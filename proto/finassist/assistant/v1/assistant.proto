@@ -1,0 +1,334 @@
+syntax = "proto3";
+
+package finassist.assistant.v1;
+
+import "finassist/common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/assistant/v1;assistantv1";
+
+// Сервис `assistant` (REST 7.x). Вызывающий: bank-bff, токен пользователя.
+// Исходящие вызовы: user.UserInternalService.GetAssistantConsentStatus (до списания попытки),
+// statementdata.AssistantToolsService и analytics.AnalyticsService (системные, user_id из
+// токена, зафиксированного при создании вопроса), Alice AI, интернет.
+
+// Диалог с LLM-помощником: вопросы, поток ответа, история, повтор, лимит.
+service AssistantService {
+  // Задать вопрос помощнику: проверить согласие и лимит, списать попытку, сохранить вопрос и
+  // запустить генерацию ответа на сервере. Возвращает сохранённый вопрос, ID ответа и остаток лимита.
+  // POST /v1/assistant/messages. Требует `idempotency-key`. Порядок: согласие (чтение primary в
+  // `user`) -> лимит (атомарный инкремент, primary) -> вопрос и ответ -> запуск генерации.
+  // CONSENT_REQUIRED / LIMIT_EXCEEDED под ключом не сохраняются.
+  rpc AskQuestion(AskQuestionRequest) returns (AskQuestionResponse);
+
+  // Читать поток генерации ответа: снимок состояния, фрагменты текста, готовые блоки, источник,
+  // переходы к данным, затем итог или ошибка. Работает и для уже готового ответа.
+  // GET /v1/assistant/messages/{answer_id}/events (SSE). Первое сообщение — snapshot;
+  // терминальные: done или error. Генерация от этого потока не зависит.
+  // Заменённый повтором ответ -> NOT_FOUND.
+  rpc WatchAnswer(WatchAnswerRequest) returns (stream WatchAnswerResponse);
+
+  // Вернуть историю диалога постранично, старые первыми: вопросы и ответы с блоками, переходами
+  // к данным и источником.
+  // GET /v1/assistant/messages.
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+
+  // Повторить неудавшийся ответ (после MODEL_ERROR): создать новый ответ на тот же вопрос,
+  // заменить им неудачный, списать попытку заново.
+  // POST /v1/assistant/messages/{answer_id}/retry. Требует `idempotency-key`.
+  rpc RetryAnswer(RetryAnswerRequest) returns (RetryAnswerResponse);
+
+  // Вернуть остаток суточного лимита вопросов и момент его сброса.
+  // GET /v1/assistant/limit.
+  rpc GetLimit(GetLimitRequest) returns (GetLimitResponse);
+}
+
+// ---------------------------------------------------------------- Блоки ответа
+
+// Вид графика в блоке ответа.
+enum ChartKind {
+  CHART_KIND_UNSPECIFIED = 0;
+  // Значения по периодам (гистограмма).
+  CHART_KIND_BAR = 1;
+}
+
+// Что отложено по оси значений графика.
+enum ValueKind {
+  VALUE_KIND_UNSPECIFIED = 0;
+  // Сумма в копейках со знаком.
+  VALUE_KIND_AMOUNT = 1;
+  // Доля 0–1.
+  VALUE_KIND_PERCENT = 2;
+}
+
+// Одна точка графика — значение за один период.
+message ChartPoint {
+  // Период точки; клиент сам решает, как его подписать.
+  finassist.common.v1.TimeRange range = 1;
+  // Значение по value_kind (копейки — как double). Отсутствует — за период нет данных (не ноль).
+  optional double value = 2;
+  finassist.common.v1.DataBounds bounds = 3;
+}
+
+// Текстовый блок ответа.
+message TextBlock {
+  // Подмножество Markdown: абзацы, **жирный**, списки «- ».
+  string text = 1;
+}
+
+// Блок-график: значения по периодам, данные — из результата инструмента.
+message ChartBlock {
+  ChartKind kind = 1;
+  // Название графика («Самокат по месяцам»).
+  string title = 2;
+  ValueKind value_kind = 3;
+  // Старые первыми.
+  repeated ChartPoint points = 4;
+  // Какую точку выделить.
+  optional int32 highlight_index = 5;
+}
+
+// Пара «название — значение» в блоке rows.
+message BlockRow {
+  // Название показателя («Средний чек»).
+  string label = 1;
+  optional string sublabel = 2;
+  // Ровно одно значение.
+  oneof value {
+    // Копейки со знаком.
+    int64 amount_minor = 3;
+    int64 count = 4;
+    // Доля 0–1.
+    double percent = 5;
+    string text = 6;
+  }
+}
+
+// Блок пар «название — значение» (число операций, средний чек и т. п.).
+message RowsBlock {
+  repeated BlockRow rows = 1;
+}
+
+// Цифры в chart/rows сервер строит из результатов инструментов, никогда — из текста модели.
+message Block {
+  // Текстовый эквивалент блока — для вспомогательных технологий и клиентов, не знающих тип;
+  // обязателен у нетекстовых блоков.
+  optional string alt_text = 1;
+  oneof content {
+    TextBlock text = 10;
+    ChartBlock chart = 11;
+    RowsBlock rows = 12;
+  }
+}
+
+// Куда ведёт переход из ответа.
+enum ChipScreen {
+  CHIP_SCREEN_UNSPECIFIED = 0;
+  // К операциям по фильтрам filters.
+  CHIP_SCREEN_OPERATIONS = 1;
+  // К аналитике за период с параметрами params.
+  CHIP_SCREEN_ANALYTICS = 2;
+}
+
+// Предлагаемый переход из ответа к данным: к операциям по фильтрам или к аналитике за период.
+message Chip {
+  // Название перехода («Все поездки на самокате»).
+  string label = 1;
+  ChipScreen screen = 2;
+  // Для OPERATIONS; всегда с transfer_mode ответа.
+  optional finassist.common.v1.OperationsFilter filters = 3;
+  // Для ANALYTICS.
+  optional finassist.common.v1.AnalyticsParams params = 4;
+}
+
+// Что изменилось в данных после расчёта ответа.
+enum ChangedSince {
+  CHANGED_SINCE_UNSPECIFIED = 0;
+  // С тех пор категории менялись.
+  CHANGED_SINCE_CATEGORIES = 1;
+  // Загружали или удаляли выписки.
+  CHANGED_SINCE_UPLOADS = 2;
+}
+
+// Источник ответа: на каких данных и когда он построен.
+message AnswerSource {
+  // Время расчёта данных, на которых построен ответ.
+  google.protobuf.Timestamp calculated_at = 1;
+  // Период данных, по которым ответил помощник.
+  optional finassist.common.v1.TimeRange data_range = 2;
+  finassist.common.v1.TransferMode transfer_mode = 3;
+  // Что изменилось после расчёта; вычисляется при чтении по statementdata.GetDataVersion.
+  repeated ChangedSince changed_since = 4;
+}
+
+// ---------------------------------------------------------------- Сообщения
+
+// Автор сообщения в диалоге.
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  // Вопрос.
+  ROLE_USER = 1;
+  // Ответ.
+  ROLE_ASSISTANT = 2;
+}
+
+// Состояние ответа помощника.
+enum AnswerStatus {
+  ANSWER_STATUS_UNSPECIFIED = 0;
+  // Ещё генерируется — клиент открывает WatchAnswer.
+  ANSWER_STATUS_GENERATING = 1;
+  ANSWER_STATUS_COMPLETE = 2;
+  // Не получилось ответить, попытка возвращена.
+  ANSWER_STATUS_FAILED = 3;
+}
+
+// Почему ответ не получился.
+enum AnswerErrorCode {
+  ANSWER_ERROR_CODE_UNSPECIFIED = 0;
+  // Сбой или таймаут Alice AI; ответ можно повторить (RetryAnswer).
+  ANSWER_ERROR_CODE_MODEL_ERROR = 1;
+  // Вопрос непонятен или на него нельзя ответить по данным; повтор не имеет смысла и недоступен.
+  ANSWER_ERROR_CODE_CANNOT_ANSWER = 2;
+}
+
+// Сообщение диалога: вопрос пользователя или ответ помощника. Набор заполненных полей зависит от
+// role и status.
+message Message {
+  string id = 1;
+  Role role = 2;
+  google.protobuf.Timestamp created_at = 3;
+  // Только у ROLE_USER: текст вопроса.
+  optional string text = 4;
+  // Ниже — только у ROLE_ASSISTANT.
+  AnswerStatus status = 5;
+  // Только у FAILED.
+  AnswerErrorCode error_code = 6;
+  // Только у COMPLETE: списана ли попытка.
+  optional bool charged = 7;
+  // У GENERATING — на момент запроса, у FAILED — пусто.
+  repeated Block blocks = 8;
+  // Только у COMPLETE.
+  repeated Chip chips = 9;
+  // Только у COMPLETE; changed_since пересчитывается на момент запроса.
+  optional AnswerSource source = 10;
+}
+
+// Новый вопрос помощнику.
+message AskQuestionRequest {
+  // Вопрос пользователя, 1–2000 символов.
+  string text = 1;
+  // Режим учёта переводов, в котором отвечать (тот же, что действует у пользователя в аналитике);
+  // UNSPECIFIED = with.
+  finassist.common.v1.TransferMode transfer_mode = 2;
+}
+
+// Созданный вопрос и ID ответа, по которому читать поток.
+message AskQuestionResponse {
+  // Сохранённый вопрос.
+  Message question = 1;
+  // ID ответа — по нему WatchAnswer.
+  string answer_id = 2;
+  // Осталось вопросов на сегодня; окончательное значение — в done.
+  int32 remaining_limit = 3;
+}
+
+// Подписка на поток генерации ответа.
+message WatchAnswerRequest {
+  string answer_id = 1;
+}
+
+// Всё состояние ответа к моменту подключения; клиент заменяет им показанное.
+message AnswerSnapshot {
+  AnswerStatus status = 1;
+  repeated Block blocks = 2;
+  repeated Chip chips = 3;
+  optional AnswerSource source = 4;
+}
+
+// Фрагмент текстового блока.
+message AnswerChunk {
+  // Номер текстового блока: равен числу полученных блоков — начинается новый; меньше — дописать.
+  int32 index = 1;
+  string text = 2;
+}
+
+// Готовый нетекстовый блок целиком.
+message AnswerBlock {
+  // Номер блока; всегда следующий по порядку.
+  int32 index = 1;
+  Block block = 2;
+}
+
+// Терминальное: ответ готов и сохранён.
+message AnswerDone {
+  // false — данных для полного ответа не хватило, попытка не списана.
+  bool charged = 1;
+  int32 remaining_limit = 2;
+}
+
+// Терминальное: ответа не получилось, попытка возвращена.
+message AnswerError {
+  AnswerErrorCode code = 1;
+  // Только для логов.
+  string message = 2;
+  // Остаток после возврата попытки.
+  int32 remaining_limit = 3;
+}
+
+// Событие потока ответа.
+message WatchAnswerResponse {
+  oneof event {
+    AnswerSnapshot snapshot = 1;
+    AnswerChunk chunk = 2;
+    AnswerBlock block = 3;
+    AnswerSource source = 4;
+    Chip chip = 5;
+    AnswerDone done = 6;
+    AnswerError error = 7;
+  }
+  string time_zone = 8;
+}
+
+// Запрос страницы истории диалога.
+message ListMessagesRequest {
+  // 1–50, по умолчанию 20.
+  int32 limit = 1;
+  // Вернуть сообщения старше этого; нет — самые новые.
+  optional string before_id = 2;
+}
+
+// Страница истории диалога.
+message ListMessagesResponse {
+  // Старые первыми. Ответ, заменённый повтором, не возвращается.
+  repeated Message messages = 1;
+  bool has_older = 2;
+  string time_zone = 3;
+}
+
+// Повтор неудавшегося ответа.
+message RetryAnswerRequest {
+  // Ответ в статусе FAILED с MODEL_ERROR; иначе RETRY_NOT_ALLOWED.
+  string answer_id = 1;
+}
+
+// Новый ответ взамен неудавшегося.
+message RetryAnswerResponse {
+  // Новый ответ; дальше — WatchAnswer по нему.
+  string answer_id = 1;
+  int32 remaining_limit = 2;
+}
+
+// Пустой запрос; пользователь — из токена.
+message GetLimitRequest {}
+
+// Суточный лимит вопросов и его остаток.
+message GetLimitResponse {
+  // Осталось вопросов на сегодня.
+  int32 remaining = 1;
+  // Суточный лимит.
+  int32 daily_max = 2;
+  // Когда лимит обновится — полночь по Москве.
+  google.protobuf.Timestamp resets_at = 3;
+  // Всегда Europe/Moscow: лимит сбрасывается по московской полуночи.
+  string time_zone = 4;
+}

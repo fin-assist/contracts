@@ -1,0 +1,77 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  BUF_VERSION: 1.47.2
+
+jobs:
+  openapi-lint:
+    name: OpenAPI lint (Redocly)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Config: redocly.yaml in the repo root.
+      - run: npx --yes @redocly/cli@1 lint openapi/openapi.yaml
+
+  openapi-breaking:
+    name: OpenAPI breaking changes (oasdiff)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oasdiff/oasdiff-action/breaking@main
+        with:
+          base: 'origin/${{ github.base_ref }}:openapi/openapi.yaml'
+          revision: 'HEAD:openapi/openapi.yaml'
+          fail-on: ERR
+
+  proto:
+    name: Protobuf lint and breaking changes (buf)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # buf lint on every run; buf breaking against the PR base on pull requests.
+      # format/push are off: sources are kept as is, BSR is not used.
+      - uses: bufbuild/buf-action@v1
+        with:
+          version: ${{ env.BUF_VERSION }}
+          input: proto
+          lint: true
+          format: false
+          breaking: ${{ github.event_name == 'pull_request' }}
+          breaking_against: '${{ github.event.repository.clone_url }}#format=git,commit=${{ github.event.pull_request.base.sha }},subdir=proto'
+          push: false
+          archive: false
+          pr_comment: false
+
+  error-registry:
+    name: Error registry vs docs/api.md
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-action@v1
+        with:
+          version: ${{ env.BUF_VERSION }}
+          setup_only: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'protobuf>=5,<8'
+      # The script expects descriptors (with imports) and the path to api.md.
+      - name: Build descriptors
+        working-directory: proto
+        run: buf build -o "$RUNNER_TEMP/fd.binpb"
+      - name: Check registry
+        working-directory: proto
+        run: python3 scripts/check_error_registry.py "$RUNNER_TEMP/fd.binpb" ../docs/api.md

@@ -1,0 +1,184 @@
+syntax = "proto3";
+
+package finassist.statementdata.v1;
+
+import "finassist/common/v1/common.proto";
+import "finassist/statementdata/v1/operations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/statementdata/v1;statementdatav1";
+
+// Системные сервисы bank-statement-data: явный user_id, только сервисная идентичность.
+// Синхронизация часового пояса — в finassist.usersettings.v1 (общий контракт с assistant).
+
+// Доступ к данным только на чтение для function calling помощника. Вызывающий: только assistant.
+// Системная модель потому, что генерация идёт на сервере независимо от соединения клиента (до
+// 3 минут) и может пережить access-токен; assistant передаёт user_id, взятый из проверенного
+// токена при создании вопроса. Побочных эффектов нет ни у одного метода. Чтение — с реплик,
+// если вызывающий не поставил `x-read-primary: 1` (assistant не ставит).
+service AssistantToolsService {
+  // Вернуть обзор данных пользователя: границы данных, покрытие по месяцам, какие поля
+  // поставляют источники, версия данных. Идёт в системный промпт, чтобы модель не делала
+  // выводов из отсутствия полей.
+  rpc GetDataOverview(GetDataOverviewRequest) returns (GetDataOverviewResponse);
+
+  // Посчитать агрегаты по операциям: суммы, число операций и средний чек, сгруппированные по
+  // месяцу / категории / продавцу, по правилам аналитики (суммы со знаком, возвраты уменьшают
+  // свою категорию). У групп есть `filters` — готовый переход к операциям группы. Источник цифр
+  // для блоков chart и rows.
+  rpc AggregateOperations(AggregateOperationsRequest) returns (AggregateOperationsResponse);
+
+  // Найти операции по фильтрам и вернуть ограниченный список («покажи самые крупные», «что было
+  // 12 июля») с общим числом совпадений.
+  rpc FindOperations(FindOperationsRequest) returns (FindOperationsResponse);
+
+  // Вернуть версию данных пользователя (моменты последних изменений категорий и загрузок).
+  // Дёшево; assistant вычисляет по нему `changed_since` при выдаче истории.
+  rpc GetDataVersion(GetDataVersionRequest) returns (GetDataVersionResponse);
+}
+
+// ---------------------------------------------------------------- Инструменты
+
+// Версия данных пользователя.
+message DataVersion {
+  // Последняя ручная смена категории или перекатегоризация правилами.
+  optional google.protobuf.Timestamp categories_changed_at = 1;
+  // Последнее завершение или удаление загрузки.
+  optional google.protobuf.Timestamp uploads_changed_at = 2;
+}
+
+// Запрос обзора данных пользователя.
+message GetDataOverviewRequest {
+  string user_id = 1;
+}
+
+// Полнота данных одного месяца.
+message MonthCoverage {
+  string month = 1;
+  finassist.common.v1.TimeRange range = 2;
+  finassist.common.v1.DataBounds bounds = 3;
+}
+
+// Обзор данных пользователя для системного промпта помощника.
+message GetDataOverviewResponse {
+  // Есть ли хоть одна операция.
+  bool has_data = 1;
+  // Границы данных по всем загрузкам.
+  optional google.protobuf.Timestamp data_from = 2;
+  optional google.protobuf.Timestamp data_to = 3;
+  // Полных месяцев.
+  int32 full_months = 4;
+  repeated MonthCoverage months = 5;
+  // Стандартные поля контракта, которые поставляет хотя бы один подключённый источник
+  // («mcc», «cashback», «posted_at», …). Отсутствие поля — «неизвестно», а не ноль.
+  repeated string supplied_fields = 6;
+  // Названия источников («Выписка Т-Банка»).
+  repeated string source_names = 7;
+  DataVersion version = 8;
+  string time_zone = 9;
+  google.protobuf.Timestamp calculated_at = 10;
+}
+
+// Измерение группировки агрегатов.
+enum GroupBy {
+  GROUP_BY_UNSPECIFIED = 0;
+  GROUP_BY_MONTH = 1;
+  GROUP_BY_CATEGORY = 2;
+  GROUP_BY_MERCHANT = 3;
+}
+
+// Запрос агрегатов по операциям для инструмента помощника.
+message AggregateOperationsRequest {
+  string user_id = 1;
+  // transfer_mode обязателен (правила аналитики); UNSPECIFIED -> VALIDATION_ERROR.
+  finassist.common.v1.OperationsFilter filter = 2;
+  bool all_time = 3;
+  // 0–2 измерения, например [MERCHANT, MONTH].
+  repeated GroupBy group_by = 4;
+  // Первые N групп по |сумме|, 1–200, по умолчанию 50.
+  int32 limit = 5;
+}
+
+// Продавец (нормализованное описание операции) как ключ группировки.
+message MerchantRef {
+  string title = 1;
+  // Токен выборки операций продавца (`s_merchant_…`) для OperationsFilter.selection; стабилен,
+  // пока продавец существует.
+  string selection = 2;
+}
+
+// Ключ группы по одному измерению; заполнено ровно одно поле — по типу измерения.
+message GroupKey {
+  optional string month = 1;
+  optional CategoryRef category = 2;
+  optional MerchantRef merchant = 3;
+}
+
+// Одна группа агрегата.
+message AggregateGroup {
+  // По одному ключу на измерение из group_by.
+  repeated GroupKey keys = 1;
+  // Сумма со знаком.
+  int64 amount_minor = 2;
+  int64 operation_count = 3;
+  // Средний чек.
+  int64 average_minor = 4;
+  // Фильтры операций, выборка по которым совпадает с группой — готовый переход к операциям.
+  finassist.common.v1.OperationsFilter filters = 5;
+}
+
+// Агрегаты по группам с итогом и покрытием периода.
+message AggregateOperationsResponse {
+  repeated AggregateGroup groups = 1;
+  int64 total_amount_minor = 2;
+  int64 total_operation_count = 3;
+  // Фактический период и его покрытие. COVERAGE_NO_DATA — инструмент вернул «пустой охват»:
+  // assistant тогда возвращает попытку (charged = false).
+  optional finassist.common.v1.TimeRange range = 4;
+  finassist.common.v1.DataBounds bounds = 5;
+  // Групп больше limit — часть отброшена.
+  bool truncated = 6;
+  DataVersion version = 7;
+  google.protobuf.Timestamp calculated_at = 8;
+  string time_zone = 9;
+}
+
+// Порядок операций в FindOperations.
+enum ToolSortOrder {
+  // Новые первыми.
+  TOOL_SORT_ORDER_UNSPECIFIED = 0;
+  TOOL_SORT_ORDER_NEWEST = 1;
+  // По убыванию суммы.
+  TOOL_SORT_ORDER_LARGEST = 2;
+}
+
+// Запрос ограниченного списка операций для инструмента помощника.
+message FindOperationsRequest {
+  string user_id = 1;
+  finassist.common.v1.OperationsFilter filter = 2;
+  bool all_time = 3;
+  ToolSortOrder order = 4;
+  // 1–100, по умолчанию 20.
+  int32 limit = 5;
+}
+
+// Найденные операции с общим числом совпадений.
+message FindOperationsResponse {
+  repeated Operation items = 1;
+  // Всего в выборке, без учёта limit.
+  int32 total_count = 2;
+  optional finassist.common.v1.TimeRange range = 3;
+  finassist.common.v1.DataBounds bounds = 4;
+  DataVersion version = 5;
+  string time_zone = 6;
+}
+
+// Запрос версии данных пользователя.
+message GetDataVersionRequest {
+  string user_id = 1;
+}
+
+// Версия данных пользователя.
+message GetDataVersionResponse {
+  DataVersion version = 1;
+}

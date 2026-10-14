@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package finassist.usersettings.v1;
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/usersettings/v1;usersettingsv1";
+
+// Настройки пользователя, которыми владеет `user` и которые нужны другим сервисам. Реализует
+// каждый сервис, которому они нужны: bank-statement-data (месяцы и «сегодня» в расчётах),
+// assistant (пояс для моментов в ответах). Вызывает только `user` (системный вызов) из своего
+// outbox — по строке на получателя, доставка at-least-once, порядок не гарантирован.
+service UserSettingsSyncService {
+  // Применить новый часовой пояс пользователя. Побеждает большая settings_version; старые
+  // версии подтверждаются и игнорируются. Для удалённого пользователя (tombstone) — OK без
+  // действий. В bank-statement-data смена пояса пересчитывает помесячные агрегаты в фоне,
+  // сначала отправив в analytics `recalculating = true`.
+  rpc SetUserTimezone(SetUserTimezoneRequest) returns (SetUserTimezoneResponse);
+}
+
+// Новый часовой пояс пользователя с версией настроек.
+message SetUserTimezoneRequest {
+  string user_id = 1;
+  // IANA.
+  string timezone = 2;
+  // Монотонная на пользователя, назначает `user`.
+  int64 settings_version = 3;
+}
+
+// Пустой ответ: пояс принят (или проигнорирован как устаревший).
+message SetUserTimezoneResponse {}

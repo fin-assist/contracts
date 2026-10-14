@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package finassist.common.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/common/v1;commonv1";
+
+// Общие типы. Соглашения (подробнее — grpc-api.md):
+// - Деньги: int64 в минимальных единицах валюты (копейки), суффикс поля `_minor`.
+//   Сумма операции >= 0; суммы аналитики и помощника — со знаком.
+// - Моменты времени: google.protobuf.Timestamp (UTC). Ответ, где есть моменты для показа
+//   пользователю, несёт `time_zone` (IANA); bank-bff форматирует все Timestamp ответа в нём.
+// - Календарные ключи: строки `YYYY-MM`, `YYYY-Qn`, `YYYY` в поясе профиля.
+// - Перечисления: значение 0 — всегда *_UNSPECIFIED. bank-bff переводит имена значений в
+//   REST-коды механически: отрезает префикс типа и приводит к нижнему регистру
+//   (TRANSFER_MODE_WITHOUT -> "without"). Новое значение сначала выкатывается потребителям
+//   (bank-bff первым), потом производителю.
+// - ID: непрозрачные строки (сейчас — UUIDv7 в текстовой форме).
+
+// Полуинтервал [start, end).
+message TimeRange {
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
+}
+
+// Режим учёта переводов в аналитике: учитывать ли переводы в расходах и доходах.
+enum TransferMode {
+  // В OperationsFilter: правила аналитики не применяются. В запросах аналитики: по умолчанию `with`.
+  TRANSFER_MODE_UNSPECIFIED = 0;
+  // Без переводов между своими счетами.
+  TRANSFER_MODE_WITH = 1;
+  // Без переводов между своими счетами и без переводов людям (входящих и исходящих).
+  TRANSFER_MODE_WITHOUT = 2;
+}
+
+// Тип календарного периода аналитики.
+enum PeriodType {
+  PERIOD_TYPE_UNSPECIFIED = 0;
+  PERIOD_TYPE_MONTH = 1;
+  PERIOD_TYPE_QUARTER = 2;
+  PERIOD_TYPE_YEAR = 3;
+}
+
+// Полнота данных за период.
+enum Coverage {
+  COVERAGE_UNSPECIFIED = 0;
+  // Данные за весь период.
+  COVERAGE_COMPLETE = 1;
+  // Данные частично; границы — в data_from / data_to и gaps.
+  COVERAGE_PARTIAL = 2;
+  // Данных за период нет.
+  COVERAGE_NO_DATA = 3;
+}
+
+// Фильтр направления операций: только расходы или только доходы.
+enum KindFilter {
+  KIND_FILTER_UNSPECIFIED = 0;
+  KIND_FILTER_EXPENSE = 1;
+  KIND_FILTER_INCOME = 2;
+}
+
+// Фильтры выборки операций. Сервер отдаёт их клиенту как готовый переход к операциям (из
+// показателей аналитики, ответов помощника, итога импорта); клиент передаёт их в поиск операций
+// как есть. Отсутствующее поле — фильтра нет.
+message OperationsFilter {
+  // Начало периода, включительно.
+  optional google.protobuf.Timestamp from = 1;
+  // Конец периода, исключительно.
+  optional google.protobuf.Timestamp to = 2;
+  // Текстовый поиск по описанию операции.
+  optional string q = 3;
+  // Категория (итоговая; с transfer_mode — категория в аналитике).
+  optional string category_id = 4;
+  // Направление: только расходы или только доходы.
+  KindFilter kind = 5;
+  // Сумма операции не меньше, копейки.
+  optional int64 amount_from_minor = 6;
+  // Сумма операции не больше, копейки.
+  optional int64 amount_to_minor = 7;
+  // Выборка по правилам аналитики.
+  TransferMode transfer_mode = 8;
+  // Непрозрачный токен выборки, который выдаёт bank-statement-data (продавец, регулярный платёж,
+  // комиссии банку, операции без категории). Периода в себе не содержит.
+  optional string selection = 9;
+  // Человекочитаемое название выборки (продавец, платёж); только для показа, в запросах игнорируется.
+  optional string selection_name = 10;
+}
+
+// Параметры аналитики за период: тип периода, его ключ и режим учёта переводов.
+message AnalyticsParams {
+  PeriodType period = 1;
+  // Точный ключ периода в формате `period`.
+  string period_key = 2;
+  TransferMode transfer_mode = 3;
+}
+
+// Границы данных внутри календарного периода.
+message DataBounds {
+  Coverage coverage = 1;
+  // Первая операция внутри периода.
+  optional google.protobuf.Timestamp data_from = 2;
+  // Последняя операция внутри периода.
+  optional google.protobuf.Timestamp data_to = 3;
+  // Дни внутри данных, которых нет ни в одной загрузке.
+  repeated TimeRange gaps = 4;
+}
+
+// Счёт для показа.
+message AccountRef {
+  // Тип счёта («Текущий»).
+  string type_name = 1;
+  // Последние цифры («··4821»); нет у счёта другого банка.
+  optional string mask = 2;
+  // Произносимая форма счёта для вспомогательных технологий («текущий счёт, последние цифры 4 8 2 1»);
+  // заполняется только в деталях операции.
+  optional string spoken = 3;
+}

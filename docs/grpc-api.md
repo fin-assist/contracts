@@ -1,0 +1,308 @@
+# gRPC API между Go-сервисами «Понятные финансы» — MVP
+
+Версия: 2026-10-14 (ревью 14.10.2026, открытые вопросы закрыты). Основа: клиентский API 0.2 (`api.md` от 12.10, инкремент FIN-36), `openapi.yaml`, фрейм «Services v3» в Miro, `architecture.md`, `storage.md`, `data-sources.md`, макеты v83 (экраны MVP). Контракт — `.proto` в `proto/finassist/**/v1` (рядом с этим файлом). При расхождении смысл полей REST задаёт `api.md`; здесь — только то, как сервисы делят работу и что передают друг другу.
+
+Не входит: вклады и кредиты (`bank-account`), свои категории и автозамены, `ch-export` — всё, что вне MVP (`mvp-scope.md`). Новый блочный контракт «Аналитики» (FIN-4/5/6) — см. «Связь с открытыми задачами».
+
+**Обновление 14.10.2026 (ревью по комментариям):** инструмент `.proto` — `buf` (10); валидация — kin-openapi на REST и `protovalidate` в сервисах (8); хеш идемпотентности — в сервисе по protobuf, ложный конфликт после деплоя принят (6); новый раздел 6.1 «Outbox»; `UserSettingsSyncService` вынесен в общий пакет `finassist.usersettings.v1`, `assistant` получает `SetUserTimezone` (1, 2, 3.3, 7.1, 7.4); чтение после своей записи — клиент 30 с после любого пишущего запроса шлёт `X-Read-Primary` (4, 7.3).
+
+## 1. Сервисы и пакеты
+
+| Сервис | Пакет | gRPC-сервисы |
+| --- | --- | --- |
+| `user` | `finassist.user.v1` | `AuthService`, `ConsentDocumentService`, `ProfileService`, `UserInternalService` |
+| `bank-statement-data` | `finassist.statementdata.v1` | `StatementsService`, `OperationsService`, `CategoriesService`, `RegularPaymentsService`, `AssistantToolsService` |
+| `analytics` | `finassist.analytics.v1` | `AnalyticsService`, `MetricsIngestService` |
+| `assistant` | `finassist.assistant.v1` | `AssistantService` |
+| `bank-statement-data`, `analytics`, `assistant` | `finassist.userdeletion.v1` | `UserDeletionService` (каждый реализует) |
+| `bank-statement-data`, `assistant` | `finassist.usersettings.v1` | `UserSettingsSyncService` (каждый реализует; решено 14.10.2026, раньше — в `statementdata.v1`) |
+| — | `finassist.common.v1` | общие типы, реестр ошибок `ErrorReason` |
+
+`bank-bff` gRPC-сервисов не имеет — только клиент.
+
+## 2. Кто кого вызывает
+
+```
+bank-bff ──(токен пользователя)──► user · bank-statement-data · analytics · assistant
+
+assistant ──(системный)──► user.UserInternalService.GetAssistantConsentStatus
+          ──(системный)──► statementdata.AssistantToolsService       (инструменты LLM)
+          ──(системный)──► analytics.AnalyticsService               (инструменты LLM)
+
+bank-statement-data ──(системный, outbox)──► analytics.MetricsIngestService.UpsertUserMetrics
+
+user ──(системный, outbox)──► usersettings.SetUserTimezone на bank-statement-data, assistant
+     ──(системный, outbox)──► userdeletion.PurgeUserData на bank-statement-data, analytics, assistant
+
+все сервисы ──► user.UserInternalService.GetSigningKeys  (JWKS, кэш)
+```
+
+Циклов нет: `analytics` никого не вызывает, `bank-statement-data` вызывает только `analytics`. Синхронных вызовов «сервис → сервис» на пути запроса клиента два: проверка согласия в `assistant` и инструменты LLM (последние — в фоне генерации).
+
+Системные вызовы (`assistant → user`, `user → bank-statement-data / analytics / assistant`) нанесены на схему «Services v3» фиолетовым пунктиром 12.10.2026; `* → user` (JWKS) — стикером, а не стрелками.
+
+## 3. Две модели вызова
+
+### 3.1 От имени пользователя
+
+Путь `bank-bff → сервис`. `bank-bff` проверяет JWT сам (JWKS, локально) и **пробрасывает исходный токен** в `authorization`. Сервис проверяет его повторно (Ed25519, микросекунды) и берёт `user_id` только из `sub`. В сообщениях запросов `user_id` нет.
+
+### 3.2 Системный
+
+Фоновые вызовы, у которых нет живого токена пользователя: outbox, удаление аккаунта, синхронизация пояса, **инструменты помощника**. `user_id` — явным полем запроса; вызывающий подтверждает себя сервисным токеном.
+
+Почему инструменты помощника системные, а не «с токеном пользователя», как было записано в `architecture.md` («Внутренние вызовы несут токен пользователя»): генерация идёт на сервере до 3 минут независимо от соединения клиента, а access-токен живёт 15 минут и мог быть выдан 14 минут назад — вызов инструмента посреди ответа получил бы `UNAUTHENTICATED`. `assistant` запоминает `user_id` из проверенного токена при создании вопроса и передаёт его явно. `architecture.md` исправлен 12.10.2026: «токен пользователя — только на синхронном пути `bank-bff → сервис`».
+
+Методы со смешанной моделью (`GetAnalytics`, `ListPeriods`, `GetAssistantConsentStatus`) имеют `optional string user_id`: с токеном пользователя поле пустое (или равно `sub`), с системным вызовом — обязательно.
+
+### 3.3 Идентичность сервиса
+
+Решено 12.10.2026: **projected ServiceAccount token** Kubernetes.
+
+- У каждого сервиса свой ServiceAccount (`bank-bff`, `user`, `bank-statement-data`, `analytics`, `assistant`) в namespace `finassist`.
+- В Deployment — projected volume `serviceAccountToken` с `audience: finassist-internal`, `expirationSeconds: 3600`; kubelet сам обновляет файл токена при ~80 % срока, перезапуск пода не нужен. Один общий audience для всех получателей — иначе клиенту пришлось бы монтировать токен на каждого адресата; разделение по получателю даёт таблица разрешений ниже.
+- Клиент читает файл (кэш по mtime) и передаёт `x-service-authorization: Bearer <token>`.
+- Сервер проверяет локально по JWKS API-сервера k3s (`https://kubernetes.default.svc/openid/v1/jwks`, кэш 1 ч, обновление при неизвестном `kid`): подпись, `exp`, `iss`, `aud`. Имя вызывающего — `kubernetes.io.serviceaccount.name` (дублируется в `sub`). TokenReview на каждый вызов не используем.
+- k3s: зафиксировать `--kube-apiserver-arg=service-account-issuer=https://kubernetes.default.svc.cluster.local` на всех трёх серверах; при недоступности discovery анонимно — ClusterRoleBinding сервисов на `system:service-account-issuer-discovery`.
+- Токен — bearer; шифрование и защита от перехвата — WireGuard между узлами (см. 9). mTLS отклонён как дублирующий; статический секрет на сервис отклонён (ротация и хранение наши, утечка даёт права навсегда).
+
+Интерцептор на сервере держит таблицу «метод → разрешённые вызывающие → модель»:
+
+| Метод | Вызывающие | Модель |
+| --- | --- | --- |
+| `user.AuthService/*`, `ConsentDocumentService/*` | `bank-bff` | без токена пользователя (`Logout` и `GetConsentDocument` ASSISTANT — с токеном) |
+| `user.ProfileService/*` | `bank-bff` | пользователь |
+| `user.UserInternalService/GetAssistantConsentStatus` | `assistant` | системный |
+| `user.UserInternalService/GetSigningKeys` | все | — |
+| `statementdata.{Statements,Operations,Categories,RegularPayments}Service/*` | `bank-bff` | пользователь |
+| `statementdata.AssistantToolsService/*` | `assistant` | системный |
+| `usersettings.UserSettingsSyncService/*` (на `bank-statement-data` и `assistant`) | `user` | системный |
+| `analytics.AnalyticsService/*` | `bank-bff` / `assistant` | пользователь / системный |
+| `analytics.MetricsIngestService/*` | `bank-statement-data` | системный |
+| `assistant.AssistantService/*` | `bank-bff` | пользователь |
+| `userdeletion.UserDeletionService/*` | `user` | системный |
+
+Чужой вызывающий — голый `PERMISSION_DENIED` без `ErrorInfo` (5.1, правило 3) и алерт. Это второй рубеж после NetworkPolicy, а не замена ей: NetworkPolicy в манифестах повторяет ту же таблицу.
+
+## 4. Metadata
+
+| Ключ | Кто ставит | Смысл |
+| --- | --- | --- |
+| `authorization` | `bank-bff` | `Bearer <access JWT>` пользователя, как пришёл от клиента |
+| `x-service-authorization` | каждый клиент | токен ServiceAccount вызывающего |
+| `x-request-id` | `bank-bff` (из заголовка клиента или новый) | сквозной ID в логах всех сервисов; дальше пробрасывается без изменений |
+| `idempotency-key` | `bank-bff` | из `Idempotency-Key`; проверку наличия делает `bank-bff` (400 до вызова), хранение — сервис-владелец |
+| `x-client-ip` | `bank-bff` | адрес пакета TCP-соединения клиента (реальный IP сохраняется, см. `architecture.md`). Из заголовков клиента **не** берётся; сервис верит ему только от `bank-bff` |
+| `x-client-version` | `bank-bff` | `android/0.1.0+12` из заголовка клиента (FIN-20), для логов и метрик |
+| `x-read-primary` | `bank-bff` (из заголовка клиента `X-Read-Primary`) | `1` — читать с primary. Клиент ставит заголовок на все запросы в течение 30 с после любого своего успешного пишущего запроса (`POST`, `PUT`, `PATCH`, `DELETE`); по умолчанию — нет (решено 14.10.2026, см. 7.3) |
+
+`verification_token` передаётся полем запроса (`WatchPhoneVerificationRequest`), а не metadata: тело gRPC не попадает в логи ingress, а поле проще не потерять при логировании metadata интерцептором. Интерцептор логирования обязан маскировать `authorization`, `x-service-authorization`, `idempotency-key` и поля с именами `*token*` (маскирование ПДн вообще — после MVP, но токены — сразу).
+
+## 5. Ошибки
+
+Ошибка, которую клиент должен получить осмысленно, несёт `google.rpc.ErrorInfo{domain: "finassist", reason: <ErrorReason>, metadata}`, а при необходимости ещё `google.rpc.BadRequest` или `google.rpc.RetryInfo`. Реестр — `common/v1/errors.proto`. У каждого кода есть опция `error_spec` (`common/v1/error_options.proto`): код gRPC, HTTP-статус, обязательные ключи `metadata`, прикладываемые детали. Таблица ниже повторяет реестр для чтения; источник правды — опции.
+
+`bank-bff` переводит **по `reason`**, а не по коду gRPC:
+
+| `reason` | gRPC | REST | Доп. поля |
+| --- | --- | --- | --- |
+| `VALIDATION_ERROR` | `INVALID_ARGUMENT` | 400 | `details[]` из `BadRequest` (в том числе неверный формат телефона, FIN-68) |
+| `INVALID_TOKEN`, `TOKEN_EXPIRED`, `TOKEN_REVOKED` | `UNAUTHENTICATED` | 401 |  |
+| `CONSENT_REQUIRED` | `PERMISSION_DENIED` | 403 |  |
+| `LIMIT_EXCEEDED` | `RESOURCE_EXHAUSTED` | 403 | `resets_at` |
+| `NOT_FOUND` | `NOT_FOUND` | 404 |  |
+| `IDEMPOTENCY_CONFLICT` | `ALREADY_EXISTS` | 409 |  |
+| `REQUEST_IN_PROGRESS` | `ABORTED` | 409 | `Retry-After` из `RetryInfo` |
+| `FILE_TOO_LARGE` | `OUT_OF_RANGE` | 413 |  |
+| `WRONG_FORMAT`, `CSV_NOT_ACCEPTED`, `WRONG_BANK`, `CONSENT_OUTDATED`, `TOO_MANY_RESULTS`, `SELECTION_NOT_FOUND`, `CATEGORY_NOT_ASSIGNABLE`, `RETRY_NOT_ALLOWED` | `FAILED_PRECONDITION` | 422 |  |
+| `RATE_LIMITED` | `RESOURCE_EXHAUSTED` | 429 | `retry_at`, `Retry-After` |
+| нет `ErrorInfo`, неизвестный `reason`, `INTERNAL_ERROR`, голые `INTERNAL` / `UNAVAILABLE` / `DEADLINE_EXCEEDED` / `PERMISSION_DENIED` |  | 500 `INTERNAL_ERROR` |  |
+
+Коды `MAINTENANCE` и `CLIENT_VERSION_UNSUPPORTED` (FIN-20) в межсервисный реестр не входят: их генерирует сам `bank-bff` (503 с `until` и `Retry-After`; 426 или 400 — решается в FIN-20), сервисы их не возвращают.
+
+### 5.1 Правила реестра
+
+Цель — чтобы кодов были десятки, а не сотни, и без дублей (решение 12.10.2026).
+
+1. **Новый код — только при новой реакции клиента**: другой текст или действие, ретрай, выход из аккаунта. Подробности (какое поле, какой ресурс, какой лимит) идут в `metadata` или `BadRequest`, а не в новый код. Неверный формат любого поля — `VALIDATION_ERROR` с нарушением у поля, а не `FIELD_X_INVALID`; «нет операции / загрузки / платежа» — один `NOT_FOUND`. По этому правилу `INVALID_PHONE` слит в `VALIDATION_ERROR` (FIN-68).
+2. **Реестр один на все сервисы.** Своих enum ошибок у сервисов нет: сервис берёт общий код или предлагает новый по правилу 1.
+3. **В реестре только то, что доходит до клиента.** Внутренние отказы между сервисами — голый код gRPC без `ErrorInfo`: ретраи и метрики работают по коду. Поэтому `CALLER_NOT_ALLOWED` удалён — чужой вызывающий получает голый `PERMISSION_DENIED`, `bank-bff` отдаёт 500 и поднимает алерт.
+4. **Реестр меняется только вместе с разделом 8 `api.md`**, через задачу FIN. Удалённые номера и имена — в `reserved`.
+
+### 5.2 Контроль
+
+Правила выше рассчитаны на дисциплину. Чтобы их соблюдали и люди, а не только агенты, правильный путь должен быть самым коротким, а неправильный — не проходить CI.
+
+| Механизм | Что не даёт сделать | Где |
+| --- | --- | --- |
+| Опция `error_spec` у каждого кода | завести код без кода gRPC, HTTP-статуса или с ключами `metadata` не в snake_case | `.proto` + проверка CI |
+| Генерация из опций: конструкторы ошибок для сервисов (`finerr.NotFound()`, `finerr.LimitExceeded(resetsAt)`) и таблица перевода для `bank-bff` | вручную собрать `ErrorInfo` с опечаткой в `reason`, забыть обязательный ключ `metadata` (это параметр конструктора), разойтись с маппингом `bank-bff` (его не пишут руками) | генератор в бэкенд-репозитории |
+| Линтер (`golangci-lint`, правило `forbidigo`): `status.Error`, `status.New`, `errdetails.ErrorInfo` запрещены вне пакета `finerr` | обойти конструкторы | CI сервисов |
+| `scripts/check_error_registry.py` | разойтись с разделом 8 `api.md` (коды и HTTP-статусы), завести `error_spec` в другом enum (свой реестр сервиса), превысить лимит в 30 кодов | CI `proto/` |
+| `buf breaking` | переиспользовать удалённый номер или имя | CI `proto/` |
+| CODEOWNERS на `errors.proto`, `error_options.proto`, `scripts/check_error_registry.py` и `api.md` + обязательное ревью владельца в защите ветки | добавить код или поднять лимит без ревью владельца | GitHub |
+| Метрика `bank-bff` `finassist_unmapped_error_total{reason, grpc_code}` и алерт на любое ненулевое значение | незаметно отдавать клиенту 500 вместо осмысленной ошибки | рантайм |
+
+Лимит в 30 кодов — не оценка, а точка обязательного обсуждения: сейчас кодов 20. Поднять лимит можно только правкой скрипта, а она проходит через CODEOWNERS.
+
+- `status.message` наружу не передаётся никогда — только в лог `bank-bff` с `x-request-id`.
+- Порядок проверки из `api.md` (`401 → 429 → 400 → 409 → 404 → 403 → 413/422`) соблюдает **сервис**, а не `bank-bff`: `bank-bff` сам отвечает только 401 (свой разбор JWT), 400 при отсутствии `Idempotency-Key` и невалидной схеме (kin-openapi) и 413 по `Content-Length`.
+- Ошибки внутри потоков (`PROCESSING_FAILED`, `CANCELLED`, `MODEL_ERROR`, `CANNOT_ANSWER`) — не статус gRPC, а терминальное сообщение потока (`ImportStreamError`, `AnswerError`), после которого сервис закрывает поток со статусом OK. Статус не-OK в середине потока (обрыв, падение пода) `bank-bff` превращает в SSE-событие `error` с `INTERNAL_ERROR` и закрывает поток; клиент переподключится и получит снимок.
+
+## 6. Идемпотентность
+
+Правило `architecture.md` переносится без изменений: ключ хранит сервис-владелец эффекта, в одной транзакции с эффектом. В gRPC:
+
+| REST | RPC | Хеш запроса | Срок |
+| --- | --- | --- | --- |
+| 1.1 | `AuthService/StartPhoneVerification` | сериализация запроса (deterministic marshal) | 24 ч |
+| 1.3 | `AuthService/Register` | то же | 24 ч |
+| 1.4 | `AuthService/RefreshTokens` | то же | 60 с, ответ зашифрован |
+| 3.2 | `StatementsService/UploadStatement` | SHA-256 содержимого файла + `file_name` | 24 ч |
+| 7.1 | `AssistantService/AskQuestion` | сериализация запроса | 24 ч |
+| 7.4 | `AssistantService/RetryAnswer` | `answer_id` | 24 ч |
+
+- Сохраняется пара (gRPC-код + `ErrorInfo`, либо сериализованный ответ), а не REST-ответ: `bank-bff` при повторе получает то же, что в первый раз, и переводит так же. Сохраняются только исходы, соответствующие REST `2xx/400/413/422`.
+- Хеш — `proto.MarshalOptions{Deterministic: true}` + SHA-256. Детерминизм гарантирован только для одного бинаря; после деплоя с изменённой схемой сообщения хеш повтора может не совпасть → ложный `IDEMPOTENCY_CONFLICT`. Окно — 24 ч после релиза, затрагивает только повторы, пересёкшие деплой; принимаем (решено 14.10.2026: хеш считает сервис по protobuf; вариант с канонизированным телом REST в `bank-bff` отклонён как лишняя сложность).
+- Внутренние вызовы с эффектом идемпотентны по конструкции и ключа не требуют: `UpsertUserMetrics` (версии), `SetUserTimezone` (версия настроек), `PurgeUserData` (повтор — OK), `DismissRegularPayment` / `ChangeCategory` (присваивание).
+
+### 6.1 Outbox
+
+Решено 14.10.2026. Все фоновые вызовы между сервисами (`SetUserTimezone`, `PurgeUserData`, `UpsertUserMetrics`) идут через transactional outbox на PG, без брокера. Механизм один — общая Go-библиотека (рядом с библиотекой идемпотентности, FIN-78).
+
+- **Запись.** Изменение и событие фиксируются в одной транзакции БД производителя: например, `UPDATE profile SET timezone = …, settings_version = settings_version + 1` и `INSERT INTO outbox`. Либо оба, либо ничего; падение пода после `COMMIT` событие не теряет.
+- **Событие, а не вызов.** Строка outbox — тема (`user.timezone_changed`), ключ (`user_id`) и payload (protobuf). Список получателей темы и метод, которым доставлять, — в конфигурации доставщика, а не в коде производителя: новый получатель добавляется без правки производителя. Доставщик раскладывает событие на задания по получателям и доставляет их независимо.
+- **Таблица** (примерно): `outbox(id int8 GENERATED ALWAYS AS IDENTITY, topic text, key text, payload bytea, target text, attempts int4 DEFAULT 0, next_attempt_at timestamptz, last_error text, created_at timestamptz DEFAULT now())`, индекс по `next_attempt_at`.
+- **Доставщик** — горутина в каждом поде производителя. В транзакции берёт пачку: `SELECT … WHERE next_attempt_at <= now() ORDER BY id LIMIT 50 FOR UPDATE SKIP LOCKED` (поды разбирают разные строки); по каждой — системный gRPC-вызов получателя с токеном ServiceAccount, дедлайн 30 с. Успех — `DELETE`; ошибка — `attempts + 1`, `next_attempt_at` по экспоненте (1 с, 2, 4… до 5 мин, с джиттером), `last_error`. Будится через `LISTEN/NOTIFY` после записи, плюс опрос раз в несколько секунд для надёжности.
+- **Получатель идемпотентен**: доставка at-least-once, порядок не гарантирован. Применяет только при большей версии (`settings_version`, `calc_version`), иначе отвечает OK без действий; для удалённого пользователя (tombstone) — OK без действий, чтобы строка не висела.
+- **Наблюдаемость:** метрики возраста самой старой строки и числа строк по получателю; алерт, если строке больше часа; причина застревания — в `last_error`.
+- **После MVP — брокер** (Redpanda или Kafka) на месте доставки: доставщик (или CDC по WAL) переносит события из outbox в топик, получатели читают топик тем же обработчиком. Outbox при этом остаётся — атомарности записи в PG и публикации в брокер иначе не получить. Производители и обработчики не меняются, потому что библиотека с первого дня работает с событиями и конфигурируемыми получателями. Когда переходить: получателей и тем станет много, понадобится журнал событий с повторным чтением или поток в ClickHouse.
+
+## 7. Сервисы
+
+### 7.1 `user`
+
+REST 1.x и 2.x один к одному. Дополнительно:
+
+- **Вебхук провайдера обратного звонка** — HTTP-эндпоинт `user` на ingress (отдельный маршрут, белый список адресов провайдера, подпись), мимо `bank-bff`. В gRPC-контракт не входит.
+- **`WatchPhoneVerification`** — первый ответ из БД, дальше `LISTEN/NOTIFY` по ID заявки (только primary). Дедлайн потока — `expires_at` + 10 с.
+- **`UpdateProfile` с `timezone`**: в той же транзакции — строки outbox `SetUserTimezone{user_id, timezone, settings_version}` для `bank-statement-data` и `assistant` (по строке на получателя, доставляются независимо). При регистрации — так же, с поясом из 1.3. `bank-statement-data` пересчитывает агрегаты и первым делом отправляет в `analytics` `recalculating = true` — до этого `GET /v1/analytics` может несколько секунд отдавать старые цифры без признака пересчёта. Принимаем.
+- **`DeleteAccount`**: синхронно — tombstone пользователя, отзыв всех refresh, строки outbox `PurgeUserData` для трёх сервисов; ответ OK. Повтор для уже удалённого — OK (tombstone найден). Outbox ретраит до успеха с экспоненциальной паузой; алерт, если строка старше часа.
+- **Tombstone в каждом сервисе данных**: после `PurgeUserData` сервис помнит `user_id` и отвечает `TOKEN_REVOKED` на любой вызов от его имени. Иначе живой 15 минут access-токен успел бы загрузить выписку или задать вопрос уже после удаления, и данные появились бы снова. До прихода `PurgeUserData` (секунды) окно остаётся — закроется мгновенным отзывом access-токенов после MVP (`session_version`).
+- **`GetSigningKeys`** — JWKS для локальной проверки JWT. Кэш в каждом сервисе: обновление раз в 10 минут и при неизвестном `kid` (не чаще раза в минуту). Отдельный HTTP `/.well-known/jwks.json` не нужен — все потребители внутри.
+
+### 7.2 `bank-statement-data`
+
+| REST | RPC |
+| --- | --- |
+| 3.1 `GET /v1/statements/config` | `StatementsService/GetImportConfig` |
+| 3.2 `POST /v1/statements` | `StatementsService/UploadStatement` (client-stream) |
+| 3.3 `GET …/{upload_id}/progress` | `StatementsService/WatchUpload` (server-stream) |
+| 3.4 `GET /v1/statements` | `StatementsService/ListUploads` |
+| 3.5 `DELETE /v1/statements/{upload_id}` | `StatementsService/DeleteUpload` |
+| 3.6 `GET …/unread-lines` | `StatementsService/ListUnreadLines` |
+| 4.1 без фильтров | `OperationsService/ListFeed` |
+| 4.1 с фильтрами | `OperationsService/SearchOperations` |
+| 4.2 | `OperationsService/GetOperation` |
+| 4.3 | `OperationsService/ChangeCategory` |
+| 5.1 | `CategoriesService/ListCategories` |
+| 6.3 `PUT/DELETE …/regular-payments/{id}/dismissal` | `RegularPaymentsService/{Dismiss,Restore}RegularPayment` |
+
+- **Лента и поиск — два RPC**, а не один с режимами, как в REST. Режим выбирает `bank-bff` по наличию фильтров; `before` вместе с фильтрами — 400 на `bank-bff`. Типы ответов разные, сервису не нужно ветвиться.
+- **Исключение платежа из регулярных («не подписка») живёт в `bank-statement-data`**, хотя путь REST под `/v1/analytics`: отметка меняет распознавание регулярных платежей и вызывает пересчёт. `bank-bff` маршрутизирует путь в `RegularPaymentsService`. `analytics` про отметки не знает — получает пересчитанную метрику `insights.regular_payments`.
+- **Загрузка**: `bank-bff` не держит файл целиком — режет multipart-поток на куски по 256 КиБ и шлёт первым сообщением `UploadHeader`. Сервис считает SHA-256 на лету, пишет файл во временный объект Object Storage, на исходе потока проверяет формат и банк и только тогда создаёт загрузку и отвечает. При `FILE_TOO_LARGE` сервис отвечает ошибкой, не дочитывая поток; `bank-bff` закрывает приём от клиента. Дедлайн — 60 с.
+- **Поиск до 10 000 операций** — до ~3–4 МиБ в protobuf. `bank-bff` поднимает `MaxCallRecvMsgSize` до 16 МиБ только для этого метода; сервис — `MaxSendMsgSize` так же.
+- **Инструменты помощника** (`AssistantToolsService`) — только чтение, системная модель. Набор минимальный и расширяемый:
+  - `GetDataOverview` — границы данных, покрытие по месяцам, список полей, которые поставляют источники («нет» ≠ «неизвестно»), версия данных. Идёт в системный промпт.
+  - `AggregateOperations` — суммы и счётчики по месяцу / категории / продавцу по правилам аналитики (`transfer_mode` обязателен). У каждой группы — `filters` (готовый переход к операциям), у продавца — токен `selection` (`s_merchant_…`).
+  - `FindOperations` — ограниченный список операций (до 100).
+  - `GetDataVersion` — для `changed_since` в истории диалога.
+  - Правило возврата попытки («функция вернула блокировку или пустой охват») сервер `assistant` проверяет по `bounds.coverage == NO_DATA` в ответах инструментов и по `status == LOCKED` в метриках `GetAnalytics`.
+- **Пороги полноты данных** («нужно 3 полных месяца») живут в реестре метрик `bank-statement-data` (FIN-6) и попадают наружу уже вычисленными: в `ImportCoverage.features` итога импорта и в `lock` метрик для `analytics`. Других мест с порогами нет.
+
+### 7.3 `analytics`
+
+`analytics` хранит готовые метрики и собирает из них ответ `GetAnalytics`. Сам он не считает ничего, кроме того, что зависит только от текущего времени и уже переданных данных:
+
+- точный ключ периода по `period` + `period_key` (`quarter` + `2026-09` → `2026-Q3`) в поясе пользователя;
+- `is_current` — `now` внутри `range`;
+- `stale` — `now ≥ stale_after` (порог присылает `bank-statement-data` готовым моментом, `analytics` его не знает);
+- `navigation`, `ListPeriods` — по списку периодов, для которых есть снимки;
+- сборка дерева ответа из плоских снимков метрик.
+
+**Модель записи.** `bank-statement-data` присылает `UpsertUserMetrics`: состояние пользователя (`UserDataState`) и снимки периодов (`PeriodSnapshot` на ключ `(период, ключ, transfer_mode)`), каждый — полный набор метрик периода с ID из реестра (`tiles.expense`, `tiles.expense.comparison`, …, `insights.small_frequent`). Каждая метрика — общий `Metric` (`status`, `lock`, `basis`, `filters`, `value_minor`, `range`) плюс типизированные `details` для карточек со списками.
+
+**Версии.** `calc_version` — монотонная последовательность пользователя в `bank-statement-data`. `analytics` применяет снимок периода и состояние, только если версия не меньше сохранённой для этого ключа; иначе подтверждает и пропускает. Поэтому outbox может отправлять параллельно и повторно, порядок доставки не важен. Большой пересчёт (бэкфилл, смена пояса) режется на несколько вызовов ≤ 4 МиБ — каждый снимок периода атомарен сам по себе.
+
+**Метрики, зависящие от «сегодня»** (прогноз и его блокировки `too_early_in_month` / `stale_data`): `bank-statement-data` пересчитывает текущие периоды ежедневным заданием в 00:05 по поясу пользователя. `stale_after` выровнен на начало дня, чтобы признак `stale` и блокировка прогноза менялись одновременно.
+
+**Чтение после своей записи** (решено 14.10.2026). Правило механическое, клиенту не нужно думать, какие данные он читает: после любого своего успешного пишущего запроса (`POST`, `PUT`, `PATCH`, `DELETE`) клиент 30 секунд ставит на все запросы заголовок `X-Read-Primary: 1`, потом перестаёт; по умолчанию заголовка нет. На Android это один интерцептор OkHttp, на iOS и вебе — так же. `bank-bff` без состояния, поэтому окно держит клиент; `bank-bff` переносит заголовок в metadata `x-read-primary`, сервис читает с primary. 30 с с большим запасом перекрывают отставание асинхронных реплик (обычно доли секунды; алерт на отставание есть). Не покрывает изменения, сделанные не этим клиентом: фоновый пересчёт (на него есть признак `recalculating`), outbox, запись с другого устройства — их пользователь увидит с задержкой на отставание реплики. Злоупотребление (заголовок на каждом запросе) только переводит чтения этого пользователя на primary и ограничено общими лимитами запросов.
+
+**Отказ метрики.** Нет снимка нужной метрики, или реестр сменил версию определения и бэкфилл не дошёл (FIN-6) → `METRIC_STATUS_UNAVAILABLE`. В REST это открытое значение `unavailable`, текущий клиент покажет его как `locked` без подробностей — совместимо уже сейчас, до FIN-4.
+
+### 7.4 `assistant`
+
+REST 7.x один к одному. Порядок в `AskQuestion`: `GetAssistantConsentStatus` (primary в `user`) → атомарный инкремент лимита (primary) → вопрос и ответ в одной транзакции с ключом идемпотентности → запуск генерации. Сбой `user` → `UNAVAILABLE` → 500, попытка не списана (инкремент после проверки).
+
+- **Поток ответа**: `WatchAnswer` — снимок из БД, дальше события генерации. Генерация в одном поде, поток может быть открыт в другом: события между подами — `LISTEN/NOTIFY` по `answer_id` (тот же приём, что в `user`), payload ≤ 8000 байт — для `block` с графиком передаётся только `index`, сам блок поток читает из БД.
+- **Пояс для `time_zone`** (решено 14.10.2026): `assistant` — получатель `SetUserTimezone` от `user` через outbox, как `bank-statement-data` (общий контракт `usersettings.v1`). Хранит пояс пользователя у себя, применяет только при большей `settings_version`; в ответах (`WatchAnswer`, `ListMessages`) отдаёт текущий пояс. Пока строка outbox не доставлена (секунды) — пояс по умолчанию `Europe/Moscow`. Чужих вызовов ради пояса нет.
+- **`changed_since`** в `ListMessages` — один вызов `GetDataVersion` на запрос, сравнение с `calculated_at` каждого ответа.
+
+## 8. Время, деньги, перечисления
+
+- **Валидация полей** (решено 14.10.2026) — в два слоя. REST на входе — `kin-openapi` по `openapi.yaml` (400 в формате `api.md` до gRPC). gRPC в сервисе — `protovalidate`: аннотации в `.proto` (длины, диапазоны, формат телефона), проверка одним серверным интерцептором, нарушения — `google.rpc.BadRequest` → `VALIDATION_ERROR` с полями. Нужен потому, что системные вызовы идут мимо REST: прежде всего инструменты помощника, аргументы которых генерирует модель. Руками в обработчиках — только бизнес-правила (связи между полями, проверки по БД). Правила в `openapi.yaml` и `.proto` сверяет контрактный тест с граничными значениями; источник правды — `api.md`.
+- **Моменты** — `google.protobuf.Timestamp` (UTC). REST требует моменты со смещением («`2026-09-01T00:00:00+03:00`»), а календарные границы считаются в поясе профиля. Поэтому каждый ответ с моментами для показа содержит `time_zone`, и `bank-bff` форматирует все `Timestamp` этого ответа в нём. Пояс приходит от сервиса, который считал календарь, — у `bank-bff` своего состояния нет.
+- **Календарные ключи** — строки `YYYY-MM`, `YYYY-Qn`, `YYYY`, как в REST.
+- **Деньги** — `int64` в копейках, суффикс `_minor`; знак — как в REST. Валюта — отдельным полем только у операции.
+- **Телефон** — `string` в E.164 (`+79001234567`), как в REST и в БД `user`; формат проверяет обработчик. `google.type.PhoneNumber` не используем: это зависимость от googleapis ради обёртки над той же строкой, а её варианты `short_code` и `extension` пришлось бы отвергать (решение 12.10.2026). Если понадобятся номера не из РФ или добавочные, заводится новое поле.
+- **Необязательность** — `optional` (presence), отсутствующее поле → поле не выводится в JSON.
+- **Перечисления** — proto-`enum`, ноль — `*_UNSPECIFIED`. `bank-bff` переводит в строковые коды REST механически по имени (`LOCK_REASON_NEED_FULL_MONTHS` → `need_full_months`) через `protoreflect`, без ручных таблиц. Новое значение: сначала выкатывается потребитель (`bank-bff`, затем остальные), потом производитель. Неизвестное `bank-bff` число (выкатили не в том порядке) → поле не выводится; для обязательных полей — по правилу поля из `api.md` (`status` → не выводить запись нельзя, поэтому ответ 500 и алерт). Закрытые наборы REST (`Theme`, `KindFilter`) и открытые реализуются одинаково — разница только в REST.
+- **Реестр ошибок** — `ErrorReason`, имена значений без префикса (стиль Google AIP-193), это единственное исключение из lint.
+- **Комментарии в `.proto`** — на русском и в терминах предметной области. Элементы интерфейса (экраны, карточки, плашки, кнопки, тексты макетов) не упоминаются: интерфейс меняется чаще контракта, и описание устаревает (решение 12.10.2026). Примеры строк допустимы только для полей, где сервер сам отдаёт готовый текст (`schedule_name`, `reason_name`).
+
+## 9. Транспорт и эксплуатация
+
+- **grpc-go**, HTTP/2 без TLS внутри кластера: трафик между узлами уже шифрует flannel `wireguard-native`, внутри узла — loopback/veth. mTLS не делаем (идентичность — токены ServiceAccount, см. 3.3).
+- **Балансировка**: обычный ClusterIP при долгоживущих HTTP/2-соединениях даёт перекос (все запросы в один под). Сервисы — headless (`clusterIP: None`), клиенты — `dns:///<svc>.<ns>.svc.cluster.local:9090` с `round_robin`; на серверах `MaxConnectionAge = 5 мин` + `MaxConnectionAgeGrace = 4 мин` (больше 3-минутного потока ответа), чтобы новые поды получали соединения.
+- **Дедлайны** — ставит `bank-bff` от своего бюджета, сервисы передают остаток дальше:
+
+| Вызов | Дедлайн |
+| --- | --- |
+| Обычные unary | 5 с |
+| `SearchOperations`, `GetAnalytics` | 10 с |
+| `UploadStatement` | 60 с |
+| `WatchUpload` | 10 мин |
+| `WatchPhoneVerification` | до `expires_at` + 10 с |
+| `WatchAnswer` | 4 мин (генерация — 3) |
+| Инструменты помощника | 10 с на вызов; общий бюджет генерации — 3 мин |
+| `UpsertUserMetrics`, `PurgeUserData`, `SetUserTimezone` | 30 с |
+
+- **Ретраи** (service config клиента): только `UNAVAILABLE`, до 3 попыток с джиттером; для всех чтений и для методов, идемпотентных по конструкции (раздел 6). Методы с `idempotency-key` ретраит клиент (приложение), не `bank-bff` — иначе один пользовательский таймаут превращается в шквал. Хеджинг не используем.
+- **Keepalive** для потоков: клиент `Time = 30 с`, сервер `EnforcementPolicy.MinTime = 20 с`. SSE-heartbeat `: ping` раз в 15 с генерирует `bank-bff`, в gRPC его нет.
+- **Health** — `grpc.health.v1` на каждом сервисе, пробы Kubernetes нативные `grpc`. Reflection — только в dev.
+- **Метрики** — RED по методу и `reason` (без `user_id` в метках), доля `UNAVAILABLE` метрик в `analytics` по `metric_id` (FIN-5).
+- **Размер сообщения** по умолчанию 4 МиБ; исключение — `SearchOperations` (16 МиБ).
+
+## 10. Кодогенерация и CI
+
+- `.proto` — один каталог `proto/` в бэкенд-монорепозитории (репозитория пока нет; путь `go_package` — `github.com/fin-assist/backend/gen/go/...`, поменять при создании).
+- Сгенерированный Go-код — в git (`gen/go`), чтобы сборка сервиса не требовала `protoc`.
+- Проверки в CI (аналог `oasdiff` для REST): lint (STANDARD), несовместимые изменения против `main` (`FILE`), запрет повторного использования номеров полей (`reserved`), реестр ошибок — `scripts/check_error_registry.py <дескрипторы> <api.md>` (5.2).
+- Из опций `error_spec` генерируются пакет `finerr` (конструкторы ошибок) и таблица перевода ошибок для `bank-bff` (5.2).
+- **Инструмент — `buf`** (решено 14.10.2026): `buf build`, `buf lint` (STANDARD), `buf breaking` против `main`, `buf generate` с локальными плагинами `protoc-gen-go` и `protoc-gen-go-grpc`, `buf format`. Версия `buf` закреплена в одном месте (инструментальные зависимости Go-модуля). BSR не используем: нужные `.proto` googleapis (`google/rpc/error_details.proto` и др.) лежат в репозитории.
+
+Проверено 12.10: все файлы проходят `buf build` и `buf lint` STANDARD (единственное исключение — префикс значений `ErrorReason`); `check_error_registry.py` — 20 из 30 кодов, совпадает с `api.md`.
+
+## 11. Связь с открытыми задачами
+
+- **FIN-4/5/6 (блочная «Аналитика»)**: ingest-модель уже блочная — плоские снимки метрик с `metric_id` и версией определения, `UNAVAILABLE` для отказавшей метрики. FIN-4 изменит только чтение: новый RPC `GetAnalyticsBlocks` рядом с `GetAnalytics` (каталог примитивов общий с блоками помощника), старый удалить после перехода клиента. `exp` и `supports` придут полями запроса, `bank-bff` пробросит их из query.
+- **FIN-20**: `MAINTENANCE` и `CLIENT_VERSION_UNSUPPORTED` отдаёт только `bank-bff`, сервисам нужен лишь `x-client-version` для логов. В межсервисный реестр эти коды не входят (5).
+- **FIN-2 (graceful degradation)**: частичный отказ — на уровне метрик `analytics`; падение `analytics` целиком `bank-bff` отдаёт как есть (500), `GetAnalytics` — критичный запрос.
+
+## 12. Открытые вопросы
+
+1. ~~**Инструмент для `.proto`**~~ — решено 14.10.2026: `buf` (раздел 10).
+2. ~~**Валидация полей**~~ — решено 14.10.2026: `kin-openapi` на REST и `protovalidate` в сервисах (раздел 8).
+3. ~~**Чтение после своей записи** в `bank-statement-data` — вариант (б) из 7.3?~~ Решено 14.10.2026: окно 30 с на клиенте после любой записи, заголовок `X-Read-Primary` (7.3).
+4. ~~**Хеш для идемпотентности**~~ — решено 14.10.2026: в сервисе по protobuf (раздел 6), ложный конфликт для повторов, пересёкших деплой, принят.
+5. ~~**Пояс в истории помощника**~~ — решено 14.10.2026: `assistant` получает `SetUserTimezone` от `user` (7.4).

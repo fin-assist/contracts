@@ -1,0 +1,5 @@
+version: v2
+lint:
+  use: [STANDARD]
+  ignore_only:
+    ENUM_VALUE_PREFIX: [finassist/common/v1/errors.proto]

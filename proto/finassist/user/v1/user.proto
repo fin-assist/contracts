@@ -1,0 +1,322 @@
+syntax = "proto3";
+
+package finassist.user.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/user/v1;userv1";
+
+// Сервис `user`: подтверждение телефона, регистрация, токены, профиль, согласия.
+//
+// Матрица вызывающих и модель идентичности (проверяет интерцептор, см. grpc-api.md):
+//   AuthService            вызывающий: bank-bff;           без токена пользователя
+//   ConsentDocumentService вызывающий: bank-bff;           токен пользователя необязателен
+//   ProfileService         вызывающий: bank-bff;           токен пользователя обязателен
+//   UserInternalService    вызывающие: assistant; все сервисы (GetSigningKeys)
+
+// ---------------------------------------------------------------- Вход (REST 1.1–1.5)
+
+// Вход и регистрация по номеру телефона с подтверждением обратным звонком, выдача и ротация
+// токенов.
+service AuthService {
+  // Начать подтверждение номера телефона обратным звонком: создаёт заявку, выбирает номер
+  // провайдера, на который пользователь позвонит, и возвращает секрет заявки и срок её жизни.
+  // Не сообщает, зарегистрирован ли номер (защита от перебора).
+  // POST /v1/auth/phone. Требует `idempotency-key`: повтор возвращает ту же заявку и не тратит
+  // лимит. Лимиты по номеру и по `x-client-ip` (ставит bank-bff по адресу соединения, из
+  // заголовков клиента никогда не берётся).
+  rpc StartPhoneVerification(StartPhoneVerificationRequest) returns (StartPhoneVerificationResponse);
+
+  // Следить за статусом заявки на подтверждение: ждёт вебхук провайдера о звонке и отдаёт
+  // результат — для существующего пользователя пару токенов, для нового одноразовый токен
+  // регистрации. Заявка находится по хешу verification_token.
+  // GET /v1/auth/phone/events (SSE). Первое сообщение — текущее состояние; поток закрывается
+  // после терминального статуса. Результат `verified` доступен повторно до expires_at
+  // (те же токены).
+  rpc WatchPhoneVerification(WatchPhoneVerificationRequest) returns (stream WatchPhoneVerificationResponse);
+
+  // Создать пользователя после подтверждения нового номера: проверяет токен регистрации и
+  // версию согласия на обработку ПДн, фиксирует согласие и время, создаёт аккаунт и выдаёт
+  // первую пару токенов. Токен регистрации расходуется только успешным ответом.
+  // POST /v1/auth/register. Требует `idempotency-key`.
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+
+  // Обменять refresh-токен на новую пару токенов с ротацией: старый refresh становится
+  // недействительным, повторное его использование отзывает всю цепочку сессии.
+  // POST /v1/auth/token. Требует `idempotency-key` (хранится 60 с, сохранённый ответ зашифрован):
+  // повтор с тем же ключом в эти 60 с возвращает ту же пару и не считается повторным использованием.
+  rpc RefreshTokens(RefreshTokensRequest) returns (RefreshTokensResponse);
+
+  // Завершить сессию: удалить refresh-токен. Access-токен живёт до истечения срока.
+  // POST /v1/auth/logout. Идемпотентен.
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+}
+
+// Запрос на подтверждение номера телефона.
+message StartPhoneVerificationRequest {
+  // E.164, только +7 и 10 цифр; неверный формат -> VALIDATION_ERROR с нарушением у поля phone (FIN-68).
+  string phone = 1;
+}
+
+// Созданная заявка: секрет для слежения за статусом и номер, на который звонить.
+message StartPhoneVerificationResponse {
+  // Секрет заявки: 256 случайных бит, base64url.
+  string verification_token = 1;
+  // Бесплатный номер, на который звонит пользователь (E.164).
+  string callback_number = 2;
+  // Срок жизни заявки.
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+// Подписка на статус заявки по её секрету.
+message WatchPhoneVerificationRequest {
+  // Из REST-заголовка X-Verification-Token. Сравнивается по хешу за постоянное время.
+  string verification_token = 1;
+}
+
+// Состояние заявки на подтверждение номера.
+enum VerificationStatus {
+  VERIFICATION_STATUS_UNSPECIFIED = 0;
+  // Звонка ещё не было.
+  VERIFICATION_STATUS_PENDING = 1;
+  // Номер подтверждён (терминальный).
+  VERIFICATION_STATUS_VERIFIED = 2;
+  // Срок заявки истёк (терминальный).
+  VERIFICATION_STATUS_EXPIRED = 3;
+}
+
+// Событие статуса заявки; при VERIFIED несёт либо токены, либо токен регистрации.
+message WatchPhoneVerificationResponse {
+  VerificationStatus status = 1;
+  // Только при VERIFIED: номера нет в системе — клиент получает согласие на обработку ПДн и
+  // вызывает Register с registration_token.
+  optional bool is_new_user = 2;
+  // Только при VERIFIED и !is_new_user.
+  optional TokenPair tokens = 3;
+  // Только при VERIFIED и is_new_user. Одноразовый, живёт до expires_at заявки.
+  optional string registration_token = 4;
+}
+
+// Регистрация нового пользователя после подтверждения номера и согласия на обработку ПДн.
+message RegisterRequest {
+  // Из события VERIFIED.
+  string registration_token = 1;
+  // Согласие на обработку ПДн; false -> CONSENT_REQUIRED.
+  bool pd_consent_accepted = 2;
+  // Версия документа, который видел пользователь; устаревшая -> CONSENT_OUTDATED.
+  string pd_consent_version = 3;
+  // Часовой пояс устройства (IANA); без поля — Europe/Moscow.
+  optional string timezone = 4;
+}
+
+// Созданный пользователь и его первая пара токенов.
+message RegisterResponse {
+  TokenPair tokens = 1;
+  string user_id = 2;
+}
+
+// Обмен refresh-токена на новую пару.
+message RefreshTokensRequest {
+  // Текущий refresh-токен.
+  string refresh_token = 1;
+}
+
+// Новая пара токенов; старый refresh недействителен.
+message RefreshTokensResponse {
+  TokenPair tokens = 1;
+}
+
+// Пара токенов сессии: короткоживущий access (JWT) и ротируемый refresh.
+message TokenPair {
+  // JWT, подпись Ed25519, 15 минут.
+  string access_token = 1;
+  // Новый refresh-токен; старый с этого момента невалиден.
+  string refresh_token = 2;
+}
+
+// Завершение сессии по её refresh-токену.
+message LogoutRequest {
+  // Refresh-токен завершаемой сессии.
+  string refresh_token = 1;
+}
+
+// Пустой ответ: сессия завершена (или уже была завершена).
+message LogoutResponse {}
+
+// ---------------------------------------------------------------- Документы согласий (REST 1.6)
+
+// Документы согласий: текущая версия и ссылка на текст.
+service ConsentDocumentService {
+  // Вернуть текущую версию документа согласия и ссылку на его текст: согласие на обработку ПДн
+  // запрашивается до регистрации, согласие помощнику — перед первым вопросом.
+  // GET /v1/consents/{type}. PERSONAL_DATA — без токена, ASSISTANT — с токеном.
+  rpc GetConsentDocument(GetConsentDocumentRequest) returns (GetConsentDocumentResponse);
+}
+
+// Какое согласие: на обработку ПДн или на передачу данных помощнику.
+enum ConsentType {
+  CONSENT_TYPE_UNSPECIFIED = 0;
+  // Согласие на обработку персональных данных (регистрация).
+  CONSENT_TYPE_PERSONAL_DATA = 1;
+  // Согласие на передачу данных помощнику (Alice AI).
+  CONSENT_TYPE_ASSISTANT = 2;
+}
+
+// Запрос документа согласия по типу.
+message GetConsentDocumentRequest {
+  ConsentType type = 1;
+}
+
+// Текущая версия документа.
+message GetConsentDocumentResponse {
+  ConsentDocument document = 1;
+}
+
+// Документ согласия: тип, версия, название и ссылка на полный текст.
+message ConsentDocument {
+  ConsentType type = 1;
+  // Текущая версия — её клиент передаёт в Register или GrantAssistantConsent.
+  string version = 2;
+  // Название документа («Согласие на обработку персональных данных»).
+  string title = 3;
+  // Полный текст документа.
+  string url = 4;
+}
+
+// ---------------------------------------------------------------- Профиль (REST 2.x)
+
+// Профиль пользователя: чтение и настройки, согласие помощнику, удаление аккаунта.
+service ProfileService {
+  // Вернуть профиль текущего пользователя: номер, тему, часовой пояс, состояние согласия
+  // помощнику, дату регистрации.
+  // GET /v1/profile.
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+
+  // Изменить настройки профиля (тему, часовой пояс) и вернуть обновлённый профиль.
+  // PATCH /v1/profile. Смена часового пояса через outbox уходит в bank-statement-data
+  // (statementdata.v1.UserSettingsSyncService.SetUserTimezone), который запускает пересчёт.
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+
+  // Дать согласие на передачу данных помощнику (Alice AI): проверяет, что версия документа
+  // текущая, фиксирует версию и время, возвращает профиль.
+  // PUT /v1/profile/assistant-consent. Идемпотентен для той же версии.
+  rpc GrantAssistantConsent(GrantAssistantConsentRequest) returns (GrantAssistantConsentResponse);
+
+  // Отозвать согласие помощнику. История ответов остаётся.
+  // DELETE /v1/profile/assistant-consent. Идемпотентен.
+  rpc RevokeAssistantConsent(RevokeAssistantConsentRequest) returns (RevokeAssistantConsentResponse);
+
+  // Удалить аккаунт и все данные пользователя во всех сервисах, включая файлы выписок.
+  // DELETE /v1/profile. Синхронно: tombstone и отзыв всех refresh-токенов. Асинхронно (outbox,
+  // повтор до OK): userdeletion.v1.PurgeUserData в bank-statement-data, analytics, assistant.
+  // Повтор после успеха -> OK.
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+}
+
+// Пустой запрос; пользователь — из токена.
+message GetProfileRequest {}
+
+// Профиль текущего пользователя.
+message GetProfileResponse {
+  Profile profile = 1;
+}
+
+// Тема оформления. Закрытый набор.
+enum Theme {
+  THEME_UNSPECIFIED = 0;
+  THEME_SYSTEM = 1;
+  THEME_LIGHT = 2;
+  THEME_DARK = 3;
+}
+
+// Состояние согласия на передачу данных помощнику (Alice AI).
+message AssistantConsent {
+  // Действует ли согласие на передачу данных помощнику.
+  bool granted = 1;
+  // Версия документа, на которую дано согласие.
+  optional string version = 2;
+  // Текущая версия документа; если version старше — согласие нужно дать заново.
+  string current_version = 3;
+}
+
+// Профиль пользователя: логин-номер, настройки отображения и расчёта, согласие помощнику.
+message Profile {
+  string user_id = 1;
+  // Номер полностью, E.164 — логин пользователя.
+  string phone = 2;
+  Theme theme = 3;
+  // Часовой пояс (IANA), в котором считаются месяцы и «сегодня».
+  string timezone = 4;
+  AssistantConsent assistant_consent = 5;
+  // Дата регистрации.
+  google.protobuf.Timestamp created_at = 6;
+}
+
+// Изменяемые настройки профиля; передаются только меняемые поля.
+message UpdateProfileRequest {
+  // Отсутствует — без изменений. THEME_UNSPECIFIED отклоняется с VALIDATION_ERROR.
+  optional Theme theme = 1;
+  // Новый часовой пояс (IANA).
+  optional string timezone = 2;
+}
+
+// Профиль после изменения.
+message UpdateProfileResponse {
+  Profile profile = 1;
+}
+
+// Согласие на передачу данных помощнику с версией прочитанного документа.
+message GrantAssistantConsentRequest {
+  // Версия документа ASSISTANT, который видел пользователь; устаревшая -> CONSENT_OUTDATED.
+  string version = 1;
+}
+
+// Профиль с действующим согласием.
+message GrantAssistantConsentResponse {
+  Profile profile = 1;
+}
+
+// Пустой запрос; пользователь — из токена.
+message RevokeAssistantConsentRequest {}
+// Пустой ответ: согласие отозвано (или уже не действовало).
+message RevokeAssistantConsentResponse {}
+
+// Пустой запрос; пользователь — из токена.
+message DeleteAccountRequest {}
+// Пустой ответ: аккаунт помечен удалённым, удаление данных в сервисах запущено.
+message DeleteAccountResponse {}
+
+// ---------------------------------------------------------------- Внутренние методы
+
+// Методы для других сервисов: проверка согласия помощнику и ключи подписи токенов.
+service UserInternalService {
+  // Вернуть состояние согласия пользователя на передачу данных помощнику. Вызывает assistant
+  // перед созданием вопроса (и перед повтором). Читает primary: отзыв согласия должен
+  // действовать сразу. Токен пользователя (путь через bank-bff) или системный
+  // вызов с явным user_id.
+  rpc GetAssistantConsentStatus(GetAssistantConsentStatusRequest) returns (GetAssistantConsentStatusResponse);
+
+  // Вернуть публичные ключи подписи access-токенов (JWKS) для их локальной проверки. Любой сервис; кэш, обновление при неизвестном
+  // kid (не чаще раза в минуту) и раз в 10 минут. При ротации ключи перекрываются.
+  rpc GetSigningKeys(GetSigningKeysRequest) returns (GetSigningKeysResponse);
+}
+
+// Запрос состояния согласия помощнику; пользователь — из токена или явным полем.
+message GetAssistantConsentStatusRequest {
+  // Обязателен для системного вызова; при токене пользователя пуст (или равен sub).
+  optional string user_id = 1;
+}
+
+// Текущее состояние согласия.
+message GetAssistantConsentStatusResponse {
+  AssistantConsent consent = 1;
+}
+
+// Пустой запрос.
+message GetSigningKeysRequest {}
+
+// Публичные ключи подписи access-токенов.
+message GetSigningKeysResponse {
+  // RFC 7517 JWK Set, JSON.
+  string jwks_json = 1;
+}

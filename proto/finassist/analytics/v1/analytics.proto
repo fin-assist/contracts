@@ -1,0 +1,521 @@
+syntax = "proto3";
+
+package finassist.analytics.v1;
+
+import "finassist/common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/analytics/v1;analyticsv1";
+
+// Сервис `analytics`: хранит готовые персональные метрики, которые присылает bank-statement-data,
+// и собирает из них аналитику за период (REST 6.1, 6.2). Метрики не считает и порогов не знает: статусы,
+// блокировки и базы приходят готовыми. Логика на чтении ограничена: точный ключ периода,
+// `is_current` (сейчас внутри range), `stale` (сейчас >= stale_after), навигация и сборка дерева
+// из снимков метрик.
+
+// Вызывающие: bank-bff (токен пользователя) и assistant (системный вызов + user_id).
+service AnalyticsService {
+  // Собрать аналитику за период: сводные показатели, категории расходов и доходов, динамика по
+  // месяцам, наблюдения (регулярные платежи, заметные траты, комиссии, мелкие частые траты),
+  // соседние периоды и состояние данных — из сохранённых снимков метрик.
+  // GET /v1/analytics.
+  rpc GetAnalytics(GetAnalyticsRequest) returns (GetAnalyticsResponse);
+  // Вернуть периоды выбранного типа, за которые есть данные, с полнотой каждого — чтобы клиент
+  // мог предложить выбор периода.
+  // GET /v1/analytics/periods.
+  rpc ListPeriods(ListPeriodsRequest) returns (ListPeriodsResponse);
+}
+
+// Вызывающий: только bank-statement-data (воркер outbox). Идемпотентный upsert с версиями.
+service MetricsIngestService {
+  // Записать готовые метрики пользователя: состояние данных и полные снимки периодов, удалить
+  // периоды без данных. Применяется по версии расчёта, повторы безопасны.
+  rpc UpsertUserMetrics(UpsertUserMetricsRequest) returns (UpsertUserMetricsResponse);
+}
+
+// ---------------------------------------------------------------- Модель метрики
+
+// Состояние метрики: посчитана ли, насколько надёжна и почему может быть недоступна.
+enum MetricStatus {
+  METRIC_STATUS_UNSPECIFIED = 0;
+  // Посчитана; значение и детали заполнены.
+  METRIC_STATUS_READY = 1;
+  // Посчитана предварительно — данных ещё мало, цифра может заметно измениться
+  // («похоже на регулярный платёж, 2 месяца из 2»). Значение заполнено.
+  METRIC_STATUS_TENTATIVE = 2;
+  // Пока не считаем: не хватает истории, рано в месяце или выписка устарела. Причина — в lock,
+  // значения нет; клиент объясняет недоступность по lock.
+  METRIC_STATUS_LOCKED = 3;
+  // Посчитали и ничего не нашли (нет регулярных платежей, нет комиссий). Значения нет,
+  // base может быть заполнена.
+  METRIC_STATUS_NONE = 4;
+  // Ставит только analytics: снимка нет или определение сменилось и бэкфилл не дошёл (FIN-5/6).
+  // В REST — открытый код `unavailable`; клиент трактует неизвестный статус как `locked`.
+  METRIC_STATUS_UNAVAILABLE = 5;
+}
+
+// Почему метрика закрыта.
+enum LockReason {
+  LOCK_REASON_UNSPECIFIED = 0;
+  // Мало полных календарных месяцев с данными (нужно required, есть available).
+  LOCK_REASON_NEED_FULL_MONTHS = 1;
+  // Мало месяцев, в которых есть хоть какие-то данные — для графика по месяцам.
+  LOCK_REASON_NEED_MONTHS_WITH_DATA = 2;
+  // Рано считать прогноз месяца: темп оценивается с 10-го числа; откроется в available_from.
+  LOCK_REASON_TOO_EARLY_IN_MONTH = 3;
+  // Выписка устарела (с последней операции прошло больше двух недель) — прогноз не считаем;
+  // вместо него есть только факт расходов.
+  LOCK_REASON_STALE_DATA = 4;
+}
+
+// Причина блокировки метрики и условие открытия: сколько данных нужно и сколько есть (например,
+// нужно 3 полных месяца, есть 1). При нуле полных месяцев клиент опирается на границы данных из
+// ScreenState.
+message MetricLock {
+  LockReason reason = 1;
+  // Для NEED_*: сколько месяцев нужно, чтобы метрика открылась.
+  optional int32 required = 2;
+  // Для NEED_*: сколько месяцев есть сейчас.
+  optional int32 available = 3;
+  // Для TOO_EARLY_IN_MONTH: момент, с которого метрика откроется (10-е число в поясе профиля).
+  optional google.protobuf.Timestamp available_from = 4;
+}
+
+// База расчёта метрики, опирающейся на историю: за какой отрезок и по скольким полным месяцам
+// посчитано («среднее за апрель — август»).
+message MetricBasis {
+  // Границы базы, полуинтервал.
+  finassist.common.v1.TimeRange range = 1;
+  // Сколько полных месяцев вошло в базу.
+  int32 full_months = 2;
+}
+
+// Один показатель аналитики — число, список или график: общая часть (статус, причина блокировки,
+// база расчёта, значение, переход к операциям) плюс типизированные детали для составных
+// показателей. Какие поля заполнены, зависит от статуса и вида метрики.
+message Metric {
+  // Состояние метрики: посчитана, предварительна, закрыта, пуста или недоступна.
+  MetricStatus status = 1;
+  // Почему метрика закрыта и что нужно, чтобы она открылась («нужно 3 полных месяца, есть 1»).
+  // Заполнено только при status = LOCKED.
+  optional MetricLock lock = 2;
+  // За какой период истории посчитана метрика («обычно около 3 100 ₽ — апрель — август»).
+  // Заполнено при READY / TENTATIVE / NONE у метрик, опирающихся на прошлые месяцы:
+  // «обычно», регулярные платежи, заметные траты, прогноз квартала и года.
+  optional MetricBasis basis = 3;
+  // Переход к операциям: готовый набор фильтров (период, категория, направление, режим переводов,
+  // выборка), по которому поиск операций вернёт ровно те операции, из которых сложилось значение
+  // метрики — суммы и число операций совпадут. Клиент не строит фильтры сам, а передаёт этот набор
+  // в поиск операций как есть. Пример: у расходов за сентябрь — from/to сентября, kind = EXPENSE,
+  // transfer_mode из ответа. Отсутствует — метрику нельзя раскрыть в список операций (например,
+  // разницу доходов и расходов).
+  optional finassist.common.v1.OperationsFilter filters = 4;
+  // Значение метрики в копейках со знаком (расходы, доходы, разница, прогноз, итог наблюдения).
+  // Заполнено у метрик-значений при READY / TENTATIVE; при LOCKED / NONE отсутствует.
+  optional int64 value_minor = 5;
+  // У сравнений с прошлым периодом: за какой отрезок взято значение («август к 25-му»,
+  // «весь август»). У остальных метрик отсутствует.
+  optional finassist.common.v1.TimeRange range = 6;
+
+  // Типизированные детали — то, что у метрики есть помимо одного числа: список категорий, точки
+  // по месяцам, список платежей или групп. Какой вариант заполнен, определяется тем, в каком поле
+  // ответа лежит метрика (см. Tiles, Insights, GetAnalyticsResponse); у простых метрик-значений
+  // (расходы, доходы, в день, прогноз, сравнения) не заполняется.
+  oneof details {
+    // tiles.balance: доля разницы от дохода.
+    BalanceDetails balance = 10;
+    // expense_categories / income_categories: категории с суммами и долями.
+    CategoryBreakdown categories = 11;
+    // monthly_chart: точки по месяцам для графиков.
+    MonthlyChart monthly_chart = 12;
+    // insights.regular_payments: список регулярных платежей и число списаний в месяц.
+    RegularPayments regular_payments = 13;
+    // insights.notable_spending: категории с расходами выше обычного.
+    NotableSpending notable_spending = 14;
+    // insights.bank_fees: из чего сложились комиссии.
+    BankFees bank_fees = 15;
+    // insights.small_frequent: группы мелких частых трат.
+    SmallFrequent small_frequent = 16;
+  }
+}
+
+// Детали разницы доходов и расходов (tiles.balance); само значение — в Metric.value_minor.
+message BalanceDetails {
+  // Доля разницы от дохода: 0.46 — осталось 46% дохода, −0.12 — потратили больше, чем получили.
+  // Отсутствует при нулевом доходе (доля не определена).
+  optional double share_of_income = 1;
+}
+
+// Одна категория в разбивке по категориям.
+message CategoryAmount {
+  // ID категории. Отсутствует — операции без категории: возвраты, для которых не нашлось
+  // расходной категории.
+  optional string category_id = 1;
+  // Название для показа («Супермаркеты», «Без категории»).
+  string category_name = 2;
+  // Ключ иконки из набора приложения.
+  string category_icon = 3;
+  // Пояснение к категории («зарплата и проценты», «5 переводов»); нет — пояснения нет.
+  optional string note = 4;
+  // Сумма по категории за период, копейки со знаком: возвраты уменьшают категорию в месяце
+  // возврата, поэтому сумма может быть отрицательной.
+  int64 amount_minor = 5;
+  // Доля от итога направления (расходов или доходов), 0–1. Отсутствует, если итог <= 0 или
+  // сумма категории < 0 — доля не определена.
+  optional double share = 6;
+  // Число операций в выборке filters, включая возвраты.
+  int64 operation_count = 7;
+  // Переход к операциям этой категории за период по правилам аналитики.
+  finassist.common.v1.OperationsFilter filters = 8;
+}
+
+// Детали метрик expense_categories / income_categories.
+message CategoryBreakdown {
+  // Все категории направления по убыванию суммы; сколько из них показывать сразу, решает клиент.
+  repeated CategoryAmount items = 1;
+}
+
+// Один месяц в динамике по месяцам.
+message MonthlyPoint {
+  // Месяц «YYYY-MM» в поясе профиля.
+  string month = 1;
+  // Границы месяца.
+  finassist.common.v1.TimeRange range = 2;
+  // Расходы за месяц, копейки со знаком. Отсутствует — за месяц нет данных (не ноль).
+  optional int64 expense_minor = 3;
+  // Доходы за месяц, копейки со знаком; отсутствует по тому же правилу.
+  optional int64 income_minor = 4;
+  // Полнота данных месяца: с какого по какое число есть данные и каких дней нет.
+  finassist.common.v1.DataBounds bounds = 5;
+}
+
+// Детали метрики monthly_chart — расходы, доходы и разница по месяцам. Сравнение с прошлым
+// периодом и «обычно» — отдельные метрики tiles.expense_comparison и tiles.expense_typical.
+message MonthlyChart {
+  // Старые первыми. Для месяца — 6 точек, заканчивая выбранным; для квартала — его 3 месяца;
+  // для года — 12 месяцев.
+  repeated MonthlyPoint points = 1;
+}
+
+// Один регулярный платёж (подписка, абонемент, периодическое списание).
+message RegularPayment {
+  // ID платежа — для исключения из регулярных (RegularPaymentsService.Dismiss). Стабилен между
+  // пересчётами: привязан к продавцу и периодичности.
+  string id = 1;
+  // Название для показа («Спортзал», «Яндекс Плюс»).
+  string title = 2;
+  // Сумма одного списания, копейки.
+  int64 amount_minor = 3;
+  // Сумма в пересчёте на месяц (недельные и годовые платежи приводятся к месяцу), копейки.
+  int64 monthly_amount_minor = 4;
+  // Когда списывается, готовая человекочитаемая строка («1-го числа», «по понедельникам», «12 марта»).
+  string schedule_name = 5;
+  // Категория платежа.
+  string category_id = 6;
+  // Переход к операциям: все списания этого платежа.
+  finassist.common.v1.OperationsFilter filters = 7;
+}
+
+// Детали метрики insights.regular_payments; итог в месяц — в Metric.value_minor.
+// 2 полных месяца — TENTATIVE, 3 и больше — READY.
+message RegularPayments {
+  // Сколько списаний в месяц по всем платежам.
+  optional int32 count = 1;
+  // Все платежи по убыванию суммы; сколько из них показывать сразу, решает клиент.
+  repeated RegularPayment items = 2;
+}
+
+// Категория, где расходы за период заметно выше обычного.
+message NotableSpendingItem {
+  string category_id = 1;
+  string category_name = 2;
+  string category_icon = 3;
+  // Расходы по категории за выбранный период, копейки.
+  int64 amount_minor = 4;
+  // Сколько обычно уходит на эту категорию за такой же период по базе, копейки.
+  // Кратность («в 2,3 раза больше») клиент считает сам.
+  int64 typical_amount_minor = 5;
+  // Переход к операциям категории за период.
+  finassist.common.v1.OperationsFilter filters = 6;
+}
+
+// Детали метрики insights.notable_spending — категории с расходами заметно выше обычного.
+// Порог — 3 полных месяца; база — в Metric.basis.
+message NotableSpending {
+  repeated NotableSpendingItem items = 1;
+}
+
+// Детали метрики insights.bank_fees — комиссии и проценты банку; сумма за период — в Metric.value_minor,
+// NONE — комиссий не было.
+message BankFees {
+  // Из чего сложилась сумма, готовая строка («обслуживание, переводы, снятие наличных»).
+  optional string kinds_name = 1;
+}
+
+// Группа мелких частых трат.
+message SmallFrequentGroup {
+  // Название группы для показа («Кофе и перекусы»).
+  string title = 1;
+  // Сколько раз в месяц в среднем.
+  int32 count = 2;
+  // Средний чек, копейки.
+  int64 average_amount_minor = 3;
+  // Сумма в месяц, копейки.
+  int64 monthly_amount_minor = 4;
+  // Сумма в год при том же темпе, копейки («около 77 000 ₽ в год»).
+  int64 yearly_amount_minor = 5;
+  // Переход к операциям группы.
+  finassist.common.v1.OperationsFilter filters = 6;
+}
+
+// Детали метрики insights.small_frequent — мелкие частые траты; итог в месяц по всем группам —
+// в Metric.value_minor.
+// Порог — 1 полный месяц.
+message SmallFrequent {
+  // Группы по убыванию суммы в месяц.
+  repeated SmallFrequentGroup items = 1;
+}
+
+// ---------------------------------------------------------------- Чтение
+
+// Запрос аналитики за период.
+message GetAnalyticsRequest {
+  // Тип периода: месяц, квартал или год. UNSPECIFIED = месяц.
+  finassist.common.v1.PeriodType period = 1;
+  // Какой период собрать. Ключ календарного периода в поясе профиля: «2026-09» (месяц),
+  // «2026-Q3» (квартал), «2026» (год). Допускается ключ точнее, чем period: при смене типа
+  // периода с месяца на квартал клиент передаёт period=QUARTER и period_key=«2026-09», сервер находит
+  // квартал, в который входит сентябрь, и возвращает точный ключ «2026-Q3» в params.period_key.
+  // Не передан — последний период с данными.
+  optional string period_key = 2;
+  // Режим учёта переводов:
+  // WITH — переводы людям входят в расходы и доходы; WITHOUT — исключаются. Переводы между
+  // своими счетами исключены в обоих режимах. Метрики хранятся отдельно для каждого режима.
+  // UNSPECIFIED = WITH.
+  finassist.common.v1.TransferMode transfer_mode = 3;
+  // Чью аналитику собирать. Только для системного вызова (assistant); при токене пользователя
+  // поле пусто — user_id берётся из токена.
+  optional string user_id = 4;
+}
+
+// Выбранный период и полнота данных в нём.
+message PeriodInfo {
+  // Границы календарного периода в поясе профиля.
+  finassist.common.v1.TimeRange range = 1;
+  // Период ещё идёт (текущий месяц, квартал, год) — для него есть прогноз.
+  bool is_current = 2;
+  // Полнота данных внутри периода: COMPLETE, PARTIAL (с границами и пропусками в данных)
+  // или NO_DATA (возможно при явном period_key).
+  finassist.common.v1.DataBounds bounds = 3;
+}
+
+// Соседние периоды с данными — для перехода к предыдущему и следующему.
+message Navigation {
+  // Ключ предыдущего периода того же типа, в котором есть данные; нет — предыдущего нет.
+  optional string previous = 1;
+  // Ключ следующего периода с данными; нет — следующего нет.
+  optional string next = 2;
+}
+
+// Сводные показатели периода: расходы, доходы, разница, в день, прогноз и сравнения.
+message Tiles {
+  // Расходы за период (сумма со знаком). Открыта при любых данных.
+  Metric expense = 1;
+  // Расходы прошлого периода того же типа к тому же дню (если сейчас 25 сентября — август по 25-е);
+  // процент разницы
+  // клиент считает сам. Порог — 1 полный прошлый период. Нет — сравнение не предусмотрено.
+  optional Metric expense_comparison = 2;
+  // Обычные расходы — средние по полным прошлым периодам того же типа; база в basis.
+  // Порог — 2 полных периода.
+  optional Metric expense_typical = 3;
+  // Доходы за период.
+  Metric income = 4;
+  // Разница доходов и расходов; доля от дохода — в details.balance.
+  Metric balance = 5;
+  // Средние расходы в день по дням с данными.
+  Metric daily_expense = 6;
+  // Средние расходы в день за весь прошлый период того же типа.
+  optional Metric daily_expense_comparison = 7;
+  // Прогноз расходов на конец периода. Только для текущего периода (is_current), для прошлых
+  // отсутствует. Блокировки по порядку: STALE_DATA (выписка устарела), затем для месяца
+  // TOO_EARLY_IN_MONTH (до 10-го), для квартала и года NEED_FULL_MONTHS (3 и 12 по всей истории).
+  optional Metric forecast = 8;
+}
+
+// Наблюдения по месяцу: регулярные платежи, заметные траты, комиссии, мелкие частые траты
+// (только для месяца).
+message Insights {
+  // Подписки и регулярные платежи: итог в месяц, список платежей (details.regular_payments).
+  Metric regular_payments = 1;
+  // Заметные траты: категории с расходами заметно выше обычного (details.notable_spending).
+  Metric notable_spending = 2;
+  // Комиссии и проценты банку за период (details.bank_fees).
+  Metric bank_fees = 3;
+  // Мелкие частые траты: группы и итог в месяц (details.small_frequent).
+  Metric small_frequent = 4;
+}
+
+// Состояние данных пользователя: актуальность выписки, границы данных, непрочитанные строки,
+// идёт ли пересчёт.
+message ScreenState {
+  // Выписка устарела: с последней операции (last_operation_at) прошло больше двух недель.
+  // Порог — на сервере.
+  bool stale = 1;
+  // Время последней загруженной операции по всем загрузкам.
+  optional google.protobuf.Timestamp last_operation_at = 2;
+  // Начало данных по всем загрузкам — объясняет блокировки при нуле полных месяцев.
+  google.protobuf.Timestamp data_from = 3;
+  // Конец данных по всем загрузкам.
+  google.protobuf.Timestamp data_to = 4;
+  // Полных календарных месяцев с данными по всем загрузкам.
+  int32 full_months = 5;
+  // Сколько строк выписок за выбранный период не удалось прочитать (см. ListUnreadLines).
+  int32 unread_lines_count = 6;
+  // Когда посчитаны метрики.
+  google.protobuf.Timestamp calculated_at = 7;
+  // Идёт пересчёт (после смены категории, удаления загрузки, смены пояса, исключения платежа из
+  // регулярных): цифры могут измениться, клиенту стоит запросить аналитику позже.
+  bool recalculating = 8;
+}
+
+// Аналитика за период целиком.
+message GetAnalyticsResponse {
+  // Есть ли у пользователя хоть одна операция. false — остальных полей нет, аналитики пока нет.
+  bool has_data = 1;
+  // Фактические параметры ответа: тип периода, точный ключ периода, режим переводов.
+  finassist.common.v1.AnalyticsParams params = 2;
+  // Выбранный период и полнота данных в нём.
+  PeriodInfo period = 3;
+  // Соседние периоды с данными.
+  Navigation navigation = 4;
+  // Сводные показатели: расходы, доходы, разница, в день, прогноз.
+  Tiles tiles = 5;
+  // Расходы по категориям (details.categories); NONE — расходов за период нет.
+  Metric expense_categories = 6;
+  // Доходы по категориям (details.categories); доля — от tiles.income.
+  Metric income_categories = 7;
+  // Динамика по месяцам (details.monthly_chart); порог — 2 месяца с данными.
+  Metric monthly_chart = 8;
+  // Наблюдения по месяцу. Приходит только для месяца; для квартала и года отсутствует.
+  optional Insights insights = 9;
+  // Состояние данных.
+  ScreenState state = 10;
+  // Пояс профиля (IANA), в котором bank-bff форматирует все моменты ответа.
+  string time_zone = 11;
+}
+
+// Запрос списка периодов с данными.
+message ListPeriodsRequest {
+  // Тип периодов: месяцы, кварталы или годы. UNSPECIFIED = месяц.
+  finassist.common.v1.PeriodType period = 1;
+  // Чьи периоды. Только для системного вызова (assistant); при токене пользователя пусто.
+  optional string user_id = 2;
+}
+
+// Период с данными.
+message PeriodItem {
+  // Ключ периода («2026-09», «2026-Q3», «2026») — значение для period_key в GetAnalytics.
+  string key = 1;
+  // Границы периода; из них клиент формирует название периода.
+  finassist.common.v1.TimeRange range = 2;
+  // Полнота данных за период; не COMPLETE — период неполный.
+  finassist.common.v1.Coverage coverage = 3;
+}
+
+// Периоды с данными выбранного типа.
+message ListPeriodsResponse {
+  // Периоды с данными, новые первыми; пустой список — данных нет. Без пагинации.
+  repeated PeriodItem periods = 1;
+  string time_zone = 2;
+}
+
+// ---------------------------------------------------------------- Запись метрик
+
+// ID метрик (реестр живёт в bank-statement-data, FIN-6):
+//   tiles.expense, tiles.expense.comparison, tiles.expense.typical, tiles.income,
+//   tiles.balance, tiles.daily_expense, tiles.daily_expense.comparison, tiles.forecast,
+//   expense_categories, income_categories, monthly_chart,
+//   insights.regular_payments, insights.notable_spending, insights.bank_fees,
+//   insights.small_frequent
+// Неизвестный metric_id сохраняется, но не отображается (сначала выкатывается композиция analytics).
+// Готовое значение одной метрики за период.
+message MetricSnapshot {
+  // ID метрики из реестра (см. список выше).
+  string metric_id = 1;
+  // Версия определения метрики в реестре; analytics хранит её рядом со значением (FIN-6).
+  int32 definition_version = 2;
+  // Значение метрики в том виде, в котором оно уйдёт клиенту.
+  Metric metric = 3;
+}
+
+// Полный снимок одного периода для одного режима переводов — всё, что GetAnalytics отдаст
+// для этого периода, кроме навигации и is_current/stale.
+message PeriodSnapshot {
+  finassist.common.v1.PeriodType period = 1;
+  // Ключ периода («2026-09», «2026-Q3», «2026»).
+  string period_key = 2;
+  // Режим переводов, для которого посчитан снимок.
+  finassist.common.v1.TransferMode transfer_mode = 3;
+  // Границы периода в поясе профиля.
+  finassist.common.v1.TimeRange range = 4;
+  // Полнота данных в периоде.
+  finassist.common.v1.DataBounds bounds = 5;
+  // Непрочитанных строк выписок за период.
+  int32 unread_lines_count = 6;
+  // Полный набор метрик периода: метрики, которых здесь нет, удаляются из хранилища.
+  repeated MetricSnapshot metrics = 7;
+  // Когда посчитан снимок.
+  google.protobuf.Timestamp calculated_at = 8;
+}
+
+// Ссылка на период в removed_periods: какой период удалить из хранилища, когда данных за него
+// больше нет (загрузка удалена). Удаляются снимки обоих режимов переводов.
+message PeriodRef {
+  // Тип периода: месяц, квартал или год.
+  finassist.common.v1.PeriodType period = 1;
+  // Ключ периода в формате типа («2026-09», «2026-Q3», «2026»).
+  string period_key = 2;
+}
+
+// Состояние данных пользователя — источник для ScreenState и ListPeriods.
+message UserDataState {
+  // Есть ли хоть одна операция.
+  bool has_data = 1;
+  // Границы данных по всем загрузкам.
+  optional google.protobuf.Timestamp data_from = 2;
+  optional google.protobuf.Timestamp data_to = 3;
+  // Время последней загруженной операции.
+  optional google.protobuf.Timestamp last_operation_at = 4;
+  // Начало дня (пояс профиля), с которого данные считаются устаревшими; analytics сравнивает
+  // с текущим моментом. Выровнено с ежедневным пересчётом метрик, зависящих от «сегодня»
+  // (блокировка прогноза).
+  optional google.protobuf.Timestamp stale_after = 5;
+  // Полных календарных месяцев с данными.
+  int32 full_months = 6;
+  // Идёт пересчёт метрик пользователя.
+  bool recalculating = 7;
+  // Пояс профиля (IANA), в котором посчитаны периоды.
+  string time_zone = 8;
+  google.protobuf.Timestamp calculated_at = 9;
+}
+
+// Пакет готовых метрик пользователя от bank-statement-data.
+message UpsertUserMetricsRequest {
+  string user_id = 1;
+  // Монотонная на пользователя (sequence в bank-statement-data). Снимок периода и состояние
+  // применяются, только если calc_version >= сохранённой версии для этого ключа; иначе
+  // пропускаются, но подтверждаются. Повторы — пустые операции.
+  int64 calc_version = 2;
+  optional UserDataState state = 3;
+  repeated PeriodSnapshot periods = 4;
+  // Периоды, в которых данных больше нет (загрузка удалена). Удаляются для обоих режимов переводов.
+  repeated PeriodRef removed_periods = 5;
+}
+
+// Что из пакета применено.
+message UpsertUserMetricsResponse {
+  // Сколько снимков периодов применено.
+  int32 applied_periods = 1;
+  // Сколько пропущено как устаревшие (calc_version меньше сохранённой).
+  int32 skipped_stale_periods = 2;
+}

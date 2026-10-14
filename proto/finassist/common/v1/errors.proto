@@ -1,0 +1,149 @@
+syntax = "proto3";
+
+package finassist.common.v1;
+
+import "finassist/common/v1/error_options.proto";
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/common/v1;commonv1";
+
+// Реестр кодов ошибок, которые доходят до клиента. Каждый не-OK статус сервиса finassist,
+// который bank-bff должен отдать клиенту осмысленно, несёт
+// google.rpc.ErrorInfo{domain: "finassist", reason: <имя значения>, metadata: {...}}.
+// bank-bff переводит ошибку в REST по `reason` и опции error_spec. Нет ErrorInfo или
+// неизвестный reason -> REST 500 INTERNAL_ERROR, метрика и алерт; сообщение статуса наружу
+// не передаётся.
+//
+// Правила реестра (grpc-api.md, раздел 5):
+// - новый код — только если клиент на него реагирует иначе, чем на существующие; подробности
+//   (поле, ресурс, лимит) передаются в metadata или BadRequest, а не новым кодом;
+// - реестр один на все сервисы; свой enum ошибок сервис не заводит;
+// - внутренние ошибки между сервисами, которые клиенту не показываются, сюда не входят —
+//   они возвращаются голым кодом gRPC без ErrorInfo;
+// - коды, которые отдаёт только bank-bff (FIN-20: техработы, устаревший клиент), живут
+//   в bank-bff, а не здесь;
+// - реестр меняется только вместе с разделом 8 api.md, через задачу FIN; число кодов
+//   ограничено (scripts/check_error_registry.py).
+enum ErrorReason {
+  ERROR_REASON_UNSPECIFIED = 0;
+
+  // Невалидный запрос: все нарушения по полям — в BadRequest (поле, код нарушения), в том
+  // числе неверный формат номера телефона (FIN-68).
+  VALIDATION_ERROR = 1 [(error_spec) = {
+    grpc_code: GRPC_CODE_INVALID_ARGUMENT
+    http_status: 400
+    details: [ERROR_DETAIL_BAD_REQUEST]
+  }];
+
+  // Невалидный или просроченный access-токен.
+  INVALID_TOKEN = 3 [(error_spec) = {
+    grpc_code: GRPC_CODE_UNAUTHENTICATED
+    http_status: 401
+  }];
+  // Токен регистрации истёк — вход нужно начать заново.
+  TOKEN_EXPIRED = 4 [(error_spec) = {
+    grpc_code: GRPC_CODE_UNAUTHENTICATED
+    http_status: 401
+  }];
+  // Refresh-токен отозван: повторное использование, выход или удалённый аккаунт.
+  TOKEN_REVOKED = 5 [(error_spec) = {
+    grpc_code: GRPC_CODE_UNAUTHENTICATED
+    http_status: 401
+  }];
+
+  // Нет согласия: на обработку ПДн или на передачу данных помощнику.
+  CONSENT_REQUIRED = 6 [(error_spec) = {
+    grpc_code: GRPC_CODE_PERMISSION_DENIED
+    http_status: 403
+  }];
+  // Лимит вопросов помощнику исчерпан; resets_at (RFC 3339) — когда обновится.
+  LIMIT_EXCEEDED = 7 [(error_spec) = {
+    grpc_code: GRPC_CODE_RESOURCE_EXHAUSTED
+    http_status: 403
+    metadata_keys: ["resets_at"]
+  }];
+
+  // Ресурса нет или он принадлежит другому пользователю.
+  NOT_FOUND = 8 [(error_spec) = {
+    grpc_code: GRPC_CODE_NOT_FOUND
+    http_status: 404
+  }];
+
+  // Тот же ключ идемпотентности уже использован с другим телом запроса.
+  IDEMPOTENCY_CONFLICT = 9 [(error_spec) = {
+    grpc_code: GRPC_CODE_ALREADY_EXISTS
+    http_status: 409
+  }];
+  // Первый запрос с этим ключом идемпотентности ещё выполняется — повторить позже.
+  REQUEST_IN_PROGRESS = 10 [(error_spec) = {
+    grpc_code: GRPC_CODE_ABORTED
+    http_status: 409
+    details: [ERROR_DETAIL_RETRY_INFO]
+  }];
+
+  // Файл выписки больше лимита.
+  FILE_TOO_LARGE = 11 [(error_spec) = {
+    grpc_code: GRPC_CODE_OUT_OF_RANGE
+    http_status: 413
+  }];
+  // Файл не в формате OFX.
+  WRONG_FORMAT = 12 [(error_spec) = {
+    grpc_code: GRPC_CODE_FAILED_PRECONDITION
+    http_status: 422
+  }];
+  // Загружен CSV вместо OFX — клиенту нужна подсказка выгрузить OFX.
+  CSV_NOT_ACCEPTED = 13 [(error_spec) = {
+    grpc_code: GRPC_CODE_FAILED_PRECONDITION
+    http_status: 422
+  }];
+  // OFX выгружен не из Т-Банка.
+  WRONG_BANK = 14 [(error_spec) = {
+    grpc_code: GRPC_CODE_FAILED_PRECONDITION
+    http_status: 422
+  }];
+  // Версия документа согласия устарела — клиент запрашивает документ заново.
+  CONSENT_OUTDATED = 15 [(error_spec) = {
+    grpc_code: GRPC_CODE_FAILED_PRECONDITION
+    http_status: 422
+  }];
+  // Выборка поиска больше 10 000 операций — нужно сузить период.
+  TOO_MANY_RESULTS = 16 [(error_spec) = {
+    grpc_code: GRPC_CODE_FAILED_PRECONDITION
+    http_status: 422
+  }];
+  // Токен выборки selection недействителен — искать без него.
+  SELECTION_NOT_FOUND = 17 [(error_spec) = {
+    grpc_code: GRPC_CODE_FAILED_PRECONDITION
+    http_status: 422
+  }];
+  // Категорию нельзя назначить этой записи.
+  CATEGORY_NOT_ASSIGNABLE = 18 [(error_spec) = {
+    grpc_code: GRPC_CODE_FAILED_PRECONDITION
+    http_status: 422
+  }];
+  // Повтор ответа помощника недоступен.
+  RETRY_NOT_ALLOWED = 19 [(error_spec) = {
+    grpc_code: GRPC_CODE_FAILED_PRECONDITION
+    http_status: 422
+  }];
+
+  // Превышен лимит запросов; retry_at (RFC 3339) — когда можно повторить.
+  RATE_LIMITED = 20 [(error_spec) = {
+    grpc_code: GRPC_CODE_RESOURCE_EXHAUSTED
+    http_status: 429
+    metadata_keys: ["retry_at"]
+    details: [ERROR_DETAIL_RETRY_INFO]
+  }];
+
+  // Внутренняя ошибка. Сервисы обычно возвращают её голым INTERNAL / UNAVAILABLE /
+  // DEADLINE_EXCEEDED без ErrorInfo — bank-bff отдаёт 500 и без явного кода.
+  INTERNAL_ERROR = 21 [(error_spec) = {
+    grpc_code: GRPC_CODE_INTERNAL
+    http_status: 500
+  }];
+
+  // 2 — INVALID_PHONE, слит в VALIDATION_ERROR (FIN-68).
+  // 22, 23 — MAINTENANCE и CLIENT_VERSION_UNSUPPORTED: их отдаёт только bank-bff (FIN-20).
+  // 24 — CALLER_NOT_ALLOWED: внутренняя ошибка, теперь голый PERMISSION_DENIED.
+  reserved 2, 22, 23, 24;
+  reserved "INVALID_PHONE", "MAINTENANCE", "CLIENT_VERSION_UNSUPPORTED", "CALLER_NOT_ALLOWED";
+}

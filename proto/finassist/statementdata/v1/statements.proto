@@ -1,0 +1,388 @@
+syntax = "proto3";
+
+package finassist.statementdata.v1;
+
+import "finassist/common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/statementdata/v1;statementdatav1";
+
+// Сервис `bank-statement-data`, часть «Выписки» (REST 3.x). Вызывающий: bank-bff, токен пользователя.
+
+// Загрузка и разбор выписок, история загрузок, непрочитанные строки.
+service StatementsService {
+  // Вернуть параметры импорта выписки: ссылки на выгрузку и вход в банк, лимит
+  // размера файла, рекомендуемый период выгрузки и сводку уже загруженного.
+  // GET /v1/statements/config.
+  rpc GetImportConfig(GetImportConfigRequest) returns (GetImportConfigResponse);
+
+  // Вернуть историю загрузок пользователя и сводку по всем загрузкам (число файлов и операций,
+  // границы данных, дни без данных).
+  // GET /v1/statements.
+  rpc ListUploads(ListUploadsRequest) returns (ListUploadsResponse);
+
+  // Принять файл выписки: сохранить его в Object Storage, проверить формат и банк, создать
+  // загрузку и запустить фоновый разбор (дедупликация, правила учёта, пересчёт метрик).
+  // POST /v1/statements. Клиентский поток: первое сообщение — `header`, затем `chunk` (<= 256 КиБ).
+  // Требует `idempotency-key`; хеш запроса — SHA-256 содержимого файла.
+  // Синхронные проверки до ответа (при ошибке загрузка не создаётся): FILE_TOO_LARGE (как только
+  // принятые байты или header.size_bytes превысили лимит), CSV_NOT_ACCEPTED, WRONG_FORMAT,
+  // WRONG_BANK. Разбор операций продолжается в фоне.
+  rpc UploadStatement(stream UploadStatementRequest) returns (UploadStatementResponse);
+
+  // Следить за разбором загрузки: прогресс по этапам, затем итог импорта или ошибка.
+  // GET /v1/statements/{upload_id}/progress (SSE). Первое сообщение — текущее состояние;
+  // терминальные: `complete` или `error`.
+  rpc WatchUpload(WatchUploadRequest) returns (stream WatchUploadResponse);
+
+  // Удалить загрузку или прервать её разбор.
+  // DELETE /v1/statements/{upload_id}. DONE: удалить операции, которых нет в других загрузках,
+  // и файл; пометить месяцы для пересчёта. PROCESSING: прервать, поток завершается CANCELLED.
+  // Уже удалена -> OK; никогда не было -> NOT_FOUND.
+  rpc DeleteUpload(DeleteUploadRequest) returns (DeleteUploadResponse);
+
+  // Вернуть строки файла, которые не удалось прочитать, — по одной загрузке или за период.
+  // Содержимое строк не хранится, только номер, дата и причина.
+  // GET /v1/statements/unread-lines.
+  rpc ListUnreadLines(ListUnreadLinesRequest) returns (ListUnreadLinesResponse);
+}
+
+// Пустой запрос; пользователь — из токена.
+message GetImportConfigRequest {}
+
+// Параметры импорта выписки: ссылки, лимиты, рекомендуемый период, что уже загружено.
+message GetImportConfigResponse {
+  // Ссылка на выгрузку OFX из банка за suggested_period.
+  string download_url = 1;
+  // Вход в кабинет Т-Банка.
+  string login_url = 2;
+  // Максимальный размер файла.
+  int64 max_file_size_bytes = 3;
+  // Принимаемые форматы файлов («OFX»).
+  repeated string accepted_formats = 4;
+  // 12 месяцев назад для первой загрузки, от начала дня последней операции — для повторной.
+  finassist.common.v1.TimeRange suggested_period = 5;
+  // Что уже загружено; отсутствует — загрузок ещё не было.
+  optional LoadedSummary loaded = 6;
+  string time_zone = 7;
+}
+
+// Сводка уже загруженных данных: границы и число операций.
+message LoadedSummary {
+  google.protobuf.Timestamp first_operation_at = 1;
+  google.protobuf.Timestamp last_operation_at = 2;
+  // Операций всего.
+  int64 operation_count = 3;
+}
+
+// Пустой запрос; пользователь — из токена.
+message ListUploadsRequest {}
+
+// История загрузок со сводкой.
+message ListUploadsResponse {
+  // Сводка по всем загрузкам; отсутствует — загрузок нет.
+  optional UploadsSummary summary = 1;
+  // Новые первыми; неудачные загрузки не показываются.
+  repeated Upload uploads = 2;
+  string time_zone = 3;
+}
+
+// Сводка по всем загрузкам пользователя: число файлов и операций, границы данных, пропуски.
+message UploadsSummary {
+  // Файлов.
+  int32 upload_count = 1;
+  // Операций всего, без повторов.
+  int64 operation_count = 2;
+  google.protobuf.Timestamp first_operation_at = 3;
+  google.protobuf.Timestamp last_operation_at = 4;
+  // Дни без данных ни в одном файле.
+  repeated finassist.common.v1.TimeRange gaps = 5;
+}
+
+// Состояние загрузки.
+enum UploadStatus {
+  UPLOAD_STATUS_UNSPECIFIED = 0;
+  // Ещё разбирается — клиент открывает поток прогресса.
+  UPLOAD_STATUS_PROCESSING = 1;
+  UPLOAD_STATUS_DONE = 2;
+}
+
+// Одна загрузка выписки.
+message Upload {
+  string upload_id = 1;
+  string file_name = 2;
+  UploadStatus status = 3;
+  google.protobuf.Timestamp uploaded_at = 4;
+  // Операций прочитано из файла, включая уже бывшие в других загрузках.
+  int64 operation_count = 5;
+  // Непрочитанных строк.
+  int32 unread_count = 6;
+  // Период файла.
+  optional google.protobuf.Timestamp first_operation_at = 7;
+  optional google.protobuf.Timestamp last_operation_at = 8;
+  // Название источника данных («Выписка Т-Банка»).
+  string source_name = 9;
+}
+
+// Сообщение клиентского потока загрузки: заголовок файла или очередной кусок содержимого.
+message UploadStatementRequest {
+  oneof part {
+    UploadHeader header = 1;
+    bytes chunk = 2;
+  }
+}
+
+// Метаданные файла, первое сообщение потока загрузки.
+message UploadHeader {
+  // Имя файла из multipart Content-Disposition.
+  string file_name = 1;
+  // Content-Type части multipart; только для логов, формат определяется по содержимому.
+  string content_type = 2;
+  // Заявленный размер, если bank-bff его знает; 0 — неизвестен.
+  int64 size_bytes = 3;
+}
+
+// Принятая загрузка; разбор продолжается в фоне.
+message UploadStatementResponse {
+  // ID загрузки — для прогресса, отмены и удаления.
+  string upload_id = 1;
+  string file_name = 2;
+}
+
+// Подписка на ход разбора загрузки.
+message WatchUploadRequest {
+  string upload_id = 1;
+}
+
+// Событие потока разбора: прогресс, итог или ошибка.
+message WatchUploadResponse {
+  oneof event {
+    ImportProgress progress = 1;
+    // Терминальное: итог импорта.
+    ImportResult complete = 2;
+    // Терминальное: разбор не удался или прерван.
+    ImportStreamError error = 3;
+  }
+  string time_zone = 4;
+}
+
+// Этап разбора файла.
+enum ImportStage {
+  IMPORT_STAGE_UNSPECIFIED = 0;
+  // Разбор файла.
+  IMPORT_STAGE_PARSING = 1;
+  // Поиск повторов.
+  IMPORT_STAGE_DEDUP = 2;
+  // Правила учёта и категории.
+  IMPORT_STAGE_RULES = 3;
+}
+
+// Прогресс разбора.
+message ImportProgress {
+  // Этап — для логов; клиент показывает только percent.
+  ImportStage stage = 1;
+  // Общий прогресс, 0–100.
+  int32 percent = 2;
+}
+
+// Почему разбор не завершился.
+enum ImportErrorCode {
+  IMPORT_ERROR_CODE_UNSPECIFIED = 0;
+  // Не удалось разобрать файл.
+  IMPORT_ERROR_CODE_PROCESSING_FAILED = 1;
+  // Разбор прерван пользователем.
+  IMPORT_ERROR_CODE_CANCELLED = 2;
+}
+
+// Терминальная ошибка разбора: ни одна операция не сохранена, файл удалён.
+message ImportStreamError {
+  ImportErrorCode code = 1;
+  // Только для логов.
+  string message = 2;
+}
+
+// По каким операциям посчитаны суммы итога импорта.
+enum ImportTotalsScope {
+  IMPORT_TOTALS_SCOPE_UNSPECIFIED = 0;
+  // По всем операциям файла (первая загрузка).
+  IMPORT_TOTALS_SCOPE_ALL = 1;
+  // Только по новым операциям.
+  IMPORT_TOTALS_SCOPE_NEW = 2;
+}
+
+// Суммы по операциям файла по правилам аналитики в режиме TRANSFER_MODE_WITH.
+message ImportTotals {
+  ImportTotalsScope scope = 1;
+  // Расходы со знаком.
+  int64 expense_minor = 2;
+  // Доходы со знаком.
+  int64 income_minor = 3;
+}
+
+// Счёт, встретившийся в файле выписки.
+message ImportAccount {
+  // Тип счёта для показа.
+  string type_name = 1;
+  // Последние цифры; нет у счёта другого банка.
+  optional string mask = 2;
+  // Счёт другого банка, подключённый в Т-Банке.
+  bool is_other_bank = 3;
+}
+
+// Неполный месяц с фактами, из которых клиент собирает текст причины.
+message IncompleteMonth {
+  string month = 1;
+  finassist.common.v1.TimeRange range = 2;
+  google.protobuf.Timestamp data_from = 3;
+  google.protobuf.Timestamp data_to = 4;
+  // Дни без данных ни в одном файле.
+  repeated finassist.common.v1.TimeRange gaps = 5;
+  // Месяц ещё не закончился.
+  bool in_progress = 6;
+}
+
+// Функции аналитики, которые открываются по мере накопления данных. Аналитика за квартал и за
+// год доступна всегда — закрыты только их прогнозы и сравнения. Пороги — на сервере.
+enum Feature {
+  FEATURE_UNSPECIFIED = 0;
+  // Сравнение расходов с прошлым периодом к тому же дню. Порог — 1 полный месяц.
+  FEATURE_COMPARISON = 1;
+  // Динамика расходов, доходов и разницы по месяцам. Порог — 2 месяца с данными.
+  FEATURE_MONTHLY_CHART = 2;
+  // Обычные расходы — средние по полным прошлым месяцам. Порог — 2 полных месяца.
+  FEATURE_TYPICAL = 3;
+  // Подписки и регулярные платежи. 2 полных месяца — предварительно, 3 — полностью.
+  FEATURE_REGULAR_PAYMENTS = 4;
+  // Заметные траты — категории с расходами выше обычного. Порог — 3 полных месяца.
+  FEATURE_NOTABLE_SPENDING = 5;
+  // Мелкие частые траты. Порог — 1 полный месяц.
+  FEATURE_SMALL_FREQUENT = 6;
+  // Прогноз расходов на год. Порог — 12 полных месяцев (у квартала — 3, отдельной функции нет).
+  FEATURE_YEAR_FORECAST = 7;
+}
+
+// Состояние одной функции аналитики после загрузки: открыта ли, открылась ли именно этой загрузкой
+// и сколько данных нужно, если закрыта. Из списка таких записей клиент сообщает, что в аналитике
+// уже доступно, что открылось этой загрузкой и чего ещё не хватает.
+message FeatureAvailability {
+  Feature feature = 1;
+  // Открыта.
+  bool open = 2;
+  // Открылась этой загрузкой.
+  bool opened_now = 3;
+  // Для закрытых: сколько полных месяцев нужно.
+  optional int32 required_full_months = 4;
+  // Для закрытых: сколько месяцев с данными нужно.
+  optional int32 required_months_with_data = 5;
+}
+
+// Полнота данных после загрузки: сколько полных месяцев накоплено и как это изменилось.
+message ImportCoverage {
+  // Полных месяцев по всем загрузкам после этой.
+  int32 full_months = 1;
+  // Полных месяцев до этой загрузки.
+  int32 full_months_before = 2;
+  // Месяцы, ставшие полными с этой загрузкой.
+  repeated string newly_full_months = 3;
+  repeated IncompleteMonth incomplete_months = 4;
+  // Что открыто и что откроется; пороги — на сервере.
+  repeated FeatureAvailability features = 5;
+}
+
+// Особые ситуации в файле, о которых стоит сказать пользователю.
+enum ImportNotice {
+  IMPORT_NOTICE_UNSPECIFIED = 0;
+  // В файле нет операций.
+  IMPORT_NOTICE_EMPTY_STATEMENT = 1;
+  // В файле нет расходов (возможно, выгружен не тот счёт).
+  IMPORT_NOTICE_NO_EXPENSES = 2;
+}
+
+// Итог импорта: что прочитано, что нового, суммы, категории, полнота данных, особые ситуации.
+message ImportResult {
+  // Операций прочитано из файла.
+  int64 operation_count = 1;
+  // Из них новых.
+  int64 new_count = 2;
+  // Уже были загружены — пропущены.
+  int64 duplicate_count = 3;
+  // Строк файла, которые не удалось прочитать.
+  int32 unread_count = 4;
+  // Первая и последняя операция в файле; нет, если файл пустой.
+  optional google.protobuf.Timestamp first_operation_at = 5;
+  optional google.protobuf.Timestamp last_operation_at = 6;
+  // Первая загрузка пользователя.
+  bool is_first_import = 7;
+  // Нет, если новых операций нет.
+  optional ImportTotals totals = 8;
+  // Счета в файле.
+  repeated ImportAccount accounts = 9;
+  // Операций с проставленной категорией.
+  int64 categorized_count = 10;
+  // Из них — переводы между своими счетами (две операции на пару).
+  int64 own_transfer_count = 11;
+  // Без категории; входят в суммы.
+  int64 uncategorized_count = 12;
+  // Переход к операциям без категории — чтобы пользователь мог их разобрать.
+  optional finassist.common.v1.OperationsFilter uncategorized_filters = 13;
+  ImportCoverage coverage = 14;
+  // Особые ситуации.
+  repeated ImportNotice notices = 15;
+}
+
+// Удаление загрузки или прерывание её разбора.
+message DeleteUploadRequest {
+  string upload_id = 1;
+}
+
+// Пустой ответ: загрузка удалена (или уже была удалена).
+message DeleteUploadResponse {}
+
+// Запрос непрочитанных строк — по загрузке или за период.
+message ListUnreadLinesRequest {
+  // Ровно одно из двух; иначе VALIDATION_ERROR.
+  oneof scope {
+    // Строки одной загрузки.
+    string upload_id = 1;
+    // Строки, разобранная дата которых попадает в период; строки без даты не попадают.
+    finassist.common.v1.TimeRange period = 2;
+  }
+}
+
+// Почему строку выписки не удалось учесть как операцию. Непрочитанной строку делает только то,
+// без чего операцию нельзя учесть: сумма, дата, целостность строки. Отсутствие описания строку
+// не блокирует (FIN-67): операция принимается с пустым title.
+enum UnreadReason {
+  UNREAD_REASON_UNSPECIFIED = 0;
+  // Не распознали сумму.
+  UNREAD_REASON_BAD_AMOUNT = 1;
+  // Дата есть, но не разбирается.
+  UNREAD_REASON_BAD_DATE = 2;
+  // Даты нет.
+  UNREAD_REASON_NO_DATE = 3;
+  // Строка обрезана — файл повреждён или выгружен не до конца.
+  UNREAD_REASON_TRUNCATED = 5;
+  // Снято до первого выпуска: NO_DESCRIPTION (FIN-67).
+  reserved 4;
+}
+
+// Содержимого строки нет — оно не хранится.
+message UnreadLine {
+  string upload_id = 1;
+  string file_name = 2;
+  // Номер строки в файле.
+  int32 line_number = 3;
+  // Дата операции, если её удалось прочитать.
+  optional google.protobuf.Timestamp date = 4;
+  // Причина — для статистики; показывается reason_name.
+  UnreadReason reason = 5;
+  // Причина в человекочитаемом виде («не распознали сумму»).
+  string reason_name = 6;
+}
+
+// Непрочитанные строки загрузки.
+message ListUnreadLinesResponse {
+  // По порядку в файле.
+  repeated UnreadLine lines = 1;
+  string time_zone = 2;
+}

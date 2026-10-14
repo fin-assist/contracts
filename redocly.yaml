@@ -1,0 +1,11 @@
+# Redocly lint config for openapi/openapi.yaml.
+# Based on "recommended", relaxed for project conventions (see docs/api.md, "Нотация"):
+# - SSE event schemas are referenced only from the `x-sse-events` vendor extension,
+#   which Redocly does not follow, so they look unused.
+# - The contract is private; no license in `info`.
+# `x-extensible-enum`, flat polymorphic objects and Russian descriptions pass "recommended" as is.
+extends:
+  - recommended
+rules:
+  no-unused-components: off
+  info-license: off

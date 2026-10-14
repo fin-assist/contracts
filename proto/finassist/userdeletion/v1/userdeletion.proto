@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package finassist.userdeletion.v1;
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/userdeletion/v1;userdeletionv1";
+
+// Удаление данных пользователя при удалении аккаунта. Реализует каждый сервис, где хранятся
+// данные пользователя: bank-statement-data, analytics, assistant. Вызывает только `user`
+// (системный вызов) из своего outbox после DELETE /v1/profile. Идемпотентен: повтор для уже
+// удалённого пользователя возвращает OK.
+//
+// После первого вызова сервис оставляет tombstone (user_id, deleted_at) и отвечает
+// UNAUTHENTICATED/TOKEN_REVOKED на любой вызов от имени этого пользователя: access-токен живёт
+// ещё до 15 минут после удаления и не должен создать данные заново.
+service UserDeletionService {
+  // Удалить все данные пользователя в этом сервисе (в bank-statement-data — и файлы выписок в
+  // Object Storage) и оставить tombstone.
+  rpc PurgeUserData(PurgeUserDataRequest) returns (PurgeUserDataResponse);
+}
+
+// Запрос на удаление данных одного пользователя.
+message PurgeUserDataRequest {
+  // Пользователь, данные которого удалить.
+  string user_id = 1;
+}
+
+// Пустой ответ: OK означает, что данных пользователя в сервисе больше нет (или не было).
+message PurgeUserDataResponse {}

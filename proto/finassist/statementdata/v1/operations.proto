@@ -1,0 +1,272 @@
+syntax = "proto3";
+
+package finassist.statementdata.v1;
+
+import "finassist/common/v1/common.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/statementdata/v1;statementdatav1";
+
+// Сервис `bank-statement-data`: операции, категории, регулярные платежи (REST 4.x, 5.1, 6.3).
+// Вызывающий: bank-bff, токен пользователя.
+
+// Лента, поиск, детали операций и ручная смена категории.
+service OperationsService {
+  // Вернуть порцию ленты операций со сводкой по месяцам и состоянием данных (устарела ли
+  // выписка). Пара переводов между своими счетами — одной записью.
+  // GET /v1/operations без фильтров (лента). Порции по 3 календарных месяца, новые первыми.
+  rpc ListFeed(ListFeedRequest) returns (ListFeedResponse);
+
+  // Найти операции по фильтрам (текст, категория, направление, сумма, период, правила аналитики,
+  // непрозрачная выборка). Без периода ищет за последние 12 месяцев.
+  // GET /v1/operations хотя бы с одним фильтром (поиск). Вся выборка одним ответом, до 10 000
+  // операций, иначе TOO_MANY_RESULTS. Ответ может превысить 4 МиБ: bank-bff ставит
+  // MaxCallRecvMsgSize 16 МиБ только для этого метода.
+  rpc SearchOperations(SearchOperationsRequest) returns (SearchOperationsResponse);
+
+  // Вернуть операцию со всеми деталями: описание, дата проведения, категория банка, MCC,
+  // пояснение учёта, произносимые формы счетов, источник.
+  // GET /v1/operations/{id}. ID операции или пары переводов между своими счетами.
+  rpc GetOperation(GetOperationRequest) returns (GetOperationResponse);
+
+  // Сменить категорию операции вручную. Пара переводов при смене на другую категорию
+  // разделяется на две операции; одиночный перевод между своими счетами с найденной второй стороной
+  // становится парой. Правка не перетирается повторным импортом; помечает месяц для пересчёта.
+  // PATCH /v1/operations/{id}. Присваивает, а не переключает — идемпотентен без ключа.
+  rpc ChangeCategory(ChangeCategoryRequest) returns (ChangeCategoryResponse);
+}
+
+// Справочник категорий.
+service CategoriesService {
+  // Вернуть справочник категорий в порядке отображения: системные и обычные, применимость к
+  // расходам и доходам, можно ли назначать вручную.
+  // GET /v1/categories.
+  rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse);
+}
+
+// Путь REST лежит под /v1/analytics, но отметкой владеет bank-statement-data: она меняет
+// распознавание регулярных платежей, за ней идёт пересчёт и отправка в analytics.
+service RegularPaymentsService {
+  // Исключить платёж из регулярных (пользователь считает, что это не подписка): он исчезает из
+  // списка регулярных платежей, итог в месяц пересчитывается.
+  // Отметка привязана к платежу (продавец и периодичность), не к периоду.
+  // PUT /v1/analytics/regular-payments/{id}/dismissal. Идемпотентен.
+  rpc DismissRegularPayment(DismissRegularPaymentRequest) returns (DismissRegularPaymentResponse);
+  // Вернуть платёж в регулярные, сняв отметку исключения (для поддержки и будущей отмены действия).
+  // DELETE /v1/analytics/regular-payments/{id}/dismissal. Идемпотентен.
+  rpc RestoreRegularPayment(RestoreRegularPaymentRequest) returns (RestoreRegularPaymentResponse);
+}
+
+// ---------------------------------------------------------------- Операции
+
+// Направление записи.
+enum OperationKind {
+  OPERATION_KIND_UNSPECIFIED = 0;
+  // Списание.
+  OPERATION_KIND_EXPENSE = 1;
+  // Зачисление.
+  OPERATION_KIND_INCOME = 2;
+  // Пара переводов между своими счетами, показывается одной записью.
+  OPERATION_KIND_OWN_TRANSFER = 3;
+}
+
+// Состояние операции в банке.
+enum OperationStatus {
+  OPERATION_STATUS_UNSPECIFIED = 0;
+  // Проведена.
+  OPERATION_STATUS_POSTED = 1;
+  // Холд.
+  OPERATION_STATUS_PENDING = 2;
+}
+
+// Категория операции для показа: ключ, название, иконка.
+message CategoryRef {
+  string id = 1;
+  string name = 2;
+  // Ключ иконки из набора приложения.
+  string icon = 3;
+}
+
+// Одно сообщение для операции в списках (лента, поиск) и для деталей. Поля с пометкой «детали» заполняют
+// только GetOperation и ChangeCategory; для списков bank-bff их не выводит.
+message Operation {
+  // ID операции или пары переводов.
+  string id = 1;
+  OperationKind kind = 2;
+  // Время совершения; у пары — время списания.
+  google.protobuf.Timestamp occurred_at = 3;
+  // Сумма, копейки, >= 0; направление задаёт kind.
+  int64 amount_minor = 4;
+  // ISO 4217.
+  string currency = 5;
+  // Название операции: описание из выписки, у пары — «Перевод между счетами».
+  string title = 6;
+  // Итоговая категория (с учётом ручной смены).
+  CategoryRef category = 7;
+  // Категорию сменил пользователь.
+  bool is_category_manual = 8;
+  // Как запись учтена в аналитике («не в тратах», «возврат · Различные товары»); нет — обычно.
+  optional string note = 9;
+  OperationStatus status = 10;
+  // У EXPENSE/INCOME.
+  optional finassist.common.v1.AccountRef account = 11;
+  // У OWN_TRANSFER: счёт списания.
+  optional finassist.common.v1.AccountRef from_account = 12;
+  // У OWN_TRANSFER: счёт зачисления.
+  optional finassist.common.v1.AccountRef to_account = 13;
+
+  // --- детали ---
+  // Описание из выписки как есть; у пары — нет.
+  optional string description = 20;
+  // Время проведения банком; нет, если источник не сообщает.
+  optional google.protobuf.Timestamp posted_at = 21;
+  // Развёрнутая версия note под категорией.
+  optional string note_details = 22;
+  // Категория банка как есть; у пары — нет.
+  optional string bank_category = 23;
+  // MCC торговой точки, если источник сообщает (в OFX Т-Банка нет).
+  optional string mcc = 24;
+  // Название источника («Выписка Т-Банка»).
+  string source_name = 25;
+}
+
+// Запрос порции ленты.
+message ListFeedRequest {
+  // Вернуть 3 месяца до этого момента; нет — заканчивая последним месяцем с данными.
+  optional google.protobuf.Timestamp before = 1;
+}
+
+// Сводка по месяцу порции — по правилам аналитики в режиме TRANSFER_MODE_WITH.
+message MonthSummary {
+  string month = 1;
+  finassist.common.v1.TimeRange range = 2;
+  // Расходы за вычетом возвратов, со знаком.
+  int64 expense_minor = 3;
+  // Доходы, со знаком.
+  int64 income_minor = 4;
+  // Есть, если месяц неполный: данные по этот момент.
+  optional google.protobuf.Timestamp data_to = 5;
+}
+
+// Состояние данных: актуальна ли выписка.
+message FeedState {
+  // Последняя операция больше двух недель назад; порог — на сервере.
+  bool stale = 1;
+  optional google.protobuf.Timestamp last_operation_at = 2;
+  optional google.protobuf.Timestamp last_uploaded_at = 3;
+}
+
+// Порция ленты операций со сводкой по месяцам.
+message ListFeedResponse {
+  repeated Operation items = 1;
+  // Сводка по месяцам порции, новые первыми.
+  repeated MonthSummary summary = 2;
+  FeedState state = 3;
+  // Границы порции.
+  finassist.common.v1.TimeRange range = 4;
+  // `before` для следующей порции; нет — раньше операций нет.
+  optional google.protobuf.Timestamp next_before = 5;
+  string time_zone = 6;
+}
+
+// Поиск операций по фильтрам.
+message SearchOperationsRequest {
+  // selection_name игнорируется. from/to вместе с all_time -> VALIDATION_ERROR.
+  finassist.common.v1.OperationsFilter filter = 1;
+  // Искать за всё время, без периода по умолчанию (12 месяцев).
+  bool all_time = 2;
+}
+
+// Результаты поиска целиком.
+message SearchOperationsResponse {
+  repeated Operation items = 1;
+  // Сколько операций подошло под фильтры — по всей выборке, не только в items.
+  int32 total_count = 2;
+  // Фактический период поиска; нет при all_time и при одной переданной границе.
+  optional finassist.common.v1.TimeRange range = 3;
+  // Только когда период выбран по умолчанию: есть операции раньше range.start.
+  optional bool has_older_data = 4;
+  string time_zone = 5;
+}
+
+// Запрос одной операции или пары переводов по ID.
+message GetOperationRequest {
+  string id = 1;
+}
+
+// Операция со всеми деталями.
+message GetOperationResponse {
+  Operation operation = 1;
+  string time_zone = 2;
+}
+
+// Ручная смена категории записи.
+message ChangeCategoryRequest {
+  string id = 1;
+  // Категория с assignable, kinds которой включает kind записи; для пары — любая с assignable.
+  // Иначе CATEGORY_NOT_ASSIGNABLE.
+  string category_id = 2;
+}
+
+// Результат смены категории: изменённые записи и ID записи, которой больше нет.
+message ChangeCategoryResponse {
+  // Изменённые записи целиком, с деталями.
+  repeated Operation items = 1;
+  // Есть, если запись с этим ID перестала существовать (пара разделена или собрана).
+  optional string replaced_id = 2;
+  string time_zone = 3;
+}
+
+// ---------------------------------------------------------------- Категории
+
+// К каким записям применима категория.
+enum CategoryKind {
+  CATEGORY_KIND_UNSPECIFIED = 0;
+  CATEGORY_KIND_EXPENSE = 1;
+  CATEGORY_KIND_INCOME = 2;
+}
+
+// Категория справочника.
+message Category {
+  // Стабильный ключ справочника («cat_supermarkets»).
+  string id = 1;
+  string name = 2;
+  // Ключ иконки из набора приложения.
+  string icon = 3;
+  // Системная категория («Между своими счетами», «Возврат»).
+  bool is_system = 4;
+  // К каким записям применима.
+  repeated CategoryKind kinds = 5;
+  // Можно выбрать при ручной смене категории.
+  bool assignable = 6;
+  // Пояснение к категории («не в тратах»); только у системных.
+  optional string note = 7;
+}
+
+// Пустой запрос.
+message ListCategoriesRequest {}
+
+// Справочник категорий.
+message ListCategoriesResponse {
+  // В порядке отображения.
+  repeated Category categories = 1;
+}
+
+// ---------------------------------------------------------------- Регулярные платежи
+
+// Исключить платёж из регулярных.
+message DismissRegularPaymentRequest {
+  // ID платежа (RegularPayment.id), стабилен между пересчётами.
+  string regular_payment_id = 1;
+}
+
+// Пустой ответ: отметка поставлена, пересчёт запущен.
+message DismissRegularPaymentResponse {}
+
+// Вернуть платёж в регулярные.
+message RestoreRegularPaymentRequest {
+  string regular_payment_id = 1;
+}
+
+// Пустой ответ: отметка снята, пересчёт запущен.
+message RestoreRegularPaymentResponse {}

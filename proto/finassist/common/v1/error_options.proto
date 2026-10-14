@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package finassist.common.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/common/v1;commonv1";
+
+// Машиночитаемое описание кода ошибки из реестра ErrorReason. Из этих опций генерируются
+// конструкторы ошибок для сервисов и таблица перевода в REST для bank-bff, поэтому код без
+// полного описания не собирается, а вручную написанного маппинга нет. Проверяет
+// scripts/check_error_registry.py (подробности — grpc-api.md, раздел 5).
+extend google.protobuf.EnumValueOptions {
+  // Описание кода; обязательно у каждого значения ErrorReason, кроме UNSPECIFIED.
+  ErrorSpec error_spec = 50100;
+}
+
+// Как код ошибки передаётся между сервисами и как bank-bff отдаёт его в REST.
+message ErrorSpec {
+  // Код статуса gRPC, с которым сервис возвращает ошибку. По нему работают ретраи и метрики.
+  GrpcCode grpc_code = 1;
+  // HTTP-статус, с которым bank-bff отдаёт ошибку клиенту.
+  int32 http_status = 2;
+  // Ключи google.rpc.ErrorInfo.metadata, которые сервис обязан заполнить (snake_case).
+  // Конструктор ошибки принимает их как обязательные параметры; другие ключи передать нельзя.
+  repeated string metadata_keys = 3;
+  // Какие стандартные детали google.rpc прикладываются к статусу.
+  repeated ErrorDetail details = 4;
+}
+
+// Коды статуса gRPC, которые допускает реестр. Номера совпадают с кодами gRPC
+// (google.golang.org/grpc/codes), поэтому значение приводится к codes.Code напрямую.
+// OK, CANCELLED, UNKNOWN, UNIMPLEMENTED, DATA_LOSS в реестре не используются.
+enum GrpcCode {
+  // Не задан — реестр с таким кодом не собирается.
+  GRPC_CODE_UNSPECIFIED = 0;
+  // Запрос невалиден независимо от состояния системы.
+  GRPC_CODE_INVALID_ARGUMENT = 3;
+  // Ответ не получен за отведённое время.
+  GRPC_CODE_DEADLINE_EXCEEDED = 4;
+  // Ресурса нет или он принадлежит другому пользователю.
+  GRPC_CODE_NOT_FOUND = 5;
+  // Ресурс уже существует (в реестре — конфликт ключа идемпотентности).
+  GRPC_CODE_ALREADY_EXISTS = 6;
+  // Действие запрещено при известной личности вызывающего.
+  GRPC_CODE_PERMISSION_DENIED = 7;
+  // Исчерпан лимит или квота.
+  GRPC_CODE_RESOURCE_EXHAUSTED = 8;
+  // Запрос корректен, но состояние системы не позволяет его выполнить.
+  GRPC_CODE_FAILED_PRECONDITION = 9;
+  // Конкурентный конфликт; запрос можно повторить.
+  GRPC_CODE_ABORTED = 10;
+  // Значение вне допустимого диапазона.
+  GRPC_CODE_OUT_OF_RANGE = 11;
+  // Внутренняя ошибка сервиса.
+  GRPC_CODE_INTERNAL = 13;
+  // Сервис временно недоступен; запрос можно повторить.
+  GRPC_CODE_UNAVAILABLE = 14;
+  // Личность вызывающего не установлена: нет токена, он невалиден или отозван.
+  GRPC_CODE_UNAUTHENTICATED = 16;
+}
+
+// Стандартные детали google.rpc, которые прикладываются к статусу вместе с ErrorInfo.
+enum ErrorDetail {
+  ERROR_DETAIL_UNSPECIFIED = 0;
+  // google.rpc.BadRequest — все нарушения по полям; bank-bff переводит их в REST `details[]`.
+  ERROR_DETAIL_BAD_REQUEST = 1;
+  // google.rpc.RetryInfo — через сколько повторить; bank-bff переводит в заголовок Retry-After.
+  ERROR_DETAIL_RETRY_INFO = 2;
+}
