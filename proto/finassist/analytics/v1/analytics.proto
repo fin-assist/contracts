@@ -372,7 +372,8 @@ message ScreenState {
   google.protobuf.Timestamp data_to = 4;
   // Полных календарных месяцев с данными по всем загрузкам.
   int32 full_months = 5;
-  // Сколько строк выписок за выбранный период не удалось прочитать (см. ListUnreadLines).
+  // Сколько строк выписок за выбранный период не удалось прочитать и ещё не закрыто более поздней
+  // загрузкой (см. ListUnreadLines, FIN-79).
   int32 unread_lines_count = 6;
   // Когда посчитаны метрики.
   google.protobuf.Timestamp calculated_at = 7;
@@ -467,7 +468,7 @@ message PeriodSnapshot {
   finassist.common.v1.TimeRange range = 4;
   // Полнота данных в периоде.
   finassist.common.v1.DataBounds bounds = 5;
-  // Непрочитанных строк выписок за период.
+  // Незакрытых непрочитанных строк выписок за период (FIN-79).
   int32 unread_lines_count = 6;
   // Полный набор метрик периода: метрики, которых здесь нет, удаляются из хранилища.
   repeated MetricSnapshot metrics = 7;

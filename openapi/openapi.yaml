@@ -511,6 +511,8 @@ paths:
                   uploaded_at: '2026-09-25T21:50:00+03:00'
                   operation_count: 1086
                   unread_count: 0
+                  resolved_unread_count: 2
+                  resolved_by_uploaded_at: '2026-10-12T10:05:00+03:00'
                   first_operation_at: '2026-04-01T09:12:00+03:00'
                   last_operation_at: '2026-09-25T21:40:00+03:00'
                   source_name: Выписка Т-Банка
@@ -651,6 +653,9 @@ paths:
       description: |
         Шторка «Непрочитанные строки»: по загрузке (`upload_id`) или по периоду (`from` + `to`) — ровно одно из
         двух, иначе 400 `VALIDATION_ERROR`. Содержимого строк нет — оно не хранится.
+
+        Только незакрытые строки: строки, дочитанные более поздней загрузкой или заменённые её записью, не
+        возвращаются ни по загрузке, ни по периоду (api.md 3.6, «Закрытие строк»; FIN-79).
 
         «Сообщить нам» эндпоинта не имеет: клиент открывает `mailto:` на адрес поддержки с `user_id`,
         `upload_id`, `file_name`, номерами строк и `reason`.
@@ -2621,6 +2626,22 @@ components:
           description: Операций прочитано из файла (включая уже бывшие в других загрузках).
         unread_count:
           type: integer
+          description: |
+            Непрочитанных строк, которые ещё не закрыты. Строки, закрытые более поздней загрузкой (дочитанные или заменённые
+            её записью), сюда не входят (api.md 3.6, «Закрытие строк»; FIN-79).
+        resolved_unread_count:
+          type: integer
+          minimum: 0
+          description: |
+            Строк этой загрузки, дочитанных более поздними загрузками; нет или 0 — таких нет. Строки, заменённые
+            записью более поздней загрузки (снова не прочитались), не входят.
+        resolved_by_uploaded_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: |
+            Когда загружена самая поздняя из загрузок, дочитавших строки («Строки дочитаны в загрузке от 12 октября»).
+            Есть, только если `resolved_unread_count` > 0.
         first_operation_at:
           type: string
           format: date-time
@@ -2639,7 +2660,7 @@ components:
       properties:
         lines:
           type: array
-          description: Непрочитанные строки по порядку в файле.
+          description: Незакрытые непрочитанные строки по порядку в файле.
           items:
             $ref: '#/components/schemas/UnreadLine'
     UnreadLine:
@@ -3515,7 +3536,7 @@ components:
           type: integer
         unread_lines_count:
           type: integer
-          description: Непрочитанных строк за выбранный период (`listUnreadLines` с `from`/`to` периода).
+          description: Незакрытых непрочитанных строк за выбранный период (`listUnreadLines` с `from`/`to` периода; FIN-79).
         calculated_at:
           type: string
           format: date-time
