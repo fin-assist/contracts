@@ -48,8 +48,9 @@ message BlockLock {
 // Действие из фиксированного словаря.
 message BlockAction {
   // open_operations, open_assistant, dismiss_regular_payment. Поля своего type обязательны: без них клиент
-  // считает действие неизвестным (api.md «Действия»); пустая строка и filter без условий —
-  // как отсутствие (transfer_mode и selection_name не в счёт, kind UNSPECIFIED — нет условия).
+  // считает действие неизвестным (api.md «Действия»); пустая строка и filter без условий — как отсутствие.
+  // Условие filter — хотя бы одно из: from, to, q, category_id, kind (кроме KIND_FILTER_UNSPECIFIED),
+  // amount_from_minor, amount_to_minor, selection; transfer_mode и selection_name не в счёт.
   string type = 1;
   // Обязательно для open_operations.
   optional OperationsFilter filter = 2;
