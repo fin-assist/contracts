@@ -3374,12 +3374,39 @@ components:
       - locked
       - none
       - unavailable
+    TileLock:
+      type: object
+      nullable: true
+      description: |
+        Блокировка плитки внутри `data` блока `tile_group` — те же поля, что у `BlockLock`, но `text` может быть пустым
+        или отсутствовать: `bank-bff` не заглядывает в `data` и текст не подставляет, «Пока недоступно» показывает
+        клиент (grpc-api.md 5.3).
+      required:
+      - reason
+      properties:
+        reason:
+          type: string
+          description: Как `BlockLock.reason`.
+        text:
+          type: string
+          nullable: true
+        required:
+          type: integer
+          nullable: true
+        available:
+          type: integer
+          nullable: true
+        available_from:
+          type: string
+          format: date-time
+          nullable: true
     BlockLock:
       type: object
       nullable: true
       description: Только при `locked`.
       required:
       - reason
+      - text
       properties:
         reason:
           type: string
@@ -3392,10 +3419,9 @@ components:
         text:
           type: string
           description: |
-            Готовый текст блокировки («Нужно 3 полных месяца, есть 1»); клиент показывает как есть. У блокировки
-            блока есть всегда: если сервис его не заполнил, `bank-bff` ставит общий «Пока недоступно» (grpc-api.md 5.3).
-            У вложенной блокировки (плитка `tile_group`) может быть пустым или отсутствовать — тогда тот же
-            «Пока недоступно» показывает клиент.
+            Готовый текст блокировки («Нужно 3 полных месяца, есть 1»); клиент показывает как есть. Есть всегда:
+            если сервис его не заполнил, `bank-bff` ставит общий «Пока недоступно» (grpc-api.md 5.3). Блокировка
+            плитки внутри `data` — `TileLock`, там текст может отсутствовать.
         required:
           type: integer
           nullable: true
@@ -3609,7 +3635,7 @@ components:
         status:
           $ref: '#/components/schemas/BlockStatus'
         lock:
-          $ref: '#/components/schemas/BlockLock'
+          $ref: '#/components/schemas/TileLock'
         value:
           type: number
           format: double
