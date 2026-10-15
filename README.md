@@ -54,3 +54,7 @@ cd proto && buf lint
 # Error registry check
 cd proto && buf build -o /tmp/fd.binpb && python3 scripts/check_error_registry.py /tmp/fd.binpb ../docs/api.md
 ```
+
+## Ревью Claude
+
+`.github/workflows/claude.yml` (FIN-97): упоминание `@claude` в комментарии или ревью PR запускает Claude Code — ревью с замечаниями inline на изменённых строках. Нужны GitHub-приложение Claude на репозитории и секрет `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`). Workflow по комментариям запускается из `main`, поэтому правки в нём действуют после мержа.
