@@ -178,7 +178,7 @@ user ──(системный, outbox)──► usersettings.SetUserTimezone н
 
 | Правило | Серьёзность |
 |---|---|
-| `field="MetricLock.text"`, любое ненулевое значение | срочное (как `finassist_untranslated_code_total`) |
+| `field=~"(Block\\.lock\|MetricLock)\\.text"`, любое ненулевое значение | срочное (как `finassist_untranslated_code_total`) |
 | `field=~".*\\.currency"`, любое ненулевое значение | до выкладки `bank-bff` без подстановки — предупреждение владельцу бэкенда (у необновлённых версий срабатывания ожидаемы); после неё — срочное |
 
 ## 6. Идемпотентность
