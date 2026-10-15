@@ -1036,6 +1036,7 @@ GET /v1/analytics?period=month&date=2026-09&transfer_mode=with
 {
   "has_data": true,
   "params": {"period": "month", "date": "2026-09", "transfer_mode": "with"},
+  "currency": "RUB",
   "period": {
     "range": {"from": "2026-09-01T00:00:00+03:00", "to": "2026-10-01T00:00:00+03:00"},
     "is_current": true,
@@ -1055,11 +1056,11 @@ GET /v1/analytics?period=month&date=2026-09&transfer_mode=with
       "filters": {"from": "2026-09-01T00:00:00+03:00", "to": "2026-10-01T00:00:00+03:00", "kind": "expense", "transfer_mode": "with"},
       "comparison": {
         "status": "locked",
-        "lock": {"reason": "need_full_months", "required": 1, "available": 0}
+        "lock": {"reason": "need_full_months", "required": 1, "available": 0, "text": "Нужно 1 полный месяц, есть 0"}
       },
       "typical": {
         "status": "locked",
-        "lock": {"reason": "need_full_months", "required": 2, "available": 0}
+        "lock": {"reason": "need_full_months", "required": 2, "available": 0, "text": "Нужно 2 полных месяца, есть 0"}
       }
     },
     "income": {
@@ -1077,7 +1078,7 @@ GET /v1/analytics?period=month&date=2026-09&transfer_mode=with
       "value": 337280,
       "comparison": {
         "status": "locked",
-        "lock": {"reason": "need_full_months", "required": 1, "available": 0}
+        "lock": {"reason": "need_full_months", "required": 1, "available": 0, "text": "Нужно 1 полный месяц, есть 0"}
       }
     },
     "forecast": {
@@ -1116,16 +1117,16 @@ GET /v1/analytics?period=month&date=2026-09&transfer_mode=with
   },
   "monthly_chart": {
     "status": "locked",
-    "lock": {"reason": "need_months_with_data", "required": 2, "available": 1}
+    "lock": {"reason": "need_months_with_data", "required": 2, "available": 1, "text": "Нужно 2 месяца с данными, есть 1"}
   },
   "insights": {
     "regular_payments": {
       "status": "locked",
-      "lock": {"reason": "need_full_months", "required": 2, "available": 0}
+      "lock": {"reason": "need_full_months", "required": 2, "available": 0, "text": "Нужно 2 полных месяца, есть 0"}
     },
     "notable_spending": {
       "status": "locked",
-      "lock": {"reason": "need_full_months", "required": 3, "available": 0}
+      "lock": {"reason": "need_full_months", "required": 3, "available": 0, "text": "Нужно 3 полных месяца, есть 0"}
     },
     "bank_fees": {
       "status": "ready",
@@ -1135,7 +1136,7 @@ GET /v1/analytics?period=month&date=2026-09&transfer_mode=with
     },
     "small_frequent": {
       "status": "locked",
-      "lock": {"reason": "need_full_months", "required": 1, "available": 0}
+      "lock": {"reason": "need_full_months", "required": 1, "available": 0, "text": "Нужно 1 полный месяц, есть 0"}
     }
   },
   "state": {
@@ -1159,16 +1160,17 @@ GET /v1/analytics?period=month&date=2026-09&transfer_mode=with
 |---|---|---|
 | `status` | code | `ready` — посчитано; `tentative` — посчитано предварительно, данных мало («похоже на регулярный платёж, 2 месяца из 2»); `locked` — пока не считаем, причина в `lock`; `none` — проверили, ничего не нашли («Регулярных платежей не нашли за апрель — сентябрь»). Неизвестное значение — как `locked` без подробностей |
 | `lock` | object? | Только при `locked`: почему закрыто |
-| `lock.reason` | code | `need_full_months` — мало полных месяцев; `need_months_with_data` — мало месяцев с данными; `too_early_in_month` — рано для прогноза; `stale_data` — выписка устарела. Неизвестное значение — блокировка без подробностей |
+| `lock.reason` | code | `need_full_months` — мало полных месяцев; `need_months_with_data` — мало месяцев с данными; `too_early_in_month` — рано для прогноза; `stale_data` — выписка устарела. Неизвестное значение — показывается `lock.text` |
 | `lock.required` | int? | Для `need_*`: сколько месяцев нужно |
 | `lock.available` | int? | Для `need_*`: сколько есть |
 | `lock.available_from` | datetime? | Для `too_early_in_month`: с какого момента откроется |
+| `lock.text` | string | Готовый текст блокировки («Нужно 3 полных месяца, есть 1»), есть всегда. Для известных `reason` клиент собирает текст сам (ниже), для неизвестного — показывает этот |
 | `basis` | object? | При `ready`, `tentative`, `none` у метрик, которые опираются на историю: за какой период посчитано («обычно около 3 100 ₽ — апрель — август») |
 | `basis.range` | range | Границы базы |
 | `basis.full_months` | int | Сколько полных месяцев в базе |
 | `filters` | operations_filter? | Переход в Поиск: выборка в Поиске совпадает с цифрой (суммы и число операций) |
 
-Текст блокировки собирает клиент: «Нужно 3 полных месяца, есть 1»; при нуле полных месяцев — «Нужно 3 полных месяца — пока есть только 1–25 сентября» по `state.data_from` / `state.data_to`.
+Текст блокировки известной причины собирает клиент (для неизвестной — `lock.text`): «Нужно 3 полных месяца, есть 1»; при нуле полных месяцев — «Нужно 3 полных месяца — пока есть только 1–25 сентября» по `state.data_from` / `state.data_to`.
 
 #### Параметры, период и навигация
 
@@ -1176,6 +1178,7 @@ GET /v1/analytics?period=month&date=2026-09&transfer_mode=with
 |---|---|---|
 | `has_data` | bool | Есть ли у пользователя хоть одна операция. `false` — пустое состояние «Аналитики пока нет», остальных полей в ответе нет |
 | `params` | analytics_params | Фактические параметры ответа: `period`, точный `date`, `transfer_mode` |
+| `currency` | string | Валюта всех сумм ответа (ISO 4217); есть всегда при `has_data: true`, сейчас — `RUB` |
 | `period.range` | range | Границы календарного периода |
 | `period.is_current` | bool | Период ещё идёт (текущий месяц, квартал, год) |
 | `period.coverage` | code | `complete` — данные за весь период; `partial` — частично, подпись по `data_from`/`data_to` и `gaps` («1–25 сентября», «июль без 11–19-го», «апрель — сентябрь 2026 · год неполный»); `no_data` — за период данных нет (возможно при явном `date`). Неизвестное значение — как `partial` |
@@ -1390,7 +1393,7 @@ Accept: text/event-stream
 
 ```
 event: snapshot
-data: {"status": "generating", "blocks": [{"type": "text", "text": "За апрель — сентябрь на Самокат ушло **7 200 ₽**"}], "chips": [], "source": null}
+data: {"status": "generating", "blocks": [{"type": "text", "text": "За апрель — сентябрь на Самокат ушло **7 200 ₽**"}], "chips": [], "source": null, "currency": "RUB"}
 
 event: chunk
 data: {"index": 0, "text": ", все операции — с июля. В среднем 2 400 ₽ в месяц, больше всего в июле: 2 880 ₽."}
@@ -1531,12 +1534,14 @@ GET /v1/assistant/messages?limit=20&before_id=01a10852-b340-77c5-9ba3-bb9964a666
     {
       "id": "01a10852-b340-77c5-9ba3-bb9964a666d0",
       "role": "user",
+      "currency": "RUB",
       "text": "Сколько я трачу на Самокат?",
       "created_at": "2026-10-04T22:10:00+03:00"
     },
     {
       "id": "01a10852-b341-7a10-8f3e-6c2d9b4a1e07",
       "role": "assistant",
+      "currency": "RUB",
       "status": "complete",
       "charged": true,
       "blocks": [
@@ -1587,7 +1592,7 @@ GET /v1/assistant/messages?limit=20&before_id=01a10852-b340-77c5-9ba3-bb9964a666
 | `messages[].error_code` | code? | Только у `failed`: `MODEL_ERROR` («Повторить» доступно) или `CANNOT_ANSWER`; неизвестный — как `MODEL_ERROR` |
 | `messages[].charged` | bool? | Только у `complete`: списана ли попытка |
 | `messages[].blocks` | array<block>? | Только у `assistant`: блоки ответа — текст, графики, строки, — те же, что в потоке 7.2. У `generating` — на момент запроса, у `failed` — пустой массив |
-| `messages[].currency` | string? | Только у `assistant`: валюта сумм в `blocks` (ISO 4217); сейчас всегда `RUB` |
+| `messages[].currency` | string | Валюта сумм в `blocks` (ISO 4217), есть у каждого сообщения (у вопроса — та же валюта профиля); сейчас всегда `RUB` |
 | `messages[].chips` | array? | Только у `complete`: чипы, как в событии `chip` (7.2) |
 | `messages[].source` | object? | Только у `complete`: как в событии `source` (7.2); `changed_since` пересчитывается на момент запроса |
 | `messages[].created_at` | datetime | Время сообщения |

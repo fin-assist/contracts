@@ -1108,12 +1108,14 @@ paths:
                         reason: need_full_months
                         required: 1
                         available: 0
+                        text: Нужно 1 полный месяц, есть 0
                     typical:
                       status: locked
                       lock:
                         reason: need_full_months
                         required: 2
                         available: 0
+                        text: Нужно 2 полных месяца, есть 0
                   income:
                     status: ready
                     value: 15690000
@@ -1135,6 +1137,7 @@ paths:
                         reason: need_full_months
                         required: 1
                         available: 0
+                        text: Нужно 1 полный месяц, есть 0
                   forecast:
                     status: ready
                     value: 10120000
@@ -1175,6 +1178,7 @@ paths:
                     reason: need_months_with_data
                     required: 2
                     available: 1
+                    text: Нужно 2 месяца с данными, есть 1
                 insights:
                   regular_payments:
                     status: locked
@@ -1182,12 +1186,14 @@ paths:
                       reason: need_full_months
                       required: 2
                       available: 0
+                      text: Нужно 2 полных месяца, есть 0
                   notable_spending:
                     status: locked
                     lock:
                       reason: need_full_months
                       required: 3
                       available: 0
+                      text: Нужно 3 полных месяца, есть 0
                   bank_fees:
                     status: ready
                     value: 124000
@@ -1204,6 +1210,7 @@ paths:
                       reason: need_full_months
                       required: 1
                       available: 0
+                      text: Нужно 1 полный месяц, есть 0
                 state:
                   stale: false
                   last_operation_at: '2026-09-25T21:40:00+03:00'
@@ -1352,10 +1359,12 @@ paths:
                 messages:
                 - id: 01a10852-b340-77c5-9ba3-bb9964a666d0
                   role: user
+                  currency: RUB
                   text: Сколько я трачу на Самокат?
                   created_at: '2026-10-04T22:10:00+03:00'
                 - id: 01a10852-b341-7a10-8f3e-6c2d9b4a1e07
                   role: assistant
+                  currency: RUB
                   status: complete
                   charged: true
                   blocks:
@@ -1477,7 +1486,7 @@ paths:
                   в `x-sse-events`.'
               example: |
                 event: snapshot
-                data: {"status": "generating", "blocks": [{"type": "text", "text": "За апрель — сентябрь на Самокат ушло **7 200 ₽**"}], "chips": [], "source": null}
+                data: {"status": "generating", "blocks": [{"type": "text", "text": "За апрель — сентябрь на Самокат ушло **7 200 ₽**"}], "chips": [], "source": null, "currency": "RUB"}
 
                 event: chunk
                 data: {"index": 0, "text": ", все операции — с июля."}
@@ -2987,6 +2996,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/AnalyticsParams'
           description: Фактические параметры ответа — `period`, точный `date`, `transfer_mode`.
+        currency:
+          type: string
+          description: 'Валюта всех сумм ответа (ISO 4217); есть всегда при `has_data: true`, сейчас — `RUB`.'
         period:
           $ref: '#/components/schemas/AnalyticsPeriodInfo'
         navigation:
@@ -3092,13 +3104,17 @@ components:
       type: object
       required:
       - reason
+      - text
       properties:
+        text:
+          type: string
+          description: Готовый текст блокировки («Нужно 3 полных месяца, есть 1»). Известные `reason` клиент форматирует сам, для неизвестного показывает этот текст.
         reason:
           type: string
           description: |
             `need_full_months` — мало полных месяцев; `need_months_with_data` — мало месяцев с данными;
             `too_early_in_month` — рано для прогноза; `stale_data` — выписка устарела.
-            Неизвестное значение — блокировка без подробностей.
+            Неизвестное значение — показывается `text`.
           x-extensible-enum:
           - need_full_months
           - need_months_with_data
@@ -3610,12 +3626,12 @@ components:
       required:
       - id
       - role
+      - currency
       - created_at
       properties:
         currency:
           type: string
-          nullable: true
-          description: Только у `assistant` — валюта сумм в `blocks` (ISO 4217); сейчас всегда `RUB`.
+          description: Валюта сумм в `blocks` (ISO 4217), есть у каждого сообщения (у вопроса — та же валюта профиля); сейчас всегда `RUB`.
         id:
           type: string
         role:

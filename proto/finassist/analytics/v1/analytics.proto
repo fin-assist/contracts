@@ -79,6 +79,8 @@ message MetricLock {
   optional int32 available = 3;
   // Для TOO_EARLY_IN_MONTH: момент, с которого метрика откроется (10-е число в поясе профиля).
   optional google.protobuf.Timestamp available_from = 4;
+  // Готовый текст блокировки: клиент показывает его для неизвестной reason (FIN-82).
+  string text = 5;
 }
 
 // База расчёта метрики, опирающейся на историю: за какой отрезок и по скольким полным месяцам
@@ -402,6 +404,8 @@ message GetAnalyticsResponse {
   ScreenState state = 10;
   // Пояс профиля (IANA), в котором bank-bff форматирует все моменты ответа.
   string time_zone = 11;
+  // Валюта всех сумм ответа (ISO 4217), при has_data всегда; сейчас RUB (FIN-82).
+  string currency = 13;
 }
 
 // Запрос списка периодов с данными.
