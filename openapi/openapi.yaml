@@ -3738,6 +3738,8 @@ components:
           nullable: true
         action:
           $ref: '#/components/schemas/BlockAction'
+        button:
+          $ref: '#/components/schemas/BlockAction'
     Chip:
       type: object
       description: Чип-переход под ответом (и событие `chip`). Неизвестный `screen` — чип не показывать.
