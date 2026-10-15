@@ -3249,6 +3249,10 @@ components:
       - role
       - created_at
       properties:
+        currency:
+          type: string
+          nullable: true
+          description: Только у `assistant` — валюта сумм в `blocks` (ISO 4217); сейчас всегда `RUB`.
         id:
           type: string
         role:
@@ -3768,6 +3772,7 @@ components:
       - calculated_at
       - transfer_mode
       - changed_since
+      - changed_since_text
       properties:
         calculated_at:
           type: string
@@ -3802,7 +3807,11 @@ components:
       - status
       - blocks
       - chips
+      - currency
       properties:
+        currency:
+          type: string
+          description: Валюта всех сумм в блоках ответа (ISO 4217); сейчас всегда `RUB`.
         status:
           type: string
           description: Как `Message.status`. Неизвестное — как `failed`.
