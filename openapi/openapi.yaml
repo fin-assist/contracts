@@ -3380,7 +3380,6 @@ components:
       description: Только при `locked`.
       required:
       - reason
-      - text
       properties:
         reason:
           type: string
@@ -3392,7 +3391,11 @@ components:
           - stale_data
         text:
           type: string
-          description: Готовый текст блокировки («Нужно 3 полных месяца, есть 1»); клиент показывает как есть.
+          description: |
+            Готовый текст блокировки («Нужно 3 полных месяца, есть 1»); клиент показывает как есть. У блокировки
+            блока есть всегда: если сервис его не заполнил, `bank-bff` ставит общий «Пока недоступно» (grpc-api.md 5.3).
+            У вложенной блокировки (плитка `tile_group`) может быть пустым или отсутствовать — тогда тот же
+            «Пока недоступно» показывает клиент.
         required:
           type: integer
           nullable: true
@@ -3410,7 +3413,9 @@ components:
         Действие из фиксированного словаря: `open_operations` — Поиск с `filter`; `open_assistant` — чат помощника;
         `dismiss_regular_payment` — кнопка `label` у строки платежа (6.3 с `payment_id`). Неизвестное — элемент не
         нажимается. Поля своего `type` обязательны (`filter`; `payment_id` и `label`): без них действие — как
-        неизвестное, кнопка не показывается. Пустая строка и `filter` без условий (`transfer_mode` и `selection_name` не в счёт) — как отсутствие.
+        неизвестное, кнопка не показывается. Пустая строка и `filter` без условий — как отсутствие. Условие — хотя бы одно из
+        `from`/`to`, `q`, `category_id`, `kind`, `amount_from`/`amount_to`, `selection`; `transfer_mode` и `selection_name`
+        не в счёт. Значения «все» у `kind` нет: без направления поля нет.
       required:
       - type
       properties:
