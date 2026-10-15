@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package finassist.analytics.v1;
 
+import "finassist/common/v1/blocks.proto";
 import "finassist/common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -296,6 +297,11 @@ message GetAnalyticsRequest {
   // Чью аналитику собирать. Только для системного вызова (assistant); при токене пользователя
   // поле пусто — user_id берётся из токена.
   optional string user_id = 4;
+  // Примитивы, которые умеет рисовать клиент (REST `supports`); пусто — версия 1 всех типов каталога.
+  // Сервис отдаёт только совместимые блоки (FIN-4, FIN-5).
+  repeated finassist.common.v1.BlockSupport supports = 5;
+  // Варианты экспериментов над составом экрана (REST `exp`): ключ → вариант. Неизвестные игнорируются (FIN-9).
+  map<string, string> experiments = 6;
 }
 
 // Выбранный период и полнота данных в нём.
@@ -389,19 +395,25 @@ message GetAnalyticsResponse {
   // Соседние периоды с данными.
   Navigation navigation = 4;
   // Сводные показатели: расходы, доходы, разница, в день, прогноз.
-  Tiles tiles = 5;
+  Tiles tiles = 5 [deprecated = true];
   // Расходы по категориям (details.categories); NONE — расходов за период нет.
-  Metric expense_categories = 6;
+  Metric expense_categories = 6 [deprecated = true];
   // Доходы по категориям (details.categories); доля — от tiles.income.
-  Metric income_categories = 7;
+  Metric income_categories = 7 [deprecated = true];
   // Динамика по месяцам (details.monthly_chart); порог — 2 месяца с данными.
-  Metric monthly_chart = 8;
+  Metric monthly_chart = 8 [deprecated = true];
   // Наблюдения по месяцу. Приходит только для месяца; для квартала и года отсутствует.
-  optional Insights insights = 9;
+  optional Insights insights = 9 [deprecated = true];
   // Состояние данных.
   ScreenState state = 10;
   // Пояс профиля (IANA), в котором bank-bff форматирует все моменты ответа.
   string time_zone = 11;
+  // Блоки экрана по порядку (FIN-4): состав, порядок и тексты собирает этот сервис (FIN-5). Поля tiles,
+  // expense_categories, income_categories, monthly_chart, insights устарели: bank-bff их не читает; удалить
+  // (номера 5–9 — в reserved), когда analytics перестанет их заполнять — условие и задача FIN-4.
+  repeated finassist.common.v1.Block blocks = 12;
+  // Валюта всех сумм блоков (ISO 4217); сейчас всегда RUB.
+  string currency = 13;
 }
 
 // Запрос списка периодов с данными.

@@ -1029,9 +1029,8 @@ paths:
       operationId: getAnalytics
       summary: Аналитика за период
       description: |
-        Все пороги, блокировки, базы расчёта и устаревание сервер вычисляет сам и передаёт в ответе. Клиент не
-        знает пороги и не считает полноту месяцев — только отображает состояние. При `has_data: false`
-        остальных полей нет.
+        Экран — упорядоченный список блоков общего каталога (FIN-4). Пороги, блокировки, базы расчёта, устаревание и
+        тексты сервер вычисляет сам; клиент только рисует блоки. При `has_data: false` остальных полей нет.
       parameters:
       - name: period
         in: query
@@ -1067,6 +1066,22 @@ paths:
           - with
           - without
           default: with
+      - name: supports
+        in: query
+        description: |
+          Примитивы, которые умеет рисовать клиент: `type@v` через запятую (`tile_group@1,chart@1`). Сервер отдаёт
+          только совместимые блоки (при возможности — в поддерживаемой версии или более простым примитивом). Без
+          параметра — версия 1 всех типов каталога.
+        schema:
+          type: string
+          example: heading@1,text@1,rows@1,chart@1,tile_group@1,ranked_list@1,insight_card@1
+      - name: exp
+        in: query
+        description: |
+          Варианты экспериментов над составом экрана из RuStore Remote Config: `key:variant` через запятую
+          (`analytics_order:b`). Неизвестный ключ или вариант сервер игнорирует (FIN-9).
+        schema:
+          type: string
       - $ref: '#/components/parameters/XRequestId'
       responses:
         '200':
@@ -1076,143 +1091,184 @@ paths:
               schema:
                 $ref: '#/components/schemas/Analytics'
               example:
-                has_data: true
-                params:
-                  period: month
-                  date: '2026-09'
-                  transfer_mode: with
-                period:
-                  range:
-                    from: '2026-09-01T00:00:00+03:00'
-                    to: '2026-10-01T00:00:00+03:00'
-                  is_current: true
-                  coverage: partial
-                  data_from: '2026-09-01T08:15:00+03:00'
-                  data_to: '2026-09-25T21:40:00+03:00'
-                  gaps: []
-                navigation:
-                  previous: null
-                  next: null
-                tiles:
-                  expense:
-                    status: ready
-                    value: 8432000
-                    filters:
-                      from: '2026-09-01T00:00:00+03:00'
-                      to: '2026-10-01T00:00:00+03:00'
-                      kind: expense
-                      transfer_mode: with
-                    comparison:
-                      status: locked
-                      lock:
-                        reason: need_full_months
-                        required: 1
-                        available: 0
-                    typical:
-                      status: locked
-                      lock:
-                        reason: need_full_months
-                        required: 2
-                        available: 0
-                  income:
-                    status: ready
-                    value: 15690000
-                    filters:
-                      from: '2026-09-01T00:00:00+03:00'
-                      to: '2026-10-01T00:00:00+03:00'
-                      kind: income
-                      transfer_mode: with
-                  balance:
-                    status: ready
-                    value: 7258000
-                    share_of_income: 0.46
-                  daily_expense:
-                    status: ready
-                    value: 337280
-                    comparison:
-                      status: locked
-                      lock:
-                        reason: need_full_months
-                        required: 1
-                        available: 0
-                  forecast:
-                    status: ready
-                    value: 10120000
-                expense_categories:
-                  status: ready
-                  items:
-                  - category_id: cat_supermarkets
-                    category_name: Супермаркеты
-                    category_icon: cart
-                    amount: 3240000
-                    share: 0.38
-                    operation_count: 28
-                    filters:
-                      from: '2026-09-01T00:00:00+03:00'
-                      to: '2026-10-01T00:00:00+03:00'
-                      category_id: cat_supermarkets
-                      kind: expense
-                      transfer_mode: with
-                income_categories:
-                  status: ready
-                  items:
-                  - category_id: cat_finance
-                    category_name: Финансы
-                    category_icon: landmark
-                    note: зарплата и проценты
-                    amount: 14214000
-                    share: 0.91
-                    operation_count: 3
-                    filters:
-                      from: '2026-09-01T00:00:00+03:00'
-                      to: '2026-10-01T00:00:00+03:00'
-                      category_id: cat_finance
-                      kind: income
-                      transfer_mode: with
-                monthly_chart:
-                  status: locked
-                  lock:
-                    reason: need_months_with_data
-                    required: 2
-                    available: 1
-                insights:
-                  regular_payments:
-                    status: locked
-                    lock:
-                      reason: need_full_months
-                      required: 2
-                      available: 0
-                  notable_spending:
-                    status: locked
-                    lock:
-                      reason: need_full_months
-                      required: 3
-                      available: 0
-                  bank_fees:
-                    status: ready
-                    value: 124000
-                    kinds_name: обслуживание, переводы, снятие наличных
-                    filters:
-                      from: '2026-09-01T00:00:00+03:00'
-                      to: '2026-10-01T00:00:00+03:00'
-                      selection: s_bank_fees
-                      selection_name: Комиссии и проценты банку
-                      transfer_mode: with
-                  small_frequent:
-                    status: locked
-                    lock:
-                      reason: need_full_months
-                      required: 1
-                      available: 0
-                state:
-                  stale: false
-                  last_operation_at: '2026-09-25T21:40:00+03:00'
-                  data_from: '2026-09-01T08:15:00+03:00'
-                  data_to: '2026-09-25T21:40:00+03:00'
-                  full_months: 0
-                  unread_lines_count: 0
-                  calculated_at: '2026-09-25T21:52:00+03:00'
-                  recalculating: false
+                {
+                  "has_data": true,
+                  "params": {
+                    "period": "month",
+                    "date": "2026-09",
+                    "transfer_mode": "with"
+                  },
+                  "period": {
+                    "range": {
+                      "from": "2026-09-01T00:00:00+03:00",
+                      "to": "2026-10-01T00:00:00+03:00"
+                    },
+                    "is_current": true,
+                    "coverage": "partial",
+                    "data_from": "2026-09-01T08:15:00+03:00",
+                    "data_to": "2026-09-25T21:40:00+03:00",
+                    "gaps": []
+                  },
+                  "navigation": {
+                    "previous": null,
+                    "next": null
+                  },
+                  "currency": "RUB",
+                  "blocks": [
+                    {
+                      "id": "tiles",
+                      "type": "tile_group",
+                      "v": 1,
+                      "alt_text": "Доходы минус расходы 72 580 ₽, прогноз расходов около 101 200 ₽, расходы в день 3 372,80 ₽, доходы 156 900 ₽",
+                      "data": {
+                        "tiles": [
+                          {
+                            "id": "balance",
+                            "title": "Доходы минус расходы",
+                            "value": 7258000,
+                            "value_kind": "amount",
+                            "caption": "46% дохода · по выписке"
+                          },
+                          {
+                            "id": "forecast",
+                            "title": "Прогноз расходов на сентябрь",
+                            "value": 10120000,
+                            "value_kind": "amount",
+                            "approx": true,
+                            "caption": "к 30 сентября"
+                          },
+                          {
+                            "id": "daily_expense",
+                            "title": "Расходы в день",
+                            "status": "locked",
+                            "lock": {
+                              "reason": "need_full_months",
+                              "text": "Нужно 1 полный месяц — пока есть только 1–25 сентября",
+                              "required": 1,
+                              "available": 0
+                            }
+                          },
+                          {
+                            "id": "income",
+                            "title": "Доходы",
+                            "value": 15690000,
+                            "value_kind": "amount",
+                            "show_plus": true,
+                            "action": {
+                              "type": "open_operations",
+                              "filter": {
+                                "from": "2026-09-01T00:00:00+03:00",
+                                "to": "2026-10-01T00:00:00+03:00",
+                                "kind": "income",
+                                "transfer_mode": "with"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": "monthly_chart",
+                      "type": "chart",
+                      "v": 1,
+                      "status": "locked",
+                      "title": "Расходы по месяцам",
+                      "alt_text": "График по месяцам пока закрыт",
+                      "lock": {
+                        "reason": "need_months_with_data",
+                        "text": "Нужно 2 месяца с данными, есть 1",
+                        "required": 2,
+                        "available": 1
+                      }
+                    },
+                    {
+                      "id": "expense_categories",
+                      "type": "ranked_list",
+                      "v": 1,
+                      "title": "Расходы по категориям",
+                      "alt_text": "Расходы 84 320 ₽: Супермаркеты 32 400 ₽, 38% …",
+                      "data": {
+                        "total": {
+                          "label": "Всего · 1–25 сентября",
+                          "value": 8432000,
+                          "value_kind": "amount",
+                          "action": {
+                            "type": "open_operations",
+                            "filter": {
+                              "from": "2026-09-01T00:00:00+03:00",
+                              "to": "2026-10-01T00:00:00+03:00",
+                              "kind": "expense",
+                              "transfer_mode": "with"
+                            }
+                          }
+                        },
+                        "items": [
+                          {
+                            "id": "cat_supermarkets",
+                            "icon": "cart",
+                            "title": "Супермаркеты",
+                            "note": "28 операций",
+                            "value": 3240000,
+                            "value_kind": "amount",
+                            "share": 0.38,
+                            "action": {
+                              "type": "open_operations",
+                              "filter": {
+                                "from": "2026-09-01T00:00:00+03:00",
+                                "to": "2026-10-01T00:00:00+03:00",
+                                "category_id": "cat_supermarkets",
+                                "kind": "expense",
+                                "transfer_mode": "with"
+                              }
+                            }
+                          }
+                        ],
+                        "visible_count": 4,
+                        "more_label": "Все категории"
+                      }
+                    },
+                    {
+                      "type": "heading",
+                      "v": 1,
+                      "data": {
+                        "text": "Регулярные платежи и заметные траты"
+                      }
+                    },
+                    {
+                      "id": "bank_fees",
+                      "type": "insight_card",
+                      "v": 1,
+                      "alt_text": "Комиссии и проценты банку за сентябрь: 1 240 ₽",
+                      "data": {
+                        "icon": "percent",
+                        "title": "Комиссии и проценты банку",
+                        "value": 124000,
+                        "value_kind": "amount",
+                        "description": "за сентябрь · обслуживание, переводы, снятие наличных"
+                      },
+                      "action": {
+                        "type": "open_operations",
+                        "filter": {
+                          "from": "2026-09-01T00:00:00+03:00",
+                          "to": "2026-10-01T00:00:00+03:00",
+                          "selection": "s_bank_fees",
+                          "selection_name": "Комиссии и проценты банку",
+                          "transfer_mode": "with"
+                        }
+                      }
+                    }
+                  ],
+                  "state": {
+                    "stale": false,
+                    "last_operation_at": "2026-09-25T21:40:00+03:00",
+                    "data_from": "2026-09-01T08:15:00+03:00",
+                    "data_to": "2026-09-25T21:40:00+03:00",
+                    "full_months": 0,
+                    "unread_lines_count": 0,
+                    "calculated_at": "2026-09-25T21:52:00+03:00",
+                    "recalculating": false
+                  }
+                }
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1360,14 +1416,20 @@ paths:
                   charged: true
                   blocks:
                   - type: text
-                    text: За апрель — сентябрь на Самокат ушло **7 200 ₽**, все операции — с июля.
+                    v: 1
+                    data:
+                      text: За апрель — сентябрь на Самокат ушло **7 200 ₽**, все операции — с июля.
                   - type: rows
+                    v: 1
                     alt_text: 'Операций: 9. Средний чек: 800 ₽'
-                    rows:
-                    - label: Операций
-                      count: 9
-                    - label: Средний чек
-                      amount: 80000
+                    data:
+                      rows:
+                      - label: Операций
+                        value: 9
+                        value_kind: count
+                      - label: Средний чек
+                        value: 80000
+                        value_kind: amount
                   chips:
                   - label: Самокат · 9 операций
                     screen: operations
@@ -2991,21 +3053,16 @@ components:
           $ref: '#/components/schemas/AnalyticsPeriodInfo'
         navigation:
           $ref: '#/components/schemas/AnalyticsNavigation'
-        tiles:
-          $ref: '#/components/schemas/AnalyticsTiles'
-        expense_categories:
-          $ref: '#/components/schemas/CategoryBreakdown'
-        income_categories:
-          allOf:
-          - $ref: '#/components/schemas/CategoryBreakdown'
-          description: Доходы по категориям; доля — от `tiles.income.value`.
-        monthly_chart:
-          $ref: '#/components/schemas/MonthlyChart'
-        insights:
-          allOf:
-          - $ref: '#/components/schemas/Insights'
-          description: Раздел «Регулярные платежи и заметные траты». Сейчас приходит только для `period=month`; нет поля —
-            раздел скрыт.
+        currency:
+          type: string
+          description: Валюта всех сумм блоков (ISO 4217); сейчас всегда `RUB`.
+        blocks:
+          type: array
+          description: |
+            Блоки экрана по порядку (FIN-4). Состав и порядок решает сервер; клиент рисует их подряд, пропуская
+            неизвестные, несовместимые, выключенные флагом `analytics.block.<id>` и те, что не удалось разобрать.
+          items:
+            $ref: '#/components/schemas/Block'
         state:
           $ref: '#/components/schemas/AnalyticsState'
     AnalyticsPeriodInfo:
@@ -3050,426 +3107,6 @@ components:
           description: '`date` следующего периода с данными; `null` — стрелка недоступна.'
           pattern: ^\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$
           nullable: true
-    MetricStatus:
-      type: string
-      description: |
-        `ready` — посчитано; `tentative` — предварительно, данных мало; `locked` — пока не считаем, причина в `lock`;
-        `none` — проверили, ничего не нашли. Неизвестное значение — как `locked` без подробностей.
-      x-extensible-enum:
-      - ready
-      - tentative
-      - locked
-      - none
-    Metric:
-      type: object
-      description: |
-        Состояние метрики или карточки. Текст блокировки собирает клиент («Нужно 3 полных месяца, есть 1»;
-        при нуле полных месяцев — по `state.data_from` / `state.data_to`).
-      required:
-      - status
-      properties:
-        status:
-          $ref: '#/components/schemas/MetricStatus'
-        lock:
-          nullable: true
-          allOf:
-          - $ref: '#/components/schemas/MetricLock'
-          description: Только при `locked`.
-          type: object
-        basis:
-          nullable: true
-          allOf:
-          - $ref: '#/components/schemas/MetricBasis'
-          description: При `ready`, `tentative`, `none` у метрик, опирающихся на историю — за какой период посчитано.
-          type: object
-        filters:
-          nullable: true
-          allOf:
-          - $ref: '#/components/schemas/OperationsFilter'
-          description: Переход в Поиск; выборка совпадает с цифрой.
-          type: object
-    MetricLock:
-      type: object
-      required:
-      - reason
-      properties:
-        reason:
-          type: string
-          description: |
-            `need_full_months` — мало полных месяцев; `need_months_with_data` — мало месяцев с данными;
-            `too_early_in_month` — рано для прогноза; `stale_data` — выписка устарела.
-            Неизвестное значение — блокировка без подробностей.
-          x-extensible-enum:
-          - need_full_months
-          - need_months_with_data
-          - too_early_in_month
-          - stale_data
-        required:
-          type: integer
-          nullable: true
-          description: Для `need_*` — сколько месяцев нужно.
-        available:
-          type: integer
-          nullable: true
-          description: Для `need_*` — сколько есть.
-        available_from:
-          type: string
-          format: date-time
-          nullable: true
-          description: Для `too_early_in_month` — с какого момента откроется.
-    MetricBasis:
-      type: object
-      required:
-      - range
-      - full_months
-      properties:
-        range:
-          $ref: '#/components/schemas/Range'
-        full_months:
-          type: integer
-          description: Полных месяцев в базе.
-    ValueMetric:
-      allOf:
-      - $ref: '#/components/schemas/Metric'
-      - type: object
-        properties:
-          value:
-            type: integer
-            format: int64
-            nullable: true
-            description: Сумма в копейках со знаком; есть при `ready` / `tentative`.
-    ComparisonMetric:
-      description: Значение прошлого периода того же типа; процент клиент считает сам.
-      allOf:
-      - $ref: '#/components/schemas/ValueMetric'
-      - type: object
-        properties:
-          range:
-            nullable: true
-            allOf:
-            - $ref: '#/components/schemas/Range'
-            description: За что взята сумма («август к 25-му»).
-            type: object
-    ExpenseTile:
-      description: Расходы за период. Открыто при любых данных.
-      allOf:
-      - $ref: '#/components/schemas/ValueMetric'
-      - type: object
-        properties:
-          comparison:
-            nullable: true
-            allOf:
-            - $ref: '#/components/schemas/ComparisonMetric'
-            description: Прошлый период того же типа «к тому же дню». Порог — 1 полный прошлый период.
-            type: object
-          typical:
-            nullable: true
-            allOf:
-            - $ref: '#/components/schemas/ValueMetric'
-            description: Среднее по полным прошлым периодам того же типа, база в `basis`. Порог — 2 полных периода.
-            type: object
-    BalanceTile:
-      description: «Доходы минус расходы».
-      allOf:
-      - $ref: '#/components/schemas/ValueMetric'
-      - type: object
-        properties:
-          share_of_income:
-            type: number
-            format: double
-            nullable: true
-            description: Доля от дохода (0.46 — «46% дохода»); `null` при нулевом доходе — «Доходов за период нет».
-    DailyExpenseTile:
-      description: Средние расходы в день по дням с данными.
-      allOf:
-      - $ref: '#/components/schemas/ValueMetric'
-      - type: object
-        properties:
-          comparison:
-            nullable: true
-            allOf:
-            - $ref: '#/components/schemas/ComparisonMetric'
-            description: Расходы в день за весь прошлый период («в августе — 2 890 ₽»).
-            type: object
-    AnalyticsTiles:
-      type: object
-      required:
-      - expense
-      - income
-      - balance
-      - daily_expense
-      properties:
-        expense:
-          $ref: '#/components/schemas/ExpenseTile'
-        income:
-          allOf:
-          - $ref: '#/components/schemas/ValueMetric'
-          description: Доходы за период.
-        balance:
-          $ref: '#/components/schemas/BalanceTile'
-        daily_expense:
-          $ref: '#/components/schemas/DailyExpenseTile'
-        forecast:
-          nullable: true
-          allOf:
-          - $ref: '#/components/schemas/ValueMetric'
-          description: |
-            Прогноз расходов на конец периода; только для текущего периода (`is_current`), для прошлых поля нет.
-            Для всех типов периода — только при свежей выписке: `stale_data`, если с последней операции прошло
-            больше двух недель (как `state.stale`); при `stale_data` клиент показывает вместо прогноза факт
-            расходов за период. Месяц — по темпу с 10-го числа (`too_early_in_month`). Квартал и год — по полным
-            месяцам всей истории: квартал — от 3, год — от 12 (`need_full_months`); значение — факт с начала
-            периода плюс средний день последних 3 / 12 полных месяцев на оставшиеся дни периода (если данных в
-            периоде ещё нет — на все его дни), база в `basis`.
-            Порядок проверок: `is_current` → `stale_data` → порог периода (`too_early_in_month` / `need_full_months`).
-          type: object
-    CategoryBreakdown:
-      type: object
-      required:
-      - status
-      - items
-      properties:
-        status:
-          type: string
-          description: '`ready`; `none` — за период нет операций этого направления. Неизвестное — как `none`.'
-          x-extensible-enum:
-          - ready
-          - none
-        items:
-          type: array
-          description: Все категории по убыванию суммы; клиент показывает первые и «Все категории».
-          items:
-            $ref: '#/components/schemas/CategoryAmount'
-    CategoryAmount:
-      type: object
-      required:
-      - category_name
-      - category_icon
-      - amount
-      - operation_count
-      - filters
-      properties:
-        category_id:
-          type: string
-          nullable: true
-          description: '`null` — «Без категории» (возвраты, для которых не нашлось расходной категории).'
-        category_name:
-          type: string
-        category_icon:
-          type: string
-        note:
-          type: string
-          nullable: true
-          description: Подпись строки («зарплата и проценты»).
-        amount:
-          type: integer
-          format: int64
-          description: Сумма со знаком — возвраты уменьшают категорию в месяце возврата.
-        share:
-          type: number
-          format: double
-          nullable: true
-          description: Доля от итога; `null`, если итог ≤ 0 или сумма категории < 0. Длину полосы клиент считает от крупнейшей
-            положительной суммы.
-        operation_count:
-          type: integer
-          description: Операций в выборке `filters`, включая возвраты.
-        filters:
-          $ref: '#/components/schemas/OperationsFilter'
-    MonthlyChart:
-      description: |
-        Точки для графиков «Расходы по месяцам» и «Доходы минус расходы по месяцам». Порог — 2 месяца с данными.
-        `status` — `ready` или `locked`.
-      allOf:
-      - $ref: '#/components/schemas/Metric'
-      - type: object
-        properties:
-          points:
-            type: array
-            nullable: true
-            description: 'Старые первыми: `month` — 6 месяцев, заканчивая выбранным; `quarter` — 3 месяца; `year` — 12 месяцев.'
-            items:
-              $ref: '#/components/schemas/MonthlyPoint'
-    MonthlyPoint:
-      type: object
-      required:
-      - month
-      - range
-      - coverage
-      - gaps
-      properties:
-        month:
-          $ref: '#/components/schemas/Month'
-        range:
-          $ref: '#/components/schemas/Range'
-        expense:
-          type: integer
-          format: int64
-          nullable: true
-          description: Расходы со знаком; нет — за месяц нет данных (пустой столбец, не ноль).
-        income:
-          type: integer
-          format: int64
-          nullable: true
-        coverage:
-          $ref: '#/components/schemas/Coverage'
-        data_from:
-          type: string
-          format: date-time
-          nullable: true
-        data_to:
-          type: string
-          format: date-time
-          nullable: true
-        gaps:
-          type: array
-          items:
-            $ref: '#/components/schemas/Range'
-    Insights:
-      type: object
-      required:
-      - regular_payments
-      - notable_spending
-      - bank_fees
-      - small_frequent
-      properties:
-        regular_payments:
-          $ref: '#/components/schemas/RegularPaymentsCard'
-        notable_spending:
-          $ref: '#/components/schemas/NotableSpendingCard'
-        bank_fees:
-          $ref: '#/components/schemas/BankFeesCard'
-        small_frequent:
-          $ref: '#/components/schemas/SmallFrequentCard'
-    RegularPaymentsCard:
-      description: «Подписки и регулярные платежи». 2 полных месяца — `tentative`, 3 и больше — `ready`; база в `basis`.
-      allOf:
-      - $ref: '#/components/schemas/ValueMetric'
-      - type: object
-        properties:
-          count:
-            type: integer
-            nullable: true
-            description: Списаний в месяц.
-          items:
-            type: array
-            nullable: true
-            description: Все платежи по убыванию суммы; клиент показывает первые и «Ещё N».
-            items:
-              $ref: '#/components/schemas/RegularPayment'
-    RegularPayment:
-      type: object
-      required:
-      - id
-      - title
-      - amount
-      - monthly_amount
-      - schedule_name
-      - category_id
-      - filters
-      properties:
-        id:
-          type: string
-          description: ID платежа для «Не подписка»; стабилен между пересчётами.
-        title:
-          type: string
-        amount:
-          type: integer
-          format: int64
-          description: Сумма одного платежа.
-        monthly_amount:
-          type: integer
-          format: int64
-          description: В пересчёте на месяц.
-        schedule_name:
-          type: string
-          description: Когда списывается, для показа («1-го числа»).
-        category_id:
-          type: string
-        filters:
-          $ref: '#/components/schemas/OperationsFilter'
-    NotableSpendingCard:
-      description: «Заметные траты» — категории, где расходы заметно выше обычного. Порог — 3 полных месяца.
-      allOf:
-      - $ref: '#/components/schemas/Metric'
-      - type: object
-        properties:
-          items:
-            type: array
-            nullable: true
-            items:
-              $ref: '#/components/schemas/NotableSpendingItem'
-    NotableSpendingItem:
-      type: object
-      required:
-      - category_id
-      - category_name
-      - category_icon
-      - amount
-      - typical_amount
-      - filters
-      properties:
-        category_id:
-          type: string
-        category_name:
-          type: string
-        category_icon:
-          type: string
-        amount:
-          type: integer
-          format: int64
-          description: За период.
-        typical_amount:
-          type: integer
-          format: int64
-          description: Обычно за такой период по базе. Кратность клиент считает сам.
-        filters:
-          $ref: '#/components/schemas/OperationsFilter'
-    BankFeesCard:
-      description: «Комиссии и проценты банку» за период. Открыто при любых данных; `none` — комиссий нет.
-      allOf:
-      - $ref: '#/components/schemas/ValueMetric'
-      - type: object
-        properties:
-          kinds_name:
-            type: string
-            nullable: true
-            description: Из чего сложилась, для показа.
-    SmallFrequentCard:
-      description: «Мелкие частые траты». Порог — 1 полный месяц. `value` — итого в месяц по всем группам.
-      allOf:
-      - $ref: '#/components/schemas/ValueMetric'
-      - type: object
-        properties:
-          items:
-            type: array
-            nullable: true
-            items:
-              $ref: '#/components/schemas/SmallFrequentGroup'
-    SmallFrequentGroup:
-      type: object
-      required:
-      - title
-      - count
-      - average_amount
-      - monthly_amount
-      - yearly_amount
-      - filters
-      properties:
-        title:
-          type: string
-          description: «Кофе и перекусы».
-        count:
-          type: integer
-          description: Раз в месяц.
-        average_amount:
-          $ref: '#/components/schemas/Money'
-        monthly_amount:
-          $ref: '#/components/schemas/Money'
-        yearly_amount:
-          $ref: '#/components/schemas/Money'
-        filters:
-          $ref: '#/components/schemas/OperationsFilter'
     AnalyticsState:
       type: object
       required:
@@ -3669,64 +3306,228 @@ components:
     Block:
       type: object
       description: |
-        Блок ответа помощника. Плоский объект: набор полей зависит от `type`.
-        - `text` — `text` (подмножество Markdown: абзацы, `**жирный**`, список `- `).
-        - `chart` — `kind`, `title`, `value_kind`, `points`, `highlight_index`, `alt_text`.
-        - `rows` — `rows`, `alt_text`.
-
-        Неизвестный `type` клиент показывает как текст из `alt_text`. Цифры в `chart` и `rows` сервер берёт из
-        результатов функций, а не из текста модели.
+        Блок общего каталога (api.md «Блоки», FIN-4): экран «Аналитика» (6.1) и ответ помощника (7.2). Оболочка общая,
+        содержимое — в `data` по схеме примитива `type` версии `v`: `heading` — `HeadingData`, `text` — `TextData`,
+        `rows` — `RowsData`, `chart` — `ChartData`, `tile_group` — `TileGroupData`, `ranked_list` — `RankedListData`,
+        `insight_card` — `InsightCardData`. Неизвестный `type` или `v` клиент не рисует: показывает `alt_text`, если он
+        есть, иначе пропускает блок. Блок, который не удалось разобрать, пропускается, остальной экран показывается.
+      required:
+      - type
+      - v
+      properties:
+        id:
+          type: string
+          nullable: true
+          description: Только в 6.1 — стабильный id блока; выключатель Remote Config `analytics.block.<id>`, события показа.
+        type:
+          type: string
+          x-extensible-enum:
+          - heading
+          - text
+          - rows
+          - chart
+          - tile_group
+          - ranked_list
+          - insight_card
+        v:
+          type: integer
+          minimum: 1
+          description: Версия схемы `data` для этого типа.
+        status:
+          $ref: '#/components/schemas/BlockStatus'
+        lock:
+          $ref: '#/components/schemas/BlockLock'
+        title:
+          type: string
+          nullable: true
+        alt_text:
+          type: string
+          nullable: true
+          description: Текстовая версия для TalkBack и для клиента, который тип не знает. Есть у всех, кроме `text` и `heading`.
+        empty_text:
+          type: string
+          nullable: true
+          description: Текст при `none` и `unavailable`.
+        data:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Содержимое примитива (схемы `*Data`); есть при `ready` и `tentative`, у `tile_group` — всегда.
+        action:
+          $ref: '#/components/schemas/BlockAction'
+    BlockStatus:
+      type: string
+      nullable: true
+      description: |
+        `ready` (нет поля — тоже) — посчитано; `tentative` — предварительно, данных мало; `locked` — пока не считаем,
+        причина в `lock`; `none` — проверили, ничего нет; `unavailable` — не удалось посчитать, остальной экран
+        показывается. Неизвестное — как `locked`.
+      x-extensible-enum:
+      - ready
+      - tentative
+      - locked
+      - none
+      - unavailable
+    BlockLock:
+      type: object
+      nullable: true
+      description: Только при `locked`.
+      required:
+      - reason
+      - text
+      properties:
+        reason:
+          type: string
+          description: Для статистики и иконки. Неизвестное — блокировка без подробностей.
+          x-extensible-enum:
+          - need_full_months
+          - need_months_with_data
+          - too_early_in_month
+          - stale_data
+        text:
+          type: string
+          description: Готовый текст блокировки («Нужно 3 полных месяца, есть 1»); клиент показывает как есть.
+        required:
+          type: integer
+          nullable: true
+        available:
+          type: integer
+          nullable: true
+        available_from:
+          type: string
+          format: date-time
+          nullable: true
+    BlockAction:
+      type: object
+      nullable: true
+      description: |
+        Действие из фиксированного словаря: `open_operations` — Поиск с `filter`; `open_assistant` — чат помощника;
+        `dismiss_regular_payment` — кнопка `label` у строки платежа (6.3 с `payment_id`). Неизвестное — элемент не
+        нажимается.
       required:
       - type
       properties:
         type:
           type: string
           x-extensible-enum:
-          - text
-          - chart
-          - rows
-        alt_text:
+          - open_operations
+          - open_assistant
+          - dismiss_regular_payment
+        filter:
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/OperationsFilter'
+          type: object
+        payment_id:
           type: string
           nullable: true
-          description: Текстовая версия для TalkBack и для клиента, который тип не знает. Есть у всех блоков, кроме `text`.
+        label:
+          type: string
+          nullable: true
+    ValueKind:
+      type: string
+      description: |
+        Что за число в паре `value` + `value_kind`: `amount` — сумма в минимальных единицах валюты ответа, со знаком;
+        `percent` — доля 0–1; `count` — количество. Неизвестное — значение не показывается.
+      x-extensible-enum:
+      - amount
+      - percent
+      - count
+    HeadingData:
+      type: object
+      description: '`heading` v1 — заголовок раздела.'
+      required:
+      - text
+      properties:
+        text:
+          type: string
+    TextData:
+      type: object
+      description: '`text` v1 — текст в подмножестве Markdown (абзацы, `**жирный**`, список `- `).'
+      required:
+      - text
+      properties:
+        text:
+          type: string
+    RowsData:
+      type: object
+      description: '`rows` v1 — строки «подпись — значение». Строку без значения и текста клиент пропускает.'
+      required:
+      - rows
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlockRow'
+    BlockRow:
+      type: object
+      required:
+      - label
+      properties:
+        label:
+          type: string
+        sublabel:
+          type: string
+          nullable: true
+        value:
+          type: number
+          format: double
+          nullable: true
+        value_kind:
+          $ref: '#/components/schemas/ValueKind'
         text:
           type: string
           nullable: true
-          description: '`text`: текст блока.'
+        action:
+          $ref: '#/components/schemas/BlockAction'
+    ChartData:
+      type: object
+      description: '`chart` v1 — столбцы по периодам, с итогом и строками под графиком.'
+      required:
+      - kind
+      - value_kind
+      - points
+      properties:
         kind:
           type: string
-          nullable: true
-          description: '`chart`: вид графика, `bar` — столбцы по периодам. Неизвестный — показать `alt_text`.'
+          description: '`bar` — столбцы. Неизвестный — показать `alt_text`.'
           x-extensible-enum:
           - bar
-        title:
-          type: string
-          nullable: true
-          description: '`chart`: подпись графика.'
         value_kind:
-          type: string
-          nullable: true
-          description: '`chart`: `amount` — копейки со знаком; `percent` — доля 0–1. Неизвестное — показать `alt_text`.'
-          x-extensible-enum:
-          - amount
-          - percent
+          $ref: '#/components/schemas/ValueKind'
         points:
           type: array
-          nullable: true
-          description: '`chart`: точки по порядку, старые первыми.'
+          description: Точки, старые первыми; может быть пустым (только итог).
           items:
             $ref: '#/components/schemas/ChartPoint'
         highlight_index:
           type: integer
           nullable: true
           minimum: 0
-          description: '`chart`: какую точку выделить.'
-        rows:
+        show_values:
+          type: boolean
+          nullable: true
+        summary:
+          $ref: '#/components/schemas/BlockValue'
+        caption:
+          type: string
+          nullable: true
+        notes:
           type: array
           nullable: true
-          description: '`rows`: строки «подпись — значение».'
           items:
-            $ref: '#/components/schemas/BlockRow'
+            type: object
+            required:
+            - text
+            properties:
+              text:
+                type: string
+              tone:
+                type: string
+                description: '`primary` или `muted`; неизвестное — `muted`.'
+                x-extensible-enum:
+                - primary
+                - muted
     ChartPoint:
       type: object
       required:
@@ -3752,33 +3553,173 @@ components:
           type: string
           format: date-time
           nullable: true
-    BlockRow:
+        note:
+          type: string
+          nullable: true
+          description: Подпись неполного столбца («по 25-е»).
+    BlockValue:
       type: object
-      description: Ровно одно из `amount`, `count`, `percent`, `text`; строку без известного вида значения клиент пропускает.
+      nullable: true
       required:
-      - label
+      - value
+      - value_kind
       properties:
         label:
+          type: string
+          nullable: true
+        value:
+          type: number
+          format: double
+        value_kind:
+          $ref: '#/components/schemas/ValueKind'
+        action:
+          $ref: '#/components/schemas/BlockAction'
+    TileGroupData:
+      type: object
+      description: '`tile_group` v1 — плитки по две в ряд, по порядку.'
+      required:
+      - tiles
+      properties:
+        tiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+    Tile:
+      type: object
+      required:
+      - id
+      - title
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        status:
+          $ref: '#/components/schemas/BlockStatus'
+        lock:
+          $ref: '#/components/schemas/BlockLock'
+        value:
+          type: number
+          format: double
+          nullable: true
+        value_kind:
+          $ref: '#/components/schemas/ValueKind'
+        approx:
+          type: boolean
+          nullable: true
+        show_plus:
+          type: boolean
+          nullable: true
+        caption:
+          type: string
+          nullable: true
+        action:
+          $ref: '#/components/schemas/BlockAction'
+    RankedListData:
+      type: object
+      description: '`ranked_list` v1 — список по убыванию с полосами.'
+      required:
+      - items
+      properties:
+        total:
+          $ref: '#/components/schemas/BlockValue'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RankedItem'
+        visible_count:
+          type: integer
+          nullable: true
+          minimum: 1
+        more_label:
+          type: string
+          nullable: true
+        empty_text:
+          type: string
+          nullable: true
+    RankedItem:
+      type: object
+      required:
+      - icon
+      - title
+      - value
+      - value_kind
+      properties:
+        id:
+          type: string
+          nullable: true
+        icon:
+          type: string
+        title:
+          type: string
+        note:
+          type: string
+          nullable: true
+        value:
+          type: number
+          format: double
+        value_kind:
+          $ref: '#/components/schemas/ValueKind'
+        share:
+          type: number
+          format: double
+          nullable: true
+        action:
+          $ref: '#/components/schemas/BlockAction'
+    InsightCardData:
+      type: object
+      description: '`insight_card` v1 — карточка-наблюдение.'
+      required:
+      - icon
+      - title
+      properties:
+        icon:
+          type: string
+        title:
+          type: string
+        badge:
+          type: string
+          nullable: true
+        value:
+          type: number
+          format: double
+          nullable: true
+        value_kind:
+          $ref: '#/components/schemas/ValueKind'
+        approx:
+          type: boolean
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        items:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/InsightItem'
+        items_more:
+          $ref: '#/components/schemas/BlockValue'
+    InsightItem:
+      type: object
+      required:
+      - title
+      properties:
+        title:
           type: string
         sublabel:
           type: string
           nullable: true
-        amount:
-          type: integer
-          format: int64
-          nullable: true
-          description: Копейки со знаком.
-        count:
-          type: integer
-          nullable: true
-        percent:
+        value:
           type: number
           format: double
           nullable: true
-          description: Доля 0–1.
-        text:
-          type: string
+        value_kind:
+          $ref: '#/components/schemas/ValueKind'
+        muted:
+          type: boolean
           nullable: true
+        action:
+          $ref: '#/components/schemas/BlockAction'
     Chip:
       type: object
       description: Чип-переход под ответом (и событие `chip`). Неизвестный `screen` — чип не показывать.

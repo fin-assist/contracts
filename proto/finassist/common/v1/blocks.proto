@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package finassist.common.v1;
+
+import "finassist/common/v1/common.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/fin-assist/backend/gen/go/finassist/common/v1;commonv1";
+
+// Блок общего каталога (api.md «Блоки», FIN-4): экран «Аналитика» и ответ помощника. bank-bff переводит его в
+// REST как есть: поля — один к одному, data — JSON-объект. Коды (type, status, lock.reason, action.type) —
+// строки, а не enum: каталог растёт без изменения proto, неизвестное значение обрабатывает клиент.
+message Block {
+  // Только на экране «Аналитика»: стабильный id блока (выключатель Remote Config analytics.block.<id>).
+  string id = 1;
+  // Примитив: heading, text, rows, chart, tile_group, ranked_list, insight_card.
+  string type = 2;
+  // Версия схемы data для этого типа, начиная с 1.
+  int32 v = 3;
+  // ready (пусто — тоже), tentative, locked, none, unavailable.
+  string status = 4;
+  // Только при status = locked.
+  optional BlockLock lock = 5;
+  optional string title = 6;
+  // Текстовая версия для TalkBack и клиента, который тип не знает.
+  optional string alt_text = 7;
+  // Текст при none и unavailable.
+  optional string empty_text = 8;
+  // Содержимое примитива по схеме type@v (api.md «Каталог примитивов»); суммы — в минимальных единицах валюты.
+  optional google.protobuf.Struct data = 9;
+  // Действие по нажатию на блок.
+  optional BlockAction action = 10;
+}
+
+// Почему блок закрыт.
+message BlockLock {
+  // need_full_months, need_months_with_data, too_early_in_month, stale_data.
+  string reason = 1;
+  // Готовый текст блокировки («Нужно 3 полных месяца, есть 1»).
+  string text = 2;
+  optional int32 required = 3;
+  optional int32 available = 4;
+  optional google.protobuf.Timestamp available_from = 5;
+}
+
+// Действие из фиксированного словаря.
+message BlockAction {
+  // open_operations, open_assistant, dismiss_regular_payment.
+  string type = 1;
+  // Для open_operations.
+  optional OperationsFilter filter = 2;
+  // Для dismiss_regular_payment.
+  optional string payment_id = 3;
+  // Подпись кнопки («Не подписка»).
+  optional string label = 4;
+}
+
+// Примитив, который умеет рисовать клиент: тип и наибольшая версия схемы (REST `supports=type@v`).
+message BlockSupport {
+  string type = 1;
+  int32 max_version = 2;
+}
