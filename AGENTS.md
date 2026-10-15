@@ -57,8 +57,9 @@ A breaking change fails `oasdiff` / `buf breaking`. In the alpha the owner may a
 
 The rules below are the ones the review checks (Code Review Rules); the full text is in `docs/api.md`.
 
-- Language: `docs/*.md` and descriptions in `openapi.yaml` are in Russian; field names, codes, proto identifiers,
-  comments in `.proto` / YAML and commit messages are in English.
+- Language: `docs/*.md`, descriptions in `openapi.yaml` and comments in `.proto` are in Russian (`.proto` comments in
+  domain terms, without UI elements — `docs/grpc-api.md`, «Время, деньги, перечисления»); field names, codes, proto
+  identifiers, comments in workflows and scripts, and commit messages are in English.
 - Change `docs/api.md`, `openapi.yaml` and, when a service is involved, `docs/grpc-api.md` and `proto/` in the same
   PR. An endpoint, field or code that exists in one of them and not in the other is a defect.
 - Every field in `docs/api.md` has a type in the notation («Нотация»), says when it is absent or `null` (`T?`), and
@@ -67,8 +68,9 @@ The rules below are the ones the review checks (Code Review Rules); the full tex
 - Extensibility (decision of 13.10.2026): grow by addition; open sets are `code` (`x-extensible-enum`), `enum` only
   for a set that cannot grow; texts for codes the client renders; `value_kind` for values, `currency` for amounts;
   lists of entities instead of a field per entity; no field name reused with another shape across block types;
-  `deprecated` only by «Удаление устаревшего». A breaking change needs a new API version (`/v2`) or, in the alpha,
-  the owner's `breaking-accepted`.
+  `deprecated` only by «Удаление устаревшего». A breaking change needs a new API version (`/v2`) or, in the alpha
+  and for REST only, the owner's `breaking-accepted`; `buf breaking` does not read labels, so a breaking `.proto`
+  change goes through `reserved` and a new field or method instead.
 - Errors: a new code goes into section 8 of `docs/api.md` and `ErrorReason` together, with HTTP status, `error_spec`
   and client behaviour; removed numbers and names go to `reserved`.
 - Idempotency: every new `POST` that creates a resource or has a side effect requires `Idempotency-Key`; say which
@@ -139,7 +141,8 @@ The API carries a user's bank operations, phone number, statement files and assi
 152-ФЗ) and spends paid resources (calls, LLM). A finding names what leaks or breaks and how a client, another user
 or a compromised service gets to it. Check the changed contract for:
 
-- Authorization and object access: every endpoint states its auth (`Authorization` or the `/v1/auth/*` exception);
+- Authorization and object access: every endpoint states its auth (`Authorization`, or one of the exceptions of «Аутентификация»: `/v1/auth/*`
+  except logout, `GET /v1/consents/personal_data` before sign-in; `assistant` there needs the token);
   the user comes from the token (`sub`), never from a path, query or body field of a user call; an object ID of
   another user gives `404`, not its data or a `403` that confirms it exists (IDOR / BOLA). System calls in gRPC take
   `user_id` explicitly and are allowed only to the callers in the table of `docs/grpc-api.md` («Идентичность сервиса»).
@@ -152,14 +155,17 @@ or a compromised service gets to it. Check the changed contract for:
 - Untrusted input: every request field has bounds — length, range, `pattern`, array size, file size and type
   (413 / 422); free text (`q`, assistant questions) has a maximum; pagination has a maximum page size; nothing in
   the contract lets a client pick a server-side path, URL, SQL fragment or prompt template.
-- Abuse and cost: endpoints that send a call or SMS, run the LLM or parse a file have a rate limit or quota
-  (`RATE_LIMITED`, `LIMIT_EXCEEDED`) enforced on the server, and require `Idempotency-Key` so a retry does not spend
-  twice.
+- Abuse and cost: a new endpoint that sends a call or SMS, runs the LLM or parses a file states its server-side rate
+  limit or quota (`RATE_LIMITED`, `LIMIT_EXCEEDED`) and requires `Idempotency-Key`, so a retry does not spend twice.
+  Existing endpoints without a stated limit (statement upload 3.2 today) are a known gap: a finding only when the
+  PR changes their cost or exposure, otherwise a separate issue.
 - Consent: data goes to the LLM assistant only after the assistant consent; an account is created only after the
   personal data consent; revoking a consent and deleting the account state what happens to stored data and in what
   time.
-- Trust boundaries in gRPC: what a service trusts only from `bank-bff` (`x-client-ip`, `x-client-version`) is never
-  taken from client headers; a new method gets its row in the caller table; `PERMISSION_DENIED` to a foreign caller
+- Trust boundaries in gRPC: each metadata key states where it comes from and how far it is trusted
+  (`docs/grpc-api.md`, «Metadata»). `x-client-ip` is computed by `bank-bff` from the TCP connection and never taken
+  from client headers; `x-client-version` is copied from a client header — spoofable, used for logs, metrics and
+  the minimum supported version, never for authorization; a new method gets its row in the caller table; `PERMISSION_DENIED` to a foreign caller
   carries no details.
 - Client-visible limits are informational: the contract never relies on the client to enforce a limit, a quota or a
   permission.
@@ -170,8 +176,8 @@ The decision of 13.10.2026 («Расширяемость» and «Нотация�
 `deprecated` is an exception. For each added or changed field, code, block or method check:
 
 - A new response field is optional, and an old client that ignores it still behaves correctly. A new required
-  request field, a removed or renamed field, a changed type or meaning is breaking: it needs `/v2` or, in the alpha,
-  the owner's `breaking-accepted`, and the PR says so.
+  request field, a removed or renamed field, a changed type or meaning is breaking: it needs `/v2` or, in the alpha
+  and for REST only, the owner's `breaking-accepted`, and the PR says so. In `.proto` it is not accepted (CI).
 - A set that can grow is a `code` (`x-extensible-enum` in OpenAPI, documented behaviour for an unknown value), not an
   `enum`. A closed `enum` in a response is a finding unless the set truly cannot grow.
 - A code the client turns into text comes with a server text (`*_name`, `text`) for unknown values; a value of

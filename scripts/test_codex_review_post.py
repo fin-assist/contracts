@@ -42,8 +42,17 @@ RESULT = json.dumps({
 
 
 class DiffLinesTest(unittest.TestCase):
-    def test_added_and_context_lines_of_every_hunk(self):
-        self.assertEqual(post.diff_lines(PATCH), {10, 11, 12, 13, 41, 42})
+    def test_added_lines_of_every_hunk(self):
+        self.assertEqual(post.diff_lines(PATCH), {11, 12, 42})
+
+    def test_context_lines_advance_numbers_but_are_not_targets(self):
+        lines = post.diff_lines(PATCH)
+        for context in (10, 13, 41):
+            self.assertNotIn(context, lines)
+
+    def test_finding_on_a_context_line_goes_to_the_body(self):
+        inline, outside = post.split_findings([post.Finding("a", 10, "ctx")], {"a": post.diff_lines(PATCH)})
+        self.assertEqual((inline, outside), ([], [post.Finding("a", 10, "ctx")]))
 
     def test_removed_lines_do_not_advance_new_file_numbers(self):
         self.assertNotIn(14, post.diff_lines(PATCH))

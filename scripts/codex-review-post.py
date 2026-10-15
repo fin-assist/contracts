@@ -2,8 +2,9 @@
 """Posts the result of the Codex review workflow (.github/workflows/codex-review.yml) as a PR review.
 
 Codex returns JSON matching the schema in the workflow: a Russian summary and findings with `path`, `line` and
-`body`. Findings on lines inside the PR diff become inline comments (review conversations that can be resolved);
-the rest go into the review body, so no finding is lost when Codex names a line outside the diff. Output that is
+`body`. Findings on lines the PR adds or changes become inline comments (review conversations that can be
+resolved); the rest — context lines of the diff included — go into the review body, so no finding is lost and none
+is pinned to a line the PR did not touch. Output that is
 not valid JSON is posted as a plain review body.
 
 Runs from the default branch checkout, never from the PR's code: it holds a token that can write to the PR.
@@ -43,7 +44,8 @@ class Finding:
 
 
 def diff_lines(patch: str | None) -> set[int]:
-    """Line numbers of the new file that a review comment can target: added and context lines of the hunks."""
+    """Line numbers of the new file the PR adds or changes ("+" lines). Context lines only advance the numbering:
+    GitHub accepts comments on them, but a finding must sit on a changed line (AGENTS.md, Code Review Rules)."""
     lines: set[int] = set()
     if not patch:
         return lines
@@ -55,8 +57,10 @@ def diff_lines(patch: str | None) -> set[int]:
             continue
         if current is None or raw.startswith("-") or raw.startswith("\\"):
             continue
-        if raw.startswith("+") or raw.startswith(" ") or raw == "":
+        if raw.startswith("+"):
             lines.add(current)
+            current += 1
+        elif raw.startswith(" ") or raw == "":
             current += 1
     return lines
 
