@@ -27,10 +27,13 @@ info:
 
     **Заголовки:** `X-Request-Id` (клиент генерирует на каждую попытку, сервер возвращает эхом во всех ответах);
     `Idempotency-Key` — на POST с побочным эффектом (у операции указан как обязательный параметр);
-    `Retry-After` — у 429 и 409 `REQUEST_IN_PROGRESS`.
+    `X-Client-Version` — версия клиента, обязательна на всех запросах (FIN-20): ниже минимальной для
+    платформы, нет заголовка или значение не разобрано — 400 `CLIENT_VERSION_UNSUPPORTED`;
+    `Retry-After` — у 429, 409 `REQUEST_IN_PROGRESS` и 503 `MAINTENANCE`.
 
     **Ошибки:** всегда один объект `error` (см. `ErrorResponse`). Порядок проверки:
-    401 → 429 → 400 → 409 → 404 → 403 → 413/422.
+    503 (`MAINTENANCE`) → 400 `CLIENT_VERSION_UNSUPPORTED` → 401 → 429 → 400 → 409 → 404 → 403 → 413/422.
+    503 и 400 `CLIENT_VERSION_UNSUPPORTED` возможны у любой операции.
 
     **SSE:** первым событием — текущее состояние целиком; после терминального события поток закрывается;
     heartbeat `: ping` каждые 15 с; ошибки до начала потока — обычный HTTP-ответ с JSON. Неизвестный тип
@@ -82,6 +85,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       requestBody:
         required: true
         content:
@@ -109,6 +113,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/auth/phone/events:
     get:
       tags:
@@ -126,6 +132,7 @@ paths:
       - verificationToken: []
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Поток событий
@@ -145,12 +152,16 @@ paths:
               $ref: '#/components/schemas/PhoneVerificationStatusEvent'
             error:
               $ref: '#/components/schemas/SseError'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/auth/register:
     post:
       tags:
@@ -165,6 +176,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       requestBody:
         required: true
         content:
@@ -201,6 +213,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/auth/token:
     post:
       tags:
@@ -214,6 +228,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       requestBody:
         required: true
         content:
@@ -240,6 +255,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/auth/logout:
     post:
       tags:
@@ -249,6 +266,7 @@ paths:
       description: Завершает сессию. Повтор возвращает `204`.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       requestBody:
         required: true
         content:
@@ -266,6 +284,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/consents/{type}:
     get:
       tags:
@@ -290,6 +310,7 @@ paths:
           - personal_data
           - assistant
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Документ
@@ -302,6 +323,8 @@ paths:
                 version: '2026-09-28'
                 title: Согласие на обработку персональных данных
                 url: https://example.ru/legal/pd-consent/2026-09-28
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -310,6 +333,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/profile:
     get:
       tags:
@@ -318,6 +343,7 @@ paths:
       summary: Профиль
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Профиль
@@ -335,12 +361,16 @@ paths:
                   granted: false
                   current_version: '2026-09-28'
                 created_at: '2026-10-04T20:00:00+03:00'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     patch:
       tags:
       - profile
@@ -351,6 +381,7 @@ paths:
         пока он идёт, `/v1/analytics` отдаёт `state.recalculating: true`.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       requestBody:
         required: true
         content:
@@ -374,6 +405,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
       tags:
       - profile
@@ -384,15 +417,20 @@ paths:
         данные во всех сервисах, включая файлы выписок. Повтор после успешного удаления — тоже `204`.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '204':
           description: Аккаунт удалён
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/profile/assistant-consent:
     put:
       tags:
@@ -402,6 +440,7 @@ paths:
       description: Только с экрана согласия после галочки. Повтор с той же версией ничего не меняет.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       requestBody:
         required: true
         content:
@@ -427,6 +466,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
       tags:
       - profile
@@ -435,15 +476,20 @@ paths:
       description: Переключатель в профиле, без диалога. Повтор — тоже `204`. История ответов остаётся.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '204':
           description: Согласие отозвано
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/statements/config:
     get:
       tags:
@@ -453,6 +499,7 @@ paths:
       description: Для экрана «Загрузка выписки».
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Конфигурация
@@ -473,12 +520,16 @@ paths:
                   first_operation_at: '2026-09-01T08:15:00+03:00'
                   last_operation_at: '2026-09-25T21:40:00+03:00'
                   operation_count: 181
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/statements:
     get:
       tags:
@@ -488,6 +539,7 @@ paths:
       description: Для «Истории загрузок» и строки «Выписка» в профиле.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Загрузки
@@ -516,12 +568,16 @@ paths:
                   first_operation_at: '2026-04-01T09:12:00+03:00'
                   last_operation_at: '2026-09-25T21:40:00+03:00'
                   source_name: Выписка Т-Банка
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     post:
       tags:
       - statements
@@ -535,6 +591,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       requestBody:
         required: true
         content:
@@ -576,6 +633,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/statements/{upload_id}:
     delete:
       tags:
@@ -590,9 +649,12 @@ paths:
       parameters:
       - $ref: '#/components/parameters/UploadId'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '204':
           description: Удалено
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -601,6 +663,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/statements/{upload_id}/progress:
     get:
       tags:
@@ -614,6 +678,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/UploadId'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Поток событий
@@ -636,6 +701,8 @@ paths:
               $ref: '#/components/schemas/ImportResult'
             error:
               $ref: '#/components/schemas/StreamError'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -644,6 +711,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/statements/unread-lines:
     get:
       tags:
@@ -678,6 +747,7 @@ paths:
           type: string
           format: date-time
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Строки
@@ -703,6 +773,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/operations:
     get:
       tags:
@@ -791,6 +863,7 @@ paths:
           type: string
           format: date-time
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Порция ленты или результаты поиска
@@ -886,6 +959,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/operations/{id}:
     get:
       tags:
@@ -896,6 +971,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/OperationId'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Операция
@@ -925,6 +1001,8 @@ paths:
                   spoken: текущий счёт, последние цифры 4821
                 status: posted
                 source_name: Выписка Т-Банка
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -933,6 +1011,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     patch:
       tags:
       - operations
@@ -952,6 +1032,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/OperationId'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       requestBody:
         required: true
         content:
@@ -979,6 +1060,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/categories:
     get:
       tags:
@@ -988,6 +1071,7 @@ paths:
       description: Для выбора категории, иконок и подписей. Клиент кэширует; при добавлении банков список расширяется.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Категории в порядке отображения
@@ -1021,12 +1105,16 @@ paths:
                   kinds:
                   - expense
                   assignable: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/analytics:
     get:
       tags:
@@ -1088,6 +1176,7 @@ paths:
         schema:
           type: string
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Аналитика
@@ -1282,6 +1371,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/analytics/periods:
     get:
       tags:
@@ -1303,6 +1394,7 @@ paths:
           - year
           default: month
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Периоды, новые первыми
@@ -1330,6 +1422,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/analytics/regular-payments/{id}/dismissal:
     parameters:
     - name: id
@@ -1349,9 +1443,12 @@ paths:
         Идемпотентно.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '204':
           description: Отмечено
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1360,6 +1457,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     delete:
       tags:
       - analytics
@@ -1368,9 +1467,12 @@ paths:
       description: В MVP в интерфейсе нет — для поддержки и будущей отмены. Идемпотентно.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '204':
           description: Отметка снята
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1379,6 +1481,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/assistant/messages:
     get:
       tags:
@@ -1402,6 +1506,7 @@ paths:
         schema:
           type: string
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Сообщения
@@ -1469,6 +1574,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
     post:
       tags:
       - assistant
@@ -1482,6 +1589,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       requestBody:
         required: true
         content:
@@ -1518,6 +1626,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/assistant/messages/{answer_id}/events:
     get:
       tags:
@@ -1535,6 +1645,7 @@ paths:
       parameters:
       - $ref: '#/components/parameters/AnswerId'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Поток событий
@@ -1568,6 +1679,8 @@ paths:
               $ref: '#/components/schemas/AnswerDoneEvent'
             error:
               $ref: '#/components/schemas/AnswerErrorEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1576,6 +1689,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/assistant/messages/{answer_id}/retry:
     post:
       tags:
@@ -1590,6 +1705,7 @@ paths:
       - $ref: '#/components/parameters/AnswerId'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '201':
           description: Новый ответ запущен
@@ -1616,6 +1732,8 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/assistant/limit:
     get:
       tags:
@@ -1624,6 +1742,7 @@ paths:
       summary: Остаток лимита
       parameters:
       - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
       responses:
         '200':
           description: Лимит
@@ -1635,12 +1754,16 @@ paths:
                 remaining: 4
                 daily_max: 5
                 resets_at: '2026-10-05T00:00:00+03:00'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 components:
   securitySchemes:
     bearerAuth:
@@ -1667,6 +1790,22 @@ components:
       schema:
         type: string
         format: uuid
+    XClientVersion:
+      name: X-Client-Version
+      in: header
+      required: true
+      description: |
+        Версия клиента `<платформа>/<версия>+<сборка>` (`android/0.2.5+41`): платформа — открытый код
+        (`android`, `ios`, `web`), версия — `MAJOR.MINOR.PATCH`, сборка — целое число. Обязателен на всех
+        запросах. Версия ниже минимальной для платформы, нет заголовка, значение не разобрано или платформа
+        неизвестна — 400 `CLIENT_VERSION_UNSUPPORTED`, а не `VALIDATION_ERROR`: сервер проверяет заголовок до
+        валидации запроса по схеме. Значение можно подделать: только совместимость, логи и метрики, не
+        авторизация и не лимиты.
+      schema:
+        type: string
+        maxLength: 64
+        pattern: ^[a-z][a-z0-9_]*/(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\+[0-9]+$
+      example: android/0.2.5+41
     XRequestId:
       name: X-Request-Id
       in: header
@@ -1708,7 +1847,7 @@ components:
         minimum: 0
   responses:
     BadRequest:
-      description: 'Невалидный запрос: `VALIDATION_ERROR`, все нарушения в `details`.'
+      description: 'Невалидный запрос: `VALIDATION_ERROR` (все нарушения в `details`) или `CLIENT_VERSION_UNSUPPORTED` (версия клиента ниже минимальной).'
       headers:
         X-Request-Id:
           $ref: '#/components/headers/XRequestId'
@@ -1836,6 +1975,22 @@ components:
             error:
               code: INTERNAL_ERROR
               message: Internal error
+    ServiceUnavailable:
+      description: '`MAINTENANCE` — техработы; `error.until` (может отсутствовать) и `Retry-After`.'
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: MAINTENANCE
+              message: Maintenance in progress
+              until: '2026-10-16T03:00:00+03:00'
   schemas:
     Range:
       type: object
@@ -1981,7 +2136,7 @@ components:
       type: object
       description: |
         Ровно одна ошибка на ответ. Клиент ветвится только по `code`; неизвестный код — общая ошибка по
-        HTTP-статусу. Дополнительные поля конкретного кода (`retry_at`, `resets_at`) описаны здесь; новые
+        HTTP-статусу. Дополнительные поля конкретного кода (`retry_at`, `resets_at`, `until`) описаны здесь; новые
         поля могут появиться.
       required:
       - code
@@ -1993,6 +2148,7 @@ components:
             `CANCELLED`, `MODEL_ERROR`, `CANNOT_ANSWER`), описаны в схемах событий.
           x-extensible-enum:
           - VALIDATION_ERROR
+          - CLIENT_VERSION_UNSUPPORTED
           - INVALID_TOKEN
           - TOKEN_EXPIRED
           - TOKEN_REVOKED
@@ -2012,6 +2168,7 @@ components:
           - RETRY_NOT_ALLOWED
           - RATE_LIMITED
           - INTERNAL_ERROR
+          - MAINTENANCE
         message:
           type: string
           description: Для логов и отладки, не для UI.
@@ -2031,6 +2188,11 @@ components:
           format: date-time
           nullable: true
           description: У `LIMIT_EXCEEDED` — когда обновится лимит вопросов (полночь по Москве).
+        until:
+          type: string
+          format: date-time
+          nullable: true
+          description: У `MAINTENANCE` — ожидаемое окончание техработ; нет — неизвестно, клиент повторяет по `Retry-After`.
     ErrorDetail:
       type: object
       required:

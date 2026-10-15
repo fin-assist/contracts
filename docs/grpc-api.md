@@ -93,7 +93,7 @@ user ──(системный, outbox)──► usersettings.SetUserTimezone н
 | `x-request-id` | `bank-bff` (из заголовка клиента или новый) | сквозной ID в логах всех сервисов; дальше пробрасывается без изменений |
 | `idempotency-key` | `bank-bff` | из `Idempotency-Key`; проверку наличия делает `bank-bff` (400 до вызова), хранение — сервис-владелец |
 | `x-client-ip` | `bank-bff` | адрес пакета TCP-соединения клиента (реальный IP сохраняется, см. `architecture.md`). Из заголовков клиента **не** берётся; сервис верит ему только от `bank-bff` |
-| `x-client-version` | `bank-bff` | `android/0.1.0+12` из заголовка клиента (FIN-20), для логов и метрик |
+| `x-client-version` | `bank-bff` | `android/0.2.5+41` из заголовка клиента `X-Client-Version` (FIN-20), для логов и метрик. Запрос без заголовка или с неразобранным значением `bank-bff` отклоняет сам (400 `CLIENT_VERSION_UNSUPPORTED`), поэтому до сервиса ключ доходит всегда. Подделывается клиентом: не для авторизации и не для лимитов |
 | `x-read-primary` | `bank-bff` (из заголовка клиента `X-Read-Primary`) | `1` — читать с primary. Клиент ставит заголовок на все запросы в течение 30 с после любого своего успешного пишущего запроса (`POST`, `PUT`, `PATCH`, `DELETE`); по умолчанию — нет (решено 14.10.2026, см. 7.3) |
 
 `verification_token` передаётся полем запроса (`WatchPhoneVerificationRequest`), а не metadata: тело gRPC не попадает в логи ingress, а поле проще не потерять при логировании metadata интерцептором. Интерцептор логирования обязан маскировать `authorization`, `x-service-authorization`, `idempotency-key` и поля с именами `*token*` (маскирование ПДн вообще — после MVP, но токены — сразу).
@@ -118,7 +118,7 @@ user ──(системный, outbox)──► usersettings.SetUserTimezone н
 | `RATE_LIMITED` | `RESOURCE_EXHAUSTED` | 429 | `retry_at`, `Retry-After` |
 | нет `ErrorInfo`, неизвестный `reason`, `INTERNAL_ERROR`, голые `INTERNAL` / `UNAVAILABLE` / `DEADLINE_EXCEEDED` / `PERMISSION_DENIED` |  | 500 `INTERNAL_ERROR` |  |
 
-Коды `MAINTENANCE` и `CLIENT_VERSION_UNSUPPORTED` (FIN-20) в межсервисный реестр не входят: их генерирует сам `bank-bff` (503 с `until` и `Retry-After`; 426 или 400 — решается в FIN-20), сервисы их не возвращают.
+Коды `MAINTENANCE` и `CLIENT_VERSION_UNSUPPORTED` (FIN-20) в межсервисный реестр не входят: их генерирует сам `bank-bff` до вызова сервиса (`MAINTENANCE` — 503 с `until` и `Retry-After`; `CLIENT_VERSION_UNSUPPORTED` — 400, решено 15.10.2026), сервисы их не возвращают. Минимальная версия по платформам и режим техработ — конфигурация `bank-bff`, меняются без релиза. Проверку версии `bank-bff` делает до валидации kin-openapi — иначе отсутствие обязательного заголовка стало бы `VALIDATION_ERROR`.
 
 ### 5.1 Правила реестра
 
@@ -337,7 +337,7 @@ REST 7.x один к одному. Порядок в `AskQuestion`: `GetAssistan
 - **Ретраи** (service config клиента): только `UNAVAILABLE`, до 3 попыток с джиттером; для всех чтений и для методов, идемпотентных по конструкции (раздел 6). Методы с `idempotency-key` ретраит клиент (приложение), не `bank-bff` — иначе один пользовательский таймаут превращается в шквал. Хеджинг не используем.
 - **Keepalive** для потоков: клиент `Time = 30 с`, сервер `EnforcementPolicy.MinTime = 20 с`. SSE-heartbeat `: ping` раз в 15 с генерирует `bank-bff`, в gRPC его нет.
 - **Health** — `grpc.health.v1` на каждом сервисе, пробы Kubernetes нативные `grpc`. Reflection — только в dev.
-- **Метрики** — RED по методу и `reason` (без `user_id` в метках), доля `UNAVAILABLE` метрик в `analytics` по `metric_id` (FIN-5).
+- **Метрики** — RED по методу и `reason` (без `user_id` в метках), доля `UNAVAILABLE` метрик в `analytics` по `metric_id` (FIN-5). В `bank-bff` — запросы по маршруту и версии клиента (FIN-20): метка — платформа и `MAJOR.MINOR`; заголовок подделывается, поэтому число значений метки ограничено (сверх лимита — `other`). По этим метрикам решается удаление устаревшего (`docs/api.md`, «Удаление устаревшего»).
 - **Размер сообщения** по умолчанию 4 МиБ; исключение — `SearchOperations` (16 МиБ).
 
 ## 10. Кодогенерация и CI
@@ -353,7 +353,7 @@ REST 7.x один к одному. Порядок в `AskQuestion`: `GetAssistan
 ## 11. Связь с открытыми задачами
 
 - **FIN-4/5/6 (блочная «Аналитика»)**: ingest-модель уже блочная — плоские снимки метрик с `metric_id` и версией определения, `UNAVAILABLE` для отказавшей метрики. FIN-4 изменит только чтение: новый RPC `GetAnalyticsBlocks` рядом с `GetAnalytics` (каталог примитивов общий с блоками помощника), старый удалить после перехода клиента. `exp` и `supports` придут полями запроса, `bank-bff` пробросит их из query.
-- **FIN-20**: `MAINTENANCE` и `CLIENT_VERSION_UNSUPPORTED` отдаёт только `bank-bff`, сервисам нужен лишь `x-client-version` для логов. В межсервисный реестр эти коды не входят (5).
+- **FIN-20** (контракт решён 15.10.2026): `MAINTENANCE` (503) и `CLIENT_VERSION_UNSUPPORTED` (400) отдаёт только `bank-bff`, сервисам нужен лишь `x-client-version` для логов. В межсервисный реестр эти коды не входят (5).
 - **FIN-2 (graceful degradation)**: частичный отказ — на уровне метрик `analytics`; падение `analytics` целиком `bank-bff` отдаёт как есть (500), `GetAnalytics` — критичный запрос.
 
 ## 12. Открытые вопросы
