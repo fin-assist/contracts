@@ -415,7 +415,8 @@ message GetAnalyticsResponse {
   // expense_categories, income_categories, monthly_chart, insights устарели: bank-bff их не читает; удалить
   // (номера 5–9 — в reserved), когда analytics перестанет их заполнять — условие и задача FIN-4.
   repeated finassist.common.v1.Block blocks = 12;
-  // Валюта всех сумм ответа (ISO 4217), при has_data всегда; сейчас RUB (FIN-82); пустая строка — ошибка сервиса (grpc-api.md 5.3).
+  // Валюта всех сумм ответа (ISO 4217), включая устаревшие поля 5–9; сейчас RUB (FIN-82). Обязательна при
+  // has_data: тогда пустая строка — ошибка сервиса; при has_data = false пусто (grpc-api.md 5.3).
   string currency = 13;
 }
 
