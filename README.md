@@ -1,6 +1,6 @@
 # Контракты «Понятных финансов»
 
-Источник правды для API приложения «Понятные финансы»:
+Источник правды для API приложения «Понятные финансы». Агентам — сначала `AGENTS.md` (карта репозитория, правила контракта и ревью; `CLAUDE.md` импортирует его).
 
 - **Клиентский REST API** (мобильный клиент ↔ `bank-bff`): `docs/api.md` — спецификация и смысл полей, `openapi/openapi.yaml` — машиночитаемый контракт OpenAPI 3.0.3 (кодогенерация, валидация kin-openapi, oasdiff).
 - **Внутренний gRPC** между Go-сервисами: `proto/` — `.proto` (`buf`), `docs/grpc-api.md` — как сервисы делят работу, ошибки, идемпотентность, outbox.
@@ -18,6 +18,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `proto/finassist/<сервис>/v1/*.proto` | Контракты сервисов и `common/v1` (типы, реестр ошибок `ErrorReason`) |
 | `proto/scripts/check_error_registry.py` | Сверка реестра ошибок с разделом 8 `docs/api.md` |
 | `redocly.yaml` | Настройки линтера OpenAPI |
+| `AGENTS.md`, `CLAUDE.md` | Инструкции агентам: карта, правила контракта, процесс, `## Code Review Rules` |
 
 Ссылки внутри файлов перенесены без правок и написаны относительно прежнего расположения: `api.md` и `grpc-api.md` → `docs/`, `openapi.yaml` → `openapi/`, «`proto/finassist/**/v1` (рядом с этим файлом)» → `proto/` в корне, `scripts/check_error_registry.py` → `proto/scripts/`. Упоминания `architecture.md`, `storage.md`, `mvp-scope.md`, `decision-ofx-only.md` и других — документы проекта, в этот репозиторий не входят. Путь `go_package` (`github.com/fin-assist/backend/gen/go/...`) — будущий бэкенд-репозиторий.
 
@@ -55,6 +56,9 @@ cd proto && buf lint
 cd proto && buf build -o /tmp/fd.binpb && python3 scripts/check_error_registry.py /tmp/fd.binpb ../docs/api.md
 ```
 
-## Ревью Claude
+## Ревью
 
-`.github/workflows/claude.yml` (FIN-97): упоминание `@claude` в комментарии или ревью PR запускает Claude Code — ревью с замечаниями inline на изменённых строках. Нужны GitHub-приложение Claude на репозитории и секрет `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`). Workflow по комментариям запускается из `main`, поэтому правки в нём действуют после мержа.
+Ревью PR — два ревьюера по разделу `## Code Review Rules` в `AGENTS.md`, с отдельными проходами «Безопасность» и «Расширяемость». Запрос — один комментарий в PR, начинающийся с `@codex @claude` (пример — `AGENTS.md`, Workflow).
+
+- `.github/workflows/claude.yml` (FIN-97): упоминание `@claude` запускает Claude Code на Claude Fable 5.1 (`claude-fable-5-1`) — ревью с замечаниями inline на изменённых строках. Нужны GitHub-приложение Claude на репозитории и секрет `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`). Workflow по комментариям запускается из `main`, поэтому правки в нём действуют после мержа.
+- `@codex` — интеграция Codex на GitHub по подписке ChatGPT владельца; модель выбирает OpenAI, из репозитория она не задаётся (FIN-103).
