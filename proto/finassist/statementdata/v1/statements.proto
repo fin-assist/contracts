@@ -41,8 +41,10 @@ service StatementsService {
   // Уже удалена -> OK; никогда не было -> NOT_FOUND.
   rpc DeleteUpload(DeleteUploadRequest) returns (DeleteUploadResponse);
 
-  // Вернуть строки файла, которые не удалось прочитать, — по одной загрузке или за период.
-  // Содержимое строк не хранится, только номер, дата и причина.
+  // Вернуть незакрытые строки файла, которые не удалось прочитать, — по одной загрузке или за период.
+  // Содержимое строк не хранится — только номер строки, дата, причина и, если прочитались, счёт
+  // (внутренний ID, не номер) и FITID. Строку закрывает более поздняя загрузка, дочитавшая её
+  // (api.md 3.6, «Закрытие строк»; FIN-79): закрытые строки сюда не попадают.
   // GET /v1/statements/unread-lines.
   rpc ListUnreadLines(ListUnreadLinesRequest) returns (ListUnreadLinesResponse);
 }
@@ -115,13 +117,18 @@ message Upload {
   google.protobuf.Timestamp uploaded_at = 4;
   // Операций прочитано из файла, включая уже бывшие в других загрузках.
   int64 operation_count = 5;
-  // Непрочитанных строк.
+  // Непрочитанных строк, ещё не закрытых более поздней загрузкой (FIN-79).
   int32 unread_count = 6;
   // Период файла.
   optional google.protobuf.Timestamp first_operation_at = 7;
   optional google.protobuf.Timestamp last_operation_at = 8;
   // Название источника данных («Выписка Т-Банка»).
   string source_name = 9;
+  // Строк этой загрузки, дочитанных более поздними загрузками (FIN-79).
+  int32 resolved_unread_count = 10;
+  // Когда загружена самая поздняя из загрузок, дочитавших строки; есть, только если
+  // resolved_unread_count > 0.
+  optional google.protobuf.Timestamp resolved_by_uploaded_at = 11;
 }
 
 // Сообщение клиентского потока загрузки: заголовок файла или очередной кусок содержимого.
@@ -366,7 +373,8 @@ enum UnreadReason {
   reserved 4;
 }
 
-// Содержимого строки нет — оно не хранится.
+// Содержимого строки нет — оно не хранится. Счёт и FITID строки хранятся, но наружу не отдаются:
+// они нужны только для закрытия строки (FIN-79).
 message UnreadLine {
   string upload_id = 1;
   string file_name = 2;
@@ -382,7 +390,7 @@ message UnreadLine {
 
 // Непрочитанные строки загрузки.
 message ListUnreadLinesResponse {
-  // По порядку в файле.
+  // Только незакрытые, по порядку в файле.
   repeated UnreadLine lines = 1;
   string time_zone = 2;
 }
