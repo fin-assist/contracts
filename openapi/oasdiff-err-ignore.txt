@@ -1,6 +1,3 @@
 PUT /v1/profile/assistant-consent removed the required property `assistant_consent` from the response with the `200` status
 PATCH /v1/profile removed the required property `assistant_consent` from the response with the `200` status
-PATCH /v1/profile removed the enum value `system` of the request property `theme`
-PATCH /v1/profile removed the enum value `light` of the request property `theme`
-PATCH /v1/profile removed the enum value `dark` of the request property `theme`
 GET /v1/profile removed the required property `assistant_consent` from the response with the `200` status

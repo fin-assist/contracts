@@ -746,9 +746,10 @@ paths:
         in: query
         description: |
           `expense` — только расходы, `income` — только доходы. Переводы между своими счетами не входят ни в
-          один. С `transfer_mode` возвраты относятся к расходам.
+          один. С `transfer_mode` возвраты относятся к расходам. Открытый код (FIN-82): клиент передаёт и значение,
+          которого сам не знает, если получил его в `operations_filter`; неизвестное серверу — 400.
         schema:
-          $ref: '#/components/schemas/OperationKindFilter'
+          $ref: '#/components/schemas/OperationKindCode'
       - name: amount_from
         in: query
         description: Сумма операции не меньше, копейки.
@@ -1811,17 +1812,12 @@ components:
       x-extensible-enum:
       - with
       - without
-    OperationKindFilter:
-      type: string
-      description: Фильтр направления в запросе Поиска («Только расходы»); значения проверяет сервер.
-      enum:
-      - expense
-      - income
     OperationKindCode:
       type: string
       description: |
-        Направление в `operations_filter`, который присылает сервер (FIN-82). Открытый набор: неизвестное значение
-        клиент не отбрасывает, а показывает чипом «Как на „Аналитике“» и передаёт в запрос как есть.
+        Направление (`kind`) в `operations_filter` и в запросе Поиска (FIN-82). Открытый набор: неизвестное значение
+        клиент не отбрасывает, а показывает чипом «Как на „Аналитике“» и передаёт в запрос как есть; сервер
+        принимает любой `kind`, который сам присылает.
       x-extensible-enum:
       - expense
       - income
@@ -2155,10 +2151,15 @@ components:
           description: Полный текст документа.
     Theme:
       type: string
-      description: |
-        Тема оформления. Открытый набор (FIN-82): в ответе неизвестное значение клиент обрабатывает как `system`;
-        в запросе неизвестное сервер отклоняет 400.
+      description: Тема оформления в ответе. Открытый набор (FIN-82) — неизвестное значение клиент обрабатывает как `system`.
       x-extensible-enum:
+      - system
+      - light
+      - dark
+    ThemeUpdate:
+      type: string
+      description: Новая тема в `PATCH /v1/profile` — одно из значений, которые знает сервер.
+      enum:
       - system
       - light
       - dark
@@ -2220,7 +2221,7 @@ components:
       description: Любое подмножество полей.
       properties:
         theme:
-          $ref: '#/components/schemas/Theme'
+          $ref: '#/components/schemas/ThemeUpdate'
         timezone:
           type: string
           description: Новый часовой пояс (IANA). Клиент отправляет, когда новый пояс устройства держится не меньше
@@ -2331,6 +2332,7 @@ components:
       - uncategorized_count
       - coverage
       - notices
+      - currency
       properties:
         operation_count:
           type: integer
@@ -2505,6 +2507,7 @@ components:
       - feature
       - open
       - opened_now
+      - feature_name
       properties:
         feature:
           type: string
@@ -2534,7 +2537,7 @@ components:
           description: Для закрытых — сколько месяцев с данными нужно.
         feature_name:
           type: string
-          description: Название функции для показа («Прогноз на год»); запасной вариант для неизвестного `feature`.
+          description: Название функции для показа («Прогноз на год»), есть всегда; запасной вариант для неизвестного `feature`.
         text:
           type: string
           nullable: true
