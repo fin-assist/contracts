@@ -28,6 +28,7 @@ message Block {
   // Текст при none и unavailable.
   optional string empty_text = 8;
   // Содержимое примитива по схеме type@v (api.md «Каталог примитивов»); суммы — в минимальных единицах валюты.
+  // Числа Struct — double: целые точны до 2^53 − 1, сумма по модулю больше в data не кладётся (api.md «Блоки»).
   optional google.protobuf.Struct data = 9;
   // Действие по нажатию на блок.
   optional BlockAction action = 10;

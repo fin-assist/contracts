@@ -80,6 +80,8 @@ message MetricLock {
   optional int32 available = 3;
   // Для TOO_EARLY_IN_MONTH: момент, с которого метрика откроется (10-е число в поясе профиля).
   optional google.protobuf.Timestamp available_from = 4;
+  // Готовый текст блокировки: клиент показывает его для неизвестной reason (FIN-82).
+  string text = 5;
 }
 
 // База расчёта метрики, опирающейся на историю: за какой отрезок и по скольким полным месяцам

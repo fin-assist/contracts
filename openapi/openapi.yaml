@@ -1408,10 +1408,12 @@ paths:
                 messages:
                 - id: 01a10852-b340-77c5-9ba3-bb9964a666d0
                   role: user
+                  currency: RUB
                   text: Сколько я трачу на Самокат?
                   created_at: '2026-10-04T22:10:00+03:00'
                 - id: 01a10852-b341-7a10-8f3e-6c2d9b4a1e07
                   role: assistant
+                  currency: RUB
                   status: complete
                   charged: true
                   blocks:
@@ -1539,7 +1541,7 @@ paths:
                   в `x-sse-events`.'
               example: |
                 event: snapshot
-                data: {"status": "generating", "blocks": [{"type": "text", "text": "За апрель — сентябрь на Самокат ушло **7 200 ₽**"}], "chips": [], "source": null}
+                data: {"status": "generating", "blocks": [{"type": "text", "v": 1, "data": {"text": "За апрель — сентябрь на Самокат ушло **7 200 ₽**"}}], "chips": [], "source": null, "currency": "RUB"}
 
                 event: chunk
                 data: {"index": 0, "text": ", все операции — с июля."}
@@ -3049,13 +3051,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/AnalyticsParams'
           description: Фактические параметры ответа — `period`, точный `date`, `transfer_mode`.
+        currency:
+          type: string
+          description: 'Валюта всех сумм ответа (ISO 4217); есть всегда при `has_data: true`, сейчас — `RUB`.'
         period:
           $ref: '#/components/schemas/AnalyticsPeriodInfo'
         navigation:
           $ref: '#/components/schemas/AnalyticsNavigation'
-        currency:
-          type: string
-          description: Валюта всех сумм блоков (ISO 4217); сейчас всегда `RUB`.
         blocks:
           type: array
           description: |
@@ -3247,12 +3249,12 @@ components:
       required:
       - id
       - role
+      - currency
       - created_at
       properties:
         currency:
           type: string
-          nullable: true
-          description: Только у `assistant` — валюта сумм в `blocks` (ISO 4217); сейчас всегда `RUB`.
+          description: Валюта сумм в `blocks` (ISO 4217), есть у каждого сообщения (у вопроса — та же валюта профиля); сейчас всегда `RUB`.
         id:
           type: string
         role:

@@ -54,6 +54,8 @@
 
 Экран «Аналитика» (6.1) и ответ помощника (7.2) собираются из блоков одного каталога (FIN-4, решение владельца 15.10.2026). Сервер решает, какие блоки показать, в каком порядке и с какими данными; все подписи и тексты блоков — с сервера. Клиент умеет рисовать фиксированный набор примитивов: новая метрика на существующем примитиве появляется без релиза приложения, новый примитив или новое действие — с релизом.
 
+Числа в `data` — JSON-числа, которые все клиенты (Kotlin, Swift, JS) и `google.protobuf.Struct` между сервисами читают как double: целое передаётся точно до 2^53 − 1. Суммы — целые в минимальных единицах валюты, и этого предела хватает с запасом (≈ 90 трлн ₽ в копейках); сервис, собирающий блок, не отдаёт сумму по модулю больше 2^53 − 1. Если понадобится больше, сумма придёт новым полем-строкой, а не сменой типа существующего.
+
 Оболочка блока:
 | Поле | Тип | Описание |
 |---|---|---|
@@ -1155,6 +1157,7 @@ GET /v1/analytics?period=month&date=2026-09&transfer_mode=with&supports=heading@
 {
   "has_data": true,
   "params": {"period": "month", "date": "2026-09", "transfer_mode": "with"},
+  "currency": "RUB",
   "period": {
     "range": {"from": "2026-09-01T00:00:00+03:00", "to": "2026-10-01T00:00:00+03:00"},
     "is_current": true,
@@ -1219,13 +1222,13 @@ GET /v1/analytics?period=month&date=2026-09&transfer_mode=with&supports=heading@
 |---|---|---|
 | `has_data` | bool | Есть ли у пользователя хоть одна операция. `false` — пустое состояние «Аналитики пока нет», остальных полей в ответе нет |
 | `params` | analytics_params | Фактические параметры ответа: `period`, точный `date`, `transfer_mode` |
+| `currency` | string | Валюта всех сумм ответа (ISO 4217); есть всегда при `has_data: true`, сейчас — `RUB` |
 | `period.range` | range | Границы календарного периода |
 | `period.is_current` | bool | Период ещё идёт (текущий месяц, квартал, год) |
 | `period.coverage` | code | `complete` — данные за весь период; `partial` — частично, подпись по `data_from`/`data_to` и `gaps` («1–25 сентября», «июль без 11–19-го», «апрель — сентябрь 2026 · год неполный»); `no_data` — за период данных нет (возможно при явном `date`). Неизвестное значение — как `partial` |
 | `period.data_from`, `period.data_to` | datetime? | Границы данных внутри периода; нет, если данных нет |
 | `period.gaps` | array<range> | Дни внутри данных, которых нет ни в одной загрузке |
 | `navigation.previous`, `navigation.next` | period_key? | `date` соседнего периода с данными; `null` — стрелка недоступна |
-| `currency` | string | Валюта всех сумм блоков (ISO 4217); сейчас всегда `RUB` |
 | `blocks` | array<block> | Блоки экрана по порядку. Состав и порядок решает сервер; клиент рисует их подряд, пропуская неизвестные, несовместимые, выключенные флагом `analytics.block.<id>` и те, что не удалось разобрать |
 
 #### Блоки экрана
@@ -1374,7 +1377,7 @@ Accept: text/event-stream
 
 ```
 event: snapshot
-data: {"status": "generating", "blocks": [{"type": "text", "v": 1, "data": {"text": "За апрель — сентябрь на Самокат ушло **7 200 ₽**"}}], "chips": [], "source": null}
+data: {"status": "generating", "blocks": [{"type": "text", "v": 1, "data": {"text": "За апрель — сентябрь на Самокат ушло **7 200 ₽**"}}], "chips": [], "source": null, "currency": "RUB"}
 
 event: chunk
 data: {"index": 0, "text": ", все операции — с июля. В среднем 2 400 ₽ в месяц, больше всего в июле: 2 880 ₽."}
@@ -1480,12 +1483,14 @@ GET /v1/assistant/messages?limit=20&before_id=01a10852-b340-77c5-9ba3-bb9964a666
     {
       "id": "01a10852-b340-77c5-9ba3-bb9964a666d0",
       "role": "user",
+      "currency": "RUB",
       "text": "Сколько я трачу на Самокат?",
       "created_at": "2026-10-04T22:10:00+03:00"
     },
     {
       "id": "01a10852-b341-7a10-8f3e-6c2d9b4a1e07",
       "role": "assistant",
+      "currency": "RUB",
       "status": "complete",
       "charged": true,
       "blocks": [
@@ -1625,7 +1630,7 @@ GET /v1/assistant/messages?limit=20&before_id=01a10852-b340-77c5-9ba3-bb9964a666
 | `messages[].error_code` | code? | Только у `failed`: `MODEL_ERROR` («Повторить» доступно) или `CANNOT_ANSWER`; неизвестный — как `MODEL_ERROR` |
 | `messages[].charged` | bool? | Только у `complete`: списана ли попытка |
 | `messages[].blocks` | array<block>? | Только у `assistant`: блоки ответа — текст, графики, строки, — те же, что в потоке 7.2. У `generating` — на момент запроса, у `failed` — пустой массив |
-| `messages[].currency` | string? | Только у `assistant`: валюта сумм в `blocks` (ISO 4217); сейчас всегда `RUB` |
+| `messages[].currency` | string | Валюта сумм в `blocks` (ISO 4217), есть у каждого сообщения (у вопроса — та же валюта профиля); сейчас всегда `RUB` |
 | `messages[].chips` | array? | Только у `complete`: чипы, как в событии `chip` (7.2) |
 | `messages[].source` | object? | Только у `complete`: как в событии `source` (7.2); `changed_since` пересчитывается на момент запроса |
 | `messages[].created_at` | datetime | Время сообщения |
