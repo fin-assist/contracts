@@ -130,7 +130,7 @@
 | `tiles` | array | Плитки по порядку, слева направо и сверху вниз |
 | `tiles[].id` | string | Стабильный id плитки (`balance`, `forecast`, `expense`, `daily_expense`, `income`); тег для тестов и событий |
 | `tiles[].title` | string | «Доходы минус расходы» |
-| `tiles[].status`, `tiles[].lock` | | Как у блока |
+| `tiles[].status`, `tiles[].lock` | | Как у блока, но `lock.text` может отсутствовать или быть пустым: `bank-bff` внутрь `data` не заглядывает, и «Пока недоступно» тогда показывает клиент (`grpc-api.md` 5.3) |
 | `tiles[].value`, `tiles[].value_kind` | number?, code? | Значение |
 | `tiles[].approx`, `tiles[].show_plus` | bool? | См. «Значения» |
 | `tiles[].caption` | string? | Подпись под значением («46% дохода · по выписке», «1–25 сентября») |

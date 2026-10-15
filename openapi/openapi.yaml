@@ -3386,7 +3386,12 @@ components:
       properties:
         reason:
           type: string
-          description: Как `BlockLock.reason`.
+          description: Как `BlockLock.reason`. Неизвестное — блокировка без подробностей.
+          x-extensible-enum:
+          - need_full_months
+          - need_months_with_data
+          - too_early_in_month
+          - stale_data
         text:
           type: string
           nullable: true
