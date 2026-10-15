@@ -142,10 +142,10 @@ or a compromised service gets to it. Check the changed contract for:
 - Authorization and object access: every endpoint states its auth (`Authorization` or the `/v1/auth/*` exception);
   the user comes from the token (`sub`), never from a path, query or body field of a user call; an object ID of
   another user gives `404`, not its data or a `403` that confirms it exists (IDOR / BOLA). System calls in gRPC take
-  `user_id` explicitly and are allowed only to the callers in the table of `docs/grpc-api.md` 3.3.
+  `user_id` explicitly and are allowed only to the callers in the table of `docs/grpc-api.md` («Идентичность сервиса»).
 - Secrets and tokens only in headers or the body, never in the path or query (they land in logs and proxies);
-  responses that hold secrets are not stored for idempotency longer than needed (1.4 — 60 s); logging interceptors
-  mask the keys named in `docs/grpc-api.md` 4.
+  responses that hold secrets are not stored for idempotency longer than needed (token refresh — 60 s); logging
+  interceptors mask the keys named in `docs/grpc-api.md` («Metadata»).
 - Data minimisation: a response returns only what the screen needs; no internal IDs, other users' data, raw
   statement content, stack traces or SQL in `error.message` / `details`. Errors do not reveal whether a phone number
   is registered beyond what the flow already shows.

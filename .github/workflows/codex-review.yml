@@ -12,20 +12,50 @@ on:
 # Every action is pinned to a commit: the jobs hold OPENAI_API_KEY or a token that can write to the PR.
 permissions: {}
 
+# The group is evaluated for every comment, before any `if`: an ordinary comment in a shared group would replace a
+# pending `/codex-review` run (one pending run per group). Only review requests share the PR's group.
 concurrency:
-  group: codex-review-${{ github.event.issue.number }}
+  group: codex-review-${{ startsWith(github.event.comment.body, '/codex-review') && github.event.issue.number || github.run_id }}
   cancel-in-progress: false
 
 env:
   CODEX_MODEL: gpt-6-astra
 
 jobs:
-  review:
-    # Only PR comments from people with write access; openai/codex-action checks the actor's permission again.
+  # A request is a PR comment whose first word is exactly `/codex-review`, from someone with write access:
+  # `author_association` alone does not prove it (a read or triage collaborator is a COLLABORATOR too), and the
+  # review spends the paid key. openai/codex-action checks the actor's permission again.
+  gate:
     if: >-
       github.event.issue.pull_request &&
       startsWith(github.event.comment.body, '/codex-review') &&
       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - name: Check the command and the author's permission
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BODY: ${{ github.event.comment.body }}
+          ACTOR: ${{ github.event.comment.user.login }}
+        run: |
+          command=$(printf '%s\n' "$BODY" | head -n 1 | awk '{print $1}')
+          permission=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$ACTOR/permission" --jq .permission)
+          if [ "$command" = "/codex-review" ] && { [ "$permission" = "admin" ] || [ "$permission" = "write" ]; }; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Not a review request: command '$command', permission '$permission'"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  review:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -63,7 +93,9 @@ jobs:
         run: |
           git ls-files -z -- 'AGENTS.md' '**/AGENTS.md' 'AGENTS.override.md' '**/AGENTS.override.md' |
             xargs -0 -r rm -f --
-          git ls-tree -r -z --name-only "$BASE_SHA" -- | grep -z -E '(^|/)AGENTS(\.override)?\.md$' |
+          # A base without any AGENTS.md is not an error (grep exits 1 on no match, and run steps use pipefail):
+          # Codex then reviews without repository rules, and the prompt still names the sections.
+          git ls-tree -r -z --name-only "$BASE_SHA" -- | { grep -z -E '(^|/)AGENTS(\.override)?\.md$' || true; } |
             xargs -0 -r git checkout "$BASE_SHA" --
           rm -rf .codex .agents
 
@@ -175,11 +207,12 @@ jobs:
 
   # A failed run still answers the review request, so the agent waiting for it does not time out silently.
   report-failure:
-    needs: [review, post]
-    # Any outcome but success, a timeout or cancellation (`cancelled`) included; not when the request did not match.
+    needs: [gate, review, post]
+    # Any outcome but success, a timeout or cancellation (`cancelled`) included; a failed gate too (the permission
+    # could not be read). Not when the comment is not a review request.
     if: >-
-      always() && needs.review.result != 'skipped' &&
-      (needs.review.result != 'success' || needs.post.result != 'success')
+      always() && (needs.gate.result == 'failure' || (needs.review.result != 'skipped' &&
+      (needs.review.result != 'success' || needs.post.result != 'success')))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
