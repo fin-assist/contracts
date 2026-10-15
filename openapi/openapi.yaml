@@ -330,7 +330,8 @@ paths:
                 phone: '+79161234567'
                 theme: system
                 timezone: Europe/Moscow
-                assistant_consent:
+                consents:
+                - type: assistant
                   granted: false
                   current_version: '2026-09-28'
                 created_at: '2026-10-04T20:00:00+03:00'
@@ -1812,8 +1813,16 @@ components:
       - without
     OperationKindFilter:
       type: string
-      description: Фильтр направления в Поиске («Только расходы»). Закрытый набор.
+      description: Фильтр направления в запросе Поиска («Только расходы»); значения проверяет сервер.
       enum:
+      - expense
+      - income
+    OperationKindCode:
+      type: string
+      description: |
+        Направление в `operations_filter`, который присылает сервер (FIN-82). Открытый набор: неизвестное значение
+        клиент не отбрасывает, а показывает чипом «Как на „Аналитике“» и передаёт в запрос как есть.
+      x-extensible-enum:
       - expense
       - income
     Coverage:
@@ -1852,7 +1861,7 @@ components:
           type: string
           nullable: true
         kind:
-          $ref: '#/components/schemas/OperationKindFilter'
+          $ref: '#/components/schemas/OperationKindCode'
         amount_from:
           type: integer
           format: int64
@@ -2146,8 +2155,10 @@ components:
           description: Полный текст документа.
     Theme:
       type: string
-      description: Тема оформления. Закрытый набор.
-      enum:
+      description: |
+        Тема оформления. Открытый набор (FIN-82): в ответе неизвестное значение клиент обрабатывает как `system`;
+        в запросе неизвестное сервер отклоняет 400.
+      x-extensible-enum:
       - system
       - light
       - dark
@@ -2158,7 +2169,7 @@ components:
       - phone
       - theme
       - timezone
-      - assistant_consent
+      - consents
       - created_at
       properties:
         user_id:
@@ -2171,21 +2182,32 @@ components:
         timezone:
           type: string
           description: Часовой пояс (IANA), в котором считаются месяцы и «сегодня».
-        assistant_consent:
-          $ref: '#/components/schemas/AssistantConsent'
+        consents:
+          type: array
+          description: |
+            Согласия пользователя, по одному на тип (FIN-82); новый тип — новый элемент. Нет элемента нужного типа —
+            согласия нет. Согласие на ПДн сюда не входит.
+          items:
+            $ref: '#/components/schemas/Consent'
         created_at:
           type: string
           format: date-time
           description: Дата регистрации.
-    AssistantConsent:
+    Consent:
       type: object
       required:
+      - type
       - granted
       - current_version
       properties:
+        type:
+          type: string
+          description: '`assistant` — передача данных помощнику (Alice AI). Элемент с неизвестным типом клиент пропускает.'
+          x-extensible-enum:
+          - assistant
         granted:
           type: boolean
-          description: Действует ли согласие на передачу данных помощнику (Alice AI).
+          description: Действует ли согласие.
         version:
           type: string
           nullable: true
@@ -2361,14 +2383,30 @@ components:
           type: object
         coverage:
           $ref: '#/components/schemas/ImportCoverage'
+        currency:
+          type: string
+          description: Валюта всех сумм события (ISO 4217); сейчас всегда `RUB`.
+          example: RUB
         notices:
           type: array
-          description: '`empty_statement` — в файле нет операций; `no_expenses` — нет расходов. Неизвестное клиент пропускает.'
+          description: Особые ситуации (FIN-82 — объекты с текстом).
           items:
-            type: string
-            x-extensible-enum:
-            - empty_statement
-            - no_expenses
+            $ref: '#/components/schemas/ImportNotice'
+    ImportNotice:
+      type: object
+      required:
+      - code
+      - text
+      properties:
+        code:
+          type: string
+          description: '`empty_statement` — в файле нет операций; `no_expenses` — нет расходов.'
+          x-extensible-enum:
+          - empty_statement
+          - no_expenses
+        text:
+          type: string
+          description: Готовый текст. Известный `code` клиент оформляет сам, неизвестный — показывает `text`.
     ImportTotals:
       type: object
       required:
@@ -2471,8 +2509,8 @@ components:
         feature:
           type: string
           description: |
-            Неизвестное значение клиент пропускает. Режимы «Квартал» и «Год» открыты всегда — закрыты только их
-            прогнозы и сравнения.
+            Неизвестное значение клиент показывает по `feature_name` и `text`. Режимы «Квартал» и «Год» открыты
+            всегда — закрыты только их прогнозы и сравнения.
           x-extensible-enum:
           - comparison
           - monthly_chart
@@ -2494,6 +2532,13 @@ components:
           type: integer
           nullable: true
           description: Для закрытых — сколько месяцев с данными нужно.
+        feature_name:
+          type: string
+          description: Название функции для показа («Прогноз на год»); запасной вариант для неизвестного `feature`.
+        text:
+          type: string
+          nullable: true
+          description: Готовая строка для закрытой функции («Прогноз на год — нужно 12 полных месяцев, есть 5»).
     StatementsList:
       type: object
       required:
@@ -3786,6 +3831,12 @@ components:
             x-extensible-enum:
             - categories
             - uploads
+        changed_since_text:
+          type: string
+          nullable: true
+          description: |
+            Готовый текст о том же («с тех пор категории менялись»); нет — ничего не менялось. Для неизвестного кода
+            клиент показывает его (FIN-82).
     AnswerSnapshotEvent:
       type: object
       description: Событие `snapshot` — всегда первое; клиент заменяет им показанное.

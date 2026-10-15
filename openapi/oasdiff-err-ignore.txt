@@ -1,0 +1,3 @@
+(?i).*assistant_consent.*
+(?i).*'theme'.*
+(?i).*'notices'.*

@@ -37,7 +37,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | Проверка | Когда | Что не пропустит |
 | --- | --- | --- |
 | `redocly lint openapi/openapi.yaml` | всегда | невалидный OpenAPI, нарушения правил `recommended` (кроме отключённых в `redocly.yaml`) |
-| `oasdiff breaking` (база PR → PR) | PR | несовместимые изменения REST (уровень `ERR`) |
+| `oasdiff breaking` (база PR → PR) | PR | несовместимые изменения REST (уровень `ERR`), кроме принятых в альфе — шаблоны в `openapi/oasdiff-err-ignore.txt` (PR с ними называет задачу) |
 | `buf lint` | всегда | нарушения STANDARD (исключение — префикс значений `ErrorReason`) |
 | `buf breaking` против базы PR | PR | несовместимые изменения `.proto`, повторное использование номеров и имён |
 | `check_error_registry.py` | всегда | расхождение `ErrorReason` с разделом 8 `docs/api.md`, неполный `error_spec`, `error_spec` вне реестра, больше 30 кодов |

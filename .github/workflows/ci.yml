@@ -35,6 +35,8 @@ jobs:
           base: 'origin/${{ github.base_ref }}:openapi/openapi.yaml'
           revision: 'HEAD:openapi/openapi.yaml'
           fail-on: ERR
+          # Breaking changes accepted while in alpha (api.md, «Удаление устаревшего»); the PR adding a line names its issue.
+          err-ignore: openapi/oasdiff-err-ignore.txt
 
   proto:
     name: Protobuf lint and breaking changes (buf)
