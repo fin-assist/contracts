@@ -1,3 +1,5 @@
 PUT /v1/profile/assistant-consent removed the required property `assistant_consent` from the response with the `200` status
 PATCH /v1/profile removed the required property `assistant_consent` from the response with the `200` status
 GET /v1/profile removed the required property `assistant_consent` from the response with the `200` status
+GET /v1/operations removed the enum value `income` from the `query` request parameter `kind`
+GET /v1/operations removed the enum value `expense` from the `query` request parameter `kind`
