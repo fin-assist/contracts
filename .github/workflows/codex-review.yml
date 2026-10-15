@@ -12,12 +12,6 @@ on:
 # Every action is pinned to a commit: the jobs hold OPENAI_API_KEY or a token that can write to the PR.
 permissions: {}
 
-# The group is evaluated for every comment, before any `if`: an ordinary comment in a shared group would replace a
-# pending `/codex-review` run (one pending run per group). Only review requests share the PR's group.
-concurrency:
-  group: codex-review-${{ startsWith(github.event.comment.body, '/codex-review') && github.event.issue.number || github.run_id }}
-  cancel-in-progress: false
-
 env:
   CODEX_MODEL: gpt-6-astra
 
@@ -44,18 +38,25 @@ jobs:
           BODY: ${{ github.event.comment.body }}
           ACTOR: ${{ github.event.comment.user.login }}
         run: |
-          command=$(printf '%s\n' "$BODY" | head -n 1 | awk '{print $1}')
+          # Comments from the web UI end lines with CRLF; awk does not split on \r.
+          command=$(printf '%s\n' "$BODY" | head -n 1 | tr -d '\r' | awk '{print $1}')
           permission=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$ACTOR/permission" --jq .permission)
           if [ "$command" = "/codex-review" ] && { [ "$permission" = "admin" ] || [ "$permission" = "write" ]; }; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Not a review request: command '$command', permission '$permission'"
+            echo "::notice::Not a review request: command '$command', permission '$permission'"
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
   review:
     needs: gate
     if: needs.gate.outputs.run == 'true'
+    # Job-level, after the gate: a workflow-level group is evaluated for every comment, and an unverified one
+    # (`/codex-review-x`, no write access) would replace a pending verified run (one pending run per group). A newer
+    # verified request still replaces a pending one; that run ends as cancelled and report-failure says so.
+    concurrency:
+      group: codex-review-${{ github.event.issue.number }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -208,10 +209,10 @@ jobs:
   # A failed run still answers the review request, so the agent waiting for it does not time out silently.
   report-failure:
     needs: [gate, review, post]
-    # Any outcome but success, a timeout or cancellation (`cancelled`) included; a failed gate too (the permission
-    # could not be read). Not when the comment is not a review request.
+    # Any outcome but success, a timeout or cancellation (`cancelled`) included; a failed or cancelled gate too (the
+    # permission could not be read). Not when the comment is not a review request.
     if: >-
-      always() && (needs.gate.result == 'failure' || (needs.review.result != 'skipped' &&
+      always() && (contains(fromJSON('["failure", "cancelled"]'), needs.gate.result) || (needs.review.result != 'skipped' &&
       (needs.review.result != 'success' || needs.post.result != 'success')))
     runs-on: ubuntu-latest
     timeout-minutes: 5
