@@ -3,6 +3,8 @@ name: ci
 on:
   push:
   pull_request:
+    # labeled/unlabeled: the `breaking-accepted` label changes the oasdiff verdict.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 permissions:
   contents: read
@@ -34,9 +36,9 @@ jobs:
         with:
           base: 'origin/${{ github.base_ref }}:openapi/openapi.yaml'
           revision: 'HEAD:openapi/openapi.yaml'
-          fail-on: ERR
-          # Breaking changes accepted while in alpha (api.md, «Удаление устаревшего»); the PR adding a line names its issue.
-          err-ignore: openapi/oasdiff-err-ignore.txt
+          # The owner accepts a breaking change of the alpha with the `breaking-accepted` label on that PR
+          # (api.md, «Удаление устаревшего»): the changes are still listed, the job does not fail.
+          fail-on: ${{ !contains(github.event.pull_request.labels.*.name, 'breaking-accepted') && 'ERR' || '' }}
 
   proto:
     name: Protobuf lint and breaking changes (buf)
