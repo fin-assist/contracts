@@ -3410,7 +3410,7 @@ components:
         Действие из фиксированного словаря: `open_operations` — Поиск с `filter`; `open_assistant` — чат помощника;
         `dismiss_regular_payment` — кнопка `label` у строки платежа (6.3 с `payment_id`). Неизвестное — элемент не
         нажимается. Поля своего `type` обязательны (`filter`; `payment_id` и `label`): без них действие — как
-        неизвестное, кнопка не показывается. Пустая строка и `filter` без условий — как отсутствие.
+        неизвестное, кнопка не показывается. Пустая строка и `filter` без условий (`transfer_mode` и `selection_name` не в счёт) — как отсутствие.
       required:
       - type
       properties:
