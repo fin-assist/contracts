@@ -36,6 +36,9 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Review findings go on diff lines as conversations; the action starts the inline-comment
+          # Model pinned to Claude Fable 5.1, as in fin-assist/android (AGENTS.md, Workflow; FIN-102). Billing: depending
+          # on plan and seat, Fable usage can draw on usage credits, and non-interactive runs do so without a prompt
+          # (https://code.claude.com/docs/en/model-config).
+          # Review findings go on diff lines as conversations (AGENTS.md); the action starts the inline-comment
           # tool only when it is allowed here.
-          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
+          claude_args: '--model claude-fable-5-1 --allowedTools "mcp__github_inline_comment__create_inline_comment"'

@@ -1,6 +1,6 @@
 # Контракты «Понятных финансов»
 
-Источник правды для API приложения «Понятные финансы»:
+Источник правды для API приложения «Понятные финансы». Агентам — сначала `AGENTS.md` (карта репозитория, правила контракта и ревью; `CLAUDE.md` импортирует его).
 
 - **Клиентский REST API** (мобильный клиент ↔ `bank-bff`): `docs/api.md` — спецификация и смысл полей, `openapi/openapi.yaml` — машиночитаемый контракт OpenAPI 3.0.3 (кодогенерация, валидация kin-openapi, oasdiff).
 - **Внутренний gRPC** между Go-сервисами: `proto/` — `.proto` (`buf`), `docs/grpc-api.md` — как сервисы делят работу, ошибки, идемпотентность, outbox.
@@ -18,6 +18,8 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `proto/finassist/<сервис>/v1/*.proto` | Контракты сервисов и `common/v1` (типы, реестр ошибок `ErrorReason`) |
 | `proto/scripts/check_error_registry.py` | Сверка реестра ошибок с разделом 8 `docs/api.md` |
 | `redocly.yaml` | Настройки линтера OpenAPI |
+| `AGENTS.md`, `CLAUDE.md` | Инструкции агентам: карта, правила контракта, процесс, `## Code Review Rules` |
+| `scripts/codex-review-post.py` | Публикация ревью Codex в PR; тесты — `scripts/test_*.py` |
 
 Ссылки внутри файлов перенесены без правок и написаны относительно прежнего расположения: `api.md` и `grpc-api.md` → `docs/`, `openapi.yaml` → `openapi/`, «`proto/finassist/**/v1` (рядом с этим файлом)» → `proto/` в корне, `scripts/check_error_registry.py` → `proto/scripts/`. Упоминания `architecture.md`, `storage.md`, `mvp-scope.md`, `decision-ofx-only.md` и других — документы проекта, в этот репозиторий не входят. Путь `go_package` (`github.com/fin-assist/backend/gen/go/...`) — будущий бэкенд-репозиторий.
 
@@ -41,6 +43,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `buf lint` | всегда | нарушения STANDARD (исключение — префикс значений `ErrorReason`) |
 | `buf breaking` против базы PR | PR | несовместимые изменения `.proto`, повторное использование номеров и имён |
 | `check_error_registry.py` | всегда | расхождение `ErrorReason` с разделом 8 `docs/api.md`, неполный `error_spec`, `error_spec` вне реестра, больше 30 кодов |
+| `unittest` по `scripts/` | всегда | ошибки скрипта публикации ревью Codex |
 
 Локально:
 
@@ -53,8 +56,14 @@ cd proto && buf lint
 
 # Error registry check
 cd proto && buf build -o /tmp/fd.binpb && python3 scripts/check_error_registry.py /tmp/fd.binpb ../docs/api.md
+
+# Scripts tests
+python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
 
-## Ревью Claude
+## Ревью
 
-`.github/workflows/claude.yml` (FIN-97): упоминание `@claude` в комментарии или ревью PR запускает Claude Code — ревью с замечаниями inline на изменённых строках. Нужны GitHub-приложение Claude на репозитории и секрет `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`). Workflow по комментариям запускается из `main`, поэтому правки в нём действуют после мержа.
+Ревью PR — два ревьюера по разделу `## Code Review Rules` в `AGENTS.md`, с отдельными проходами «Безопасность» и «Расширяемость». Запрос — один комментарий в PR: первая строка начинается с `/codex-review`, вторая — `@claude` (пример — `AGENTS.md`, Workflow). Workflow по комментариям запускаются из `main`, поэтому правки в них действуют после мержа.
+
+- `.github/workflows/claude.yml` (FIN-97): упоминание `@claude` запускает Claude Code на Claude Fable 5.1 (`claude-fable-5-1`) — ревью с замечаниями inline на изменённых строках. Нужны GitHub-приложение Claude на репозитории и секрет `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`).
+- `.github/workflows/codex-review.yml` (FIN-102, как FIN-99 в `fin-assist/android`): `/codex-review` запускает `openai/codex-action` на GPT-6 Astra (`gpt-6-astra`) без сети и с правилами ревью из базового коммита; ответ публикует `github-actions[bot]` как review с inline-замечаниями (`scripts/codex-review-post.py`), при сбое — комментарий с маркером `<!-- codex-review-workflow -->`. Запустить могут только участники с правами записи. Нужен секрет `OPENAI_API_KEY` (оплата по API).
