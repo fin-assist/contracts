@@ -330,7 +330,8 @@ paths:
                 phone: '+79161234567'
                 theme: system
                 timezone: Europe/Moscow
-                assistant_consent:
+                consents:
+                - type: assistant
                   granted: false
                   current_version: '2026-09-28'
                 created_at: '2026-10-04T20:00:00+03:00'
@@ -750,9 +751,10 @@ paths:
         in: query
         description: |
           `expense` — только расходы, `income` — только доходы. Переводы между своими счетами не входят ни в
-          один. С `transfer_mode` возвраты относятся к расходам.
+          один. С `transfer_mode` возвраты относятся к расходам. Открытый код (FIN-82): клиент передаёт и значение,
+          которого сам не знает, если получил его в `operations_filter`; неизвестное серверу — 400.
         schema:
-          $ref: '#/components/schemas/OperationKindFilter'
+          $ref: '#/components/schemas/OperationKindCode'
       - name: amount_from
         in: query
         description: Сумма операции не меньше, копейки.
@@ -1111,12 +1113,14 @@ paths:
                         reason: need_full_months
                         required: 1
                         available: 0
+                        text: Нужно 1 полный месяц, есть 0
                     typical:
                       status: locked
                       lock:
                         reason: need_full_months
                         required: 2
                         available: 0
+                        text: Нужно 2 полных месяца, есть 0
                   income:
                     status: ready
                     value: 15690000
@@ -1138,6 +1142,7 @@ paths:
                         reason: need_full_months
                         required: 1
                         available: 0
+                        text: Нужно 1 полный месяц, есть 0
                   forecast:
                     status: ready
                     value: 10120000
@@ -1178,6 +1183,7 @@ paths:
                     reason: need_months_with_data
                     required: 2
                     available: 1
+                    text: Нужно 2 месяца с данными, есть 1
                 insights:
                   regular_payments:
                     status: locked
@@ -1185,12 +1191,14 @@ paths:
                       reason: need_full_months
                       required: 2
                       available: 0
+                      text: Нужно 2 полных месяца, есть 0
                   notable_spending:
                     status: locked
                     lock:
                       reason: need_full_months
                       required: 3
                       available: 0
+                      text: Нужно 3 полных месяца, есть 0
                   bank_fees:
                     status: ready
                     value: 124000
@@ -1207,6 +1215,7 @@ paths:
                       reason: need_full_months
                       required: 1
                       available: 0
+                      text: Нужно 1 полный месяц, есть 0
                 state:
                   stale: false
                   last_operation_at: '2026-09-25T21:40:00+03:00'
@@ -1355,10 +1364,12 @@ paths:
                 messages:
                 - id: 01a10852-b340-77c5-9ba3-bb9964a666d0
                   role: user
+                  currency: RUB
                   text: Сколько я трачу на Самокат?
                   created_at: '2026-10-04T22:10:00+03:00'
                 - id: 01a10852-b341-7a10-8f3e-6c2d9b4a1e07
                   role: assistant
+                  currency: RUB
                   status: complete
                   charged: true
                   blocks:
@@ -1480,7 +1491,7 @@ paths:
                   в `x-sse-events`.'
               example: |
                 event: snapshot
-                data: {"status": "generating", "blocks": [{"type": "text", "text": "За апрель — сентябрь на Самокат ушло **7 200 ₽**"}], "chips": [], "source": null}
+                data: {"status": "generating", "blocks": [{"type": "text", "text": "За апрель — сентябрь на Самокат ушло **7 200 ₽**"}], "chips": [], "source": null, "currency": "RUB"}
 
                 event: chunk
                 data: {"index": 0, "text": ", все операции — с июля."}
@@ -1815,10 +1826,13 @@ components:
       x-extensible-enum:
       - with
       - without
-    OperationKindFilter:
+    OperationKindCode:
       type: string
-      description: Фильтр направления в Поиске («Только расходы»). Закрытый набор.
-      enum:
+      description: |
+        Направление (`kind`) в `operations_filter` и в запросе Поиска (FIN-82). Открытый набор: неизвестное значение
+        клиент не отбрасывает, а показывает чипом «Как на „Аналитике“» и передаёт в запрос как есть; сервер
+        принимает любой `kind`, который сам присылает.
+      x-extensible-enum:
       - expense
       - income
     Coverage:
@@ -1857,7 +1871,7 @@ components:
           type: string
           nullable: true
         kind:
-          $ref: '#/components/schemas/OperationKindFilter'
+          $ref: '#/components/schemas/OperationKindCode'
         amount_from:
           type: integer
           format: int64
@@ -2151,7 +2165,14 @@ components:
           description: Полный текст документа.
     Theme:
       type: string
-      description: Тема оформления. Закрытый набор.
+      description: Тема оформления в ответе. Открытый набор (FIN-82) — неизвестное значение клиент обрабатывает как `system`.
+      x-extensible-enum:
+      - system
+      - light
+      - dark
+    ThemeUpdate:
+      type: string
+      description: Новая тема в `PATCH /v1/profile` — одно из значений, которые знает сервер.
       enum:
       - system
       - light
@@ -2163,7 +2184,7 @@ components:
       - phone
       - theme
       - timezone
-      - assistant_consent
+      - consents
       - created_at
       properties:
         user_id:
@@ -2176,21 +2197,32 @@ components:
         timezone:
           type: string
           description: Часовой пояс (IANA), в котором считаются месяцы и «сегодня».
-        assistant_consent:
-          $ref: '#/components/schemas/AssistantConsent'
+        consents:
+          type: array
+          description: |
+            Согласия пользователя, по одному на тип (FIN-82); новый тип — новый элемент. Нет элемента нужного типа —
+            согласия нет. Согласие на ПДн сюда не входит.
+          items:
+            $ref: '#/components/schemas/Consent'
         created_at:
           type: string
           format: date-time
           description: Дата регистрации.
-    AssistantConsent:
+    Consent:
       type: object
       required:
+      - type
       - granted
       - current_version
       properties:
+        type:
+          type: string
+          description: '`assistant` — передача данных помощнику (Alice AI). Элемент с неизвестным типом клиент пропускает.'
+          x-extensible-enum:
+          - assistant
         granted:
           type: boolean
-          description: Действует ли согласие на передачу данных помощнику (Alice AI).
+          description: Действует ли согласие.
         version:
           type: string
           nullable: true
@@ -2203,7 +2235,7 @@ components:
       description: Любое подмножество полей.
       properties:
         theme:
-          $ref: '#/components/schemas/Theme'
+          $ref: '#/components/schemas/ThemeUpdate'
         timezone:
           type: string
           description: Новый часовой пояс (IANA). Клиент отправляет, когда новый пояс устройства держится не меньше
@@ -2314,6 +2346,7 @@ components:
       - uncategorized_count
       - coverage
       - notices
+      - currency
       properties:
         operation_count:
           type: integer
@@ -2366,14 +2399,30 @@ components:
           type: object
         coverage:
           $ref: '#/components/schemas/ImportCoverage'
+        currency:
+          type: string
+          description: Валюта всех сумм события (ISO 4217); сейчас всегда `RUB`.
+          example: RUB
         notices:
           type: array
-          description: '`empty_statement` — в файле нет операций; `no_expenses` — нет расходов. Неизвестное клиент пропускает.'
+          description: Особые ситуации (FIN-82 — объекты с текстом).
           items:
-            type: string
-            x-extensible-enum:
-            - empty_statement
-            - no_expenses
+            $ref: '#/components/schemas/ImportNotice'
+    ImportNotice:
+      type: object
+      required:
+      - code
+      - text
+      properties:
+        code:
+          type: string
+          description: '`empty_statement` — в файле нет операций; `no_expenses` — нет расходов.'
+          x-extensible-enum:
+          - empty_statement
+          - no_expenses
+        text:
+          type: string
+          description: Готовый текст. Известный `code` клиент оформляет сам, неизвестный — показывает `text`.
     ImportTotals:
       type: object
       required:
@@ -2472,12 +2521,13 @@ components:
       - feature
       - open
       - opened_now
+      - feature_name
       properties:
         feature:
           type: string
           description: |
-            Неизвестное значение клиент пропускает. Режимы «Квартал» и «Год» открыты всегда — закрыты только их
-            прогнозы и сравнения.
+            Неизвестное значение клиент показывает по `feature_name` и `text`. Режимы «Квартал» и «Год» открыты
+            всегда — закрыты только их прогнозы и сравнения.
           x-extensible-enum:
           - comparison
           - monthly_chart
@@ -2499,6 +2549,13 @@ components:
           type: integer
           nullable: true
           description: Для закрытых — сколько месяцев с данными нужно.
+        feature_name:
+          type: string
+          description: Название функции для показа («Прогноз на год»), есть всегда; запасной вариант для неизвестного `feature`.
+        text:
+          type: string
+          nullable: true
+          description: Готовая строка для закрытой функции («Прогноз на год — нужно 12 полных месяцев, есть 5»).
     StatementsList:
       type: object
       required:
@@ -2960,6 +3017,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/AnalyticsParams'
           description: Фактические параметры ответа — `period`, точный `date`, `transfer_mode`.
+        currency:
+          type: string
+          description: 'Валюта всех сумм ответа (ISO 4217); есть всегда при `has_data: true`, сейчас — `RUB`.'
         period:
           $ref: '#/components/schemas/AnalyticsPeriodInfo'
         navigation:
@@ -3065,13 +3125,17 @@ components:
       type: object
       required:
       - reason
+      - text
       properties:
+        text:
+          type: string
+          description: Готовый текст блокировки («Нужно 3 полных месяца, есть 1»). Известные `reason` клиент форматирует сам, для неизвестного показывает этот текст. Если сервис текст не заполнил — общий «Пока недоступно».
         reason:
           type: string
           description: |
             `need_full_months` — мало полных месяцев; `need_months_with_data` — мало месяцев с данными;
             `too_early_in_month` — рано для прогноза; `stale_data` — выписка устарела.
-            Неизвестное значение — блокировка без подробностей.
+            Неизвестное значение — показывается `text`.
           x-extensible-enum:
           - need_full_months
           - need_months_with_data
@@ -3583,8 +3647,12 @@ components:
       required:
       - id
       - role
+      - currency
       - created_at
       properties:
+        currency:
+          type: string
+          description: 'Валюта сумм в `blocks` (ISO 4217), есть у каждого сообщения; сейчас всегда `RUB`. У вопроса сумм нет, но поле тоже обязательное: так схема гарантирует валюту ответа без разделения `Message` по ролям (осознанный компромисс). Поля валюты в профиле пока нет, поэтому у вопросов и у сообщений, сохранённых до появления поля, — `RUB`.'
         id:
           type: string
         role:
@@ -3786,6 +3854,7 @@ components:
       - calculated_at
       - transfer_mode
       - changed_since
+      - changed_since_text
       properties:
         calculated_at:
           type: string
@@ -3807,6 +3876,12 @@ components:
             x-extensible-enum:
             - categories
             - uploads
+        changed_since_text:
+          type: string
+          nullable: true
+          description: |
+            Готовый текст о том же («с тех пор категории менялись»); нет — ничего не менялось. Для неизвестного кода
+            клиент показывает его (FIN-82).
     AnswerSnapshotEvent:
       type: object
       description: Событие `snapshot` — всегда первое; клиент заменяет им показанное.
@@ -3814,7 +3889,11 @@ components:
       - status
       - blocks
       - chips
+      - currency
       properties:
+        currency:
+          type: string
+          description: Валюта всех сумм в блоках ответа (ISO 4217); сейчас всегда `RUB`.
         status:
           type: string
           description: Как `Message.status`. Неизвестное — как `failed`.

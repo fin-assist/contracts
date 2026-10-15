@@ -79,6 +79,9 @@ message MetricLock {
   optional int32 available = 3;
   // Для TOO_EARLY_IN_MONTH: момент, с которого метрика откроется (10-е число в поясе профиля).
   optional google.protobuf.Timestamp available_from = 4;
+  // Готовый текст блокировки: клиент показывает его для неизвестной reason (FIN-82). Заполняет analytics;
+  // пустая строка — ошибка сервиса (grpc-api.md 5.3).
+  string text = 5;
 }
 
 // База расчёта метрики, опирающейся на историю: за какой отрезок и по скольким полным месяцам
@@ -403,6 +406,10 @@ message GetAnalyticsResponse {
   ScreenState state = 10;
   // Пояс профиля (IANA), в котором bank-bff форматирует все моменты ответа.
   string time_zone = 11;
+  // 12 — repeated Block blocks (FIN-4, отдельный PR): номер занят, не использовать.
+  // Валюта всех сумм ответа (ISO 4217), включая поля 5–9 (в наблюдениях 9 тоже суммы); сейчас RUB (FIN-82). Обязательна при
+  // has_data: тогда пустая строка — ошибка сервиса; при has_data = false пусто (grpc-api.md 5.3).
+  string currency = 13;
 }
 
 // Запрос списка периодов с данными.
