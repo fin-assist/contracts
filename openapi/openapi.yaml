@@ -3352,7 +3352,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Содержимое примитива (схемы `*Data`); есть при `ready` и `tentative`, у `tile_group` — всегда.
+          description: Содержимое примитива (схемы `*Data`); есть при `ready` и `tentative`, у `tile_group` и `insight_card` — всегда.
         action:
           $ref: '#/components/schemas/BlockAction'
     BlockStatus:
@@ -3637,6 +3637,13 @@ components:
         empty_text:
           type: string
           nullable: true
+        style:
+          type: string
+          nullable: true
+          description: '`bars` (по умолчанию) — полосы и доли; `plain` — строки без полос. Неизвестное — `bars`.'
+          x-extensible-enum:
+          - bars
+          - plain
     RankedItem:
       type: object
       required:
@@ -3663,6 +3670,9 @@ components:
         share:
           type: number
           format: double
+          nullable: true
+        show_plus:
+          type: boolean
           nullable: true
         action:
           $ref: '#/components/schemas/BlockAction'
@@ -3715,6 +3725,10 @@ components:
           nullable: true
         value_kind:
           $ref: '#/components/schemas/ValueKind'
+        value_suffix:
+          type: string
+          nullable: true
+          description: Приписка к значению («в месяц»).
         muted:
           type: boolean
           nullable: true
