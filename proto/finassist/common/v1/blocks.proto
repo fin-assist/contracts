@@ -38,7 +38,7 @@ message Block {
 message BlockLock {
   // need_full_months, need_months_with_data, too_early_in_month, stale_data.
   string reason = 1;
-  // Готовый текст блокировки («Нужно 3 полных месяца, есть 1»).
+  // Готовый текст блокировки («Нужно 3 полных месяца, есть 1»); пустая строка — ошибка сервиса (grpc-api.md 5.3).
   string text = 2;
   optional int32 required = 3;
   optional int32 available = 4;
@@ -47,13 +47,14 @@ message BlockLock {
 
 // Действие из фиксированного словаря.
 message BlockAction {
-  // open_operations, open_assistant, dismiss_regular_payment.
+  // open_operations, open_assistant, dismiss_regular_payment. Поля своего type обязательны: без них клиент
+  // считает действие неизвестным (api.md «Действия»).
   string type = 1;
-  // Для open_operations.
+  // Обязательно для open_operations.
   optional OperationsFilter filter = 2;
-  // Для dismiss_regular_payment.
+  // Обязательно для dismiss_regular_payment.
   optional string payment_id = 3;
-  // Подпись кнопки («Не подписка»).
+  // Подпись кнопки («Не подписка»); обязательно для dismiss_regular_payment.
   optional string label = 4;
 }
 
