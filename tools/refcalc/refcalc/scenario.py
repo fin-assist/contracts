@@ -98,7 +98,7 @@ class Runner:
                 else:
                     raise ValueError(f"unknown step {do}")
             except ApiError as e:
-                resp = {"status": e.status, "error": {"code": e.code}}
+                resp = {"status": e.status, "error": {"code": e.code, "message": e.code}}
             self.responses[step["name"]] = resp
             if step.get("expect"):
                 out[step["expect"]] = redact(resp, known=self.known)
