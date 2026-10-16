@@ -129,6 +129,25 @@ def main(argv=None) -> int:
             print(f"{invalid} schema errors")
             return 1
         print(f"schema OK: {len(runner.raw)} responses")
+        from .coverage import Coverage
+        from .schema import SCHEMAS
+        cov = Coverage(args.openapi)
+        roots = set()
+        for kind, resp in runner.raw.values():
+            if isinstance(resp, dict) and set(resp) == {"status", "error"}:
+                continue
+            roots.add(SCHEMAS[kind])
+            cov.observe(SCHEMAS[kind], resp)
+        with open(os.path.join(args.root, "coverage-exceptions.json"), encoding="utf-8") as f:
+            exceptions = json.load(f)["fields"]
+        problems = cov.report(roots, exceptions)
+        for e in problems:
+            print(e)
+        if problems:
+            print(f"{len(problems)} coverage problems: cover the field with a scenario step or add an exception with "
+                  "a reason to fixtures/calc/coverage-exceptions.json")
+            return 1
+        print(f"coverage OK: {len(cov.universe)} fields, {len(exceptions)} exceptions")
     stale = []
     for rel, body in expected.items():
         path = os.path.join(args.root, rel)

@@ -1,15 +1,15 @@
 {
-  "operation_count": 360,
-  "new_count": 301,
+  "operation_count": 342,
+  "new_count": 283,
   "duplicate_count": 59,
   "unread_count": 0,
   "first_operation_at": "2026-06-20T11:23:14+03:00",
-  "last_operation_at": "2026-08-10T22:41:26+03:00",
+  "last_operation_at": "2026-08-07T22:02:11+03:00",
   "is_first_import": false,
   "totals": {
     "scope": "new",
-    "expense": 333994152,
-    "income": 257386192
+    "expense": 288027455,
+    "income": 235855792
   },
   "currency": "RUB",
   "accounts": [
@@ -29,8 +29,8 @@
       "is_other_bank": true
     }
   ],
-  "categorized_count": 301,
-  "own_transfer_count": 53,
+  "categorized_count": 283,
+  "own_transfer_count": 48,
   "uncategorized_count": 0,
   "coverage": {
     "full_months": 9,
@@ -57,7 +57,7 @@
           "to": "2026-09-01T00:00:00+03:00"
         },
         "data_from": "2026-08-01T00:00:00+03:00",
-        "data_to": "2026-08-10T22:41:26+03:00",
+        "data_to": "2026-08-07T22:02:11+03:00",
         "gaps": [],
         "in_progress": true
       }

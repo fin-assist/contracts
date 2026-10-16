@@ -1,0 +1,118 @@
+{
+  "operation_count": 76,
+  "new_count": 76,
+  "duplicate_count": 0,
+  "unread_count": 0,
+  "first_operation_at": "2025-10-15T08:25:02+03:00",
+  "last_operation_at": "2025-10-31T21:06:35+03:00",
+  "is_first_import": true,
+  "totals": {
+    "scope": "all",
+    "expense": 63673873,
+    "income": 66021079
+  },
+  "currency": "RUB",
+  "accounts": [
+    {
+      "type_name": "<ignored>",
+      "mask": "··1111",
+      "is_other_bank": false
+    },
+    {
+      "type_name": "<ignored>",
+      "mask": "··2222",
+      "is_other_bank": false
+    },
+    {
+      "type_name": "<ignored>",
+      "mask": null,
+      "is_other_bank": true
+    }
+  ],
+  "categorized_count": 75,
+  "own_transfer_count": 0,
+  "uncategorized_count": 1,
+  "uncategorized_filters": {
+    "from": "2025-10-15T00:00:00+03:00",
+    "to": "2025-11-01T00:00:00+03:00",
+    "selection": "<ignored>",
+    "selection_name": "<ignored>"
+  },
+  "coverage": {
+    "full_months": 0,
+    "full_months_before": 0,
+    "newly_full_months": [],
+    "incomplete_months": [
+      {
+        "month": "2025-10",
+        "range": {
+          "from": "2025-10-01T00:00:00+03:00",
+          "to": "2025-11-01T00:00:00+03:00"
+        },
+        "data_from": "2025-10-15T00:00:00+03:00",
+        "data_to": "2025-10-31T21:06:35+03:00",
+        "gaps": [],
+        "in_progress": false
+      }
+    ],
+    "features": [
+      {
+        "feature": "comparison",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 1,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "monthly_chart",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_months_with_data": 2,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "typical",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 2,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "regular_payments",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 2,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "notable_spending",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 3,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "small_frequent",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 1,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "year_forecast",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 12,
+        "text": "<ignored>"
+      }
+    ]
+  },
+  "notices": []
+}

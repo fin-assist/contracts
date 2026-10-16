@@ -34,7 +34,7 @@
             "id": "balance",
             "title": "<ignored>",
             "status": "ready",
-            "value": -52285127,
+            "value": -52510127,
             "value_kind": "amount",
             "caption": "<ignored>"
           },
@@ -42,7 +42,7 @@
             "id": "expense",
             "title": "<ignored>",
             "status": "ready",
-            "value": 257969452,
+            "value": 258194452,
             "value_kind": "amount",
             "caption": "<ignored>",
             "action": {
@@ -59,7 +59,7 @@
             "id": "daily_expense",
             "title": "<ignored>",
             "status": "ready",
-            "value": 8321595,
+            "value": 8328853,
             "value_kind": "amount",
             "caption": "<ignored>"
           },
@@ -139,7 +139,7 @@
               "from": "2026-07-01T00:00:00+03:00",
               "to": "2026-08-01T00:00:00+03:00"
             },
-            "value": 257969452,
+            "value": 258194452,
             "coverage": "complete"
           }
         ],
@@ -157,7 +157,7 @@
       "data": {
         "total": {
           "label": "<ignored>",
-          "value": 257969452,
+          "value": 258194452,
           "value_kind": "amount",
           "action": {
             "type": "open_operations",
@@ -186,7 +186,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.8954963396208633,
+            "share": 0.8947159716661921,
             "note": "<ignored>"
           },
           {
@@ -205,7 +205,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.03597325159259555
+            "share": 0.03594190319782704
           },
           {
             "id": "cat_supermarkets",
@@ -223,7 +223,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.017274223616213287
+            "share": 0.017259170231899483
           },
           {
             "id": "cat_restaurants",
@@ -241,7 +241,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.016346121477980268
+            "share": 0.016331876875495373
           },
           {
             "id": "cat_marketplaces",
@@ -259,13 +259,13 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.007977688769133797
+            "share": 0.007970736722104315
           },
           {
             "id": "cat_fastfood",
             "icon": "coffee",
             "title": "Фастфуд",
-            "value": 1474400,
+            "value": 1699400,
             "value_kind": "amount",
             "action": {
               "type": "open_operations",
@@ -277,7 +277,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.005715405403892551
+            "share": 0.006581861023102076
           },
           {
             "id": "cat_fuel",
@@ -295,7 +295,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.004829071777072271
+            "share": 0.0048248635489658
           },
           {
             "id": "cat_utilities",
@@ -313,7 +313,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.002895013321189673
+            "share": 0.0028924905016936616
           },
           {
             "id": "cat_toll_roads",
@@ -331,7 +331,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.002852275702783599
+            "share": 0.002849790126396674
           },
           {
             "id": "cat_art",
@@ -349,7 +349,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.001356749790669013
+            "share": 0.001355567469745632
           },
           {
             "id": "cat_digital",
@@ -367,7 +367,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0010582648367218302
+            "share": 0.0010573426264015929
           },
           {
             "id": "cat_fitness",
@@ -385,7 +385,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0010078712730684097
+            "share": 0.0010069929775253265
           },
           {
             "id": "cat_transport",
@@ -403,7 +403,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0009818992056470314
+            "share": 0.0009810435431044815
           },
           {
             "id": "cat_pets",
@@ -421,7 +421,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0009342191415749489
+            "share": 0.0009334050291677066
           },
           {
             "id": "cat_services",
@@ -439,7 +439,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0009245280716415989
+            "share": 0.0009237224043838092
           },
           {
             "id": "cat_mobile",
@@ -457,7 +457,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0008528141541348081
+            "share": 0.0008520709809829686
           },
           {
             "id": "cat_auto_services",
@@ -475,7 +475,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.00062256596180233
+            "share": 0.0006220234352673077
           },
           {
             "id": "cat_taxi",
@@ -493,7 +493,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0004337722902167502
+            "share": 0.0004333942853272463
           },
           {
             "id": "cat_telecom",
@@ -511,7 +511,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.00042214300629673005
+            "share": 0.00042177513558656947
           },
           {
             "id": "cat_pharmacy",
@@ -529,7 +529,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0004033035663462975
+            "share": 0.00040295211300667296
           },
           {
             "id": "cat_charity",
@@ -547,7 +547,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0003605426893723835
+            "share": 0.0003602284994102042
           },
           {
             "id": "cat_rail",
@@ -565,7 +565,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.00031941766500321906
+            "share": 0.00031913931287725733
           },
           {
             "id": "cat_beauty",
@@ -583,7 +583,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.00021320353853370203
+            "share": 0.00021301774524574215
           },
           {
             "id": "cat_nko",
@@ -601,7 +601,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.00019382139866700186
+            "share": 0.0001936524956779474
           },
           {
             "id": "cat_gifts",
@@ -619,7 +619,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0001550571189336015
+            "share": 0.00015492199654235794
           },
           {
             "id": "cat_travel",
@@ -637,7 +637,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.0001550571189336015
+            "share": 0.00015492199654235794
           },
           {
             "id": "cat_streaming",
@@ -655,7 +655,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 0.00015466947613626748
+            "share": 0.00015453469155100205
           },
           {
             "id": "cat_bank_fees",
@@ -673,7 +673,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 5.814641960010056e-05
+            "share": 5.809574870338422e-05
           },
           {
             "id": "cat_service",
@@ -691,7 +691,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 2.3258567840040224e-05
+            "share": 2.323829948135369e-05
           },
           {
             "id": "cat_photo",
@@ -709,7 +709,7 @@
                 "transfer_mode": "with"
               }
             },
-            "share": 9.303427136016088e-06
+            "share": 9.295319792541476e-06
           }
         ],
         "visible_count": 4,
@@ -1025,7 +1025,7 @@
       "data": {
         "icon": "coffee",
         "title": "<ignored>",
-        "value": 1474400,
+        "value": 1699400,
         "value_kind": "amount",
         "description": "<ignored>"
       },
@@ -1217,11 +1217,29 @@
       "data": {
         "icon": "coffee",
         "title": "<ignored>",
-        "value": 174300,
+        "value": 399300,
         "value_kind": "amount",
         "approx": true,
         "description": "<ignored>",
-        "items": []
+        "items": [
+          {
+            "title": "Московский метрополитен",
+            "sublabel": "<ignored>",
+            "value": 174300,
+            "value_kind": "amount",
+            "value_suffix": "<ignored>",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "selection": "<ignored>",
+                "selection_name": "<ignored>",
+                "transfer_mode": "with"
+              }
+            }
+          }
+        ]
       },
       "action": {
         "type": "open_operations",
@@ -1290,13 +1308,13 @@
               "from": "2026-07-01T00:00:00+03:00",
               "to": "2026-08-01T00:00:00+03:00"
             },
-            "value": -0.2542008342152471,
+            "value": -0.2552947435347832,
             "coverage": "complete"
           }
         ],
         "show_values": true,
         "summary": {
-          "value": -52285127,
+          "value": -52510127,
           "value_kind": "amount"
         },
         "caption": "<ignored>",
