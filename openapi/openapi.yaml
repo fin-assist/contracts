@@ -1069,7 +1069,9 @@ paths:
       - categories
       operationId: listCategories
       summary: Справочник категорий
-      description: Для выбора категории, иконок и подписей. Клиент кэширует; при добавлении банков список расширяется.
+      description: Для выбора категории, иконок и подписей. Клиент кэширует и перечитывает при запуске приложения, после
+        каждой успешной загрузки (`complete` в `streamStatementProgress`) и при ответе 422 `CATEGORY_NOT_ASSIGNABLE` — новая
+        категория банка появляется при первой встрече в выписке, а у известной может смениться `kinds`.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
       - $ref: '#/components/parameters/XClientVersion'
@@ -1099,6 +1101,15 @@ paths:
                   - income
                   assignable: true
                   note: уменьшает расходы на покупку
+                - id: cat_uncategorized
+                  name: Без категории
+                  icon: tag
+                  is_system: true
+                  kinds:
+                  - expense
+                  - income
+                  assignable: false
+                  note: в выписке нет категории
                 - id: cat_supermarkets
                   name: Супермаркеты
                   icon: cart
@@ -2606,17 +2617,22 @@ components:
             $ref: '#/components/schemas/ImportAccount'
         categorized_count:
           type: integer
+          description: Новые операции, не вошедшие в `uncategorized_count`, — `new_count` − `uncategorized_count`.
         own_transfer_count:
           type: integer
           description: Из `categorized_count` — операций (две на пару) в категории «Между своими счетами».
         uncategorized_count:
           type: integer
-          description: Без категории; входят в суммы.
+          description: Без категории; входят в суммы. Новые операции в категории `cat_uncategorized` (категория банка пустая
+            или буквально «Без категории») плюс возвраты, для которых не нашлась расходная категория, оба направления (FIN-126).
+            В аналитике тот же набор разделён по направлениям — строки «Без категории» в «Расходах по категориям»
+            (списания и возвраты) и в «Доходах по категориям» (зачисления).
         uncategorized_filters:
           nullable: true
           allOf:
           - $ref: '#/components/schemas/OperationsFilter'
-          description: Выборка для ссылки «разобрать».
+          description: Выборка для ссылки «разобрать» — `selection` «Без категории» за дни новых операций загрузки
+            (`from`/`to`); может включать операции «Без категории» прошлых загрузок за те же дни.
           type: object
         coverage:
           $ref: '#/components/schemas/ImportCoverage'
@@ -3071,7 +3087,8 @@ components:
           bank_category:
             type: string
             nullable: true
-            description: Категория банка как есть; у пары — нет.
+            maxLength: 64
+            description: Категория банка как в выписке, обрезанная до 64 символов; у пары — нет.
           mcc:
             type: string
             nullable: true
@@ -3181,7 +3198,7 @@ components:
         category_id:
           type: string
           description: Категория с `assignable`, у которой `kinds` включает `kind` записи; для пары — любая с `assignable`.
-            Иначе 422 `CATEGORY_NOT_ASSIGNABLE`.
+            Иначе 422 `CATEGORY_NOT_ASSIGNABLE` — клиент перечитывает справочник (`listCategories`) и перестраивает выбор.
     ChangeCategoryResponse:
       type: object
       required:
@@ -3221,12 +3238,15 @@ components:
           description: Стабильный непрозрачный ключ (`cat_supermarkets`).
         name:
           type: string
+          maxLength: 64
+          description: Название; у категории банка — из выписки, обрезано до 64 символов.
         icon:
           type: string
           description: Ключ иконки из набора приложения; неизвестный — иконка по умолчанию.
         is_system:
           type: boolean
-          description: Системная категория — группа «Системные» сверху в выборе.
+          description: Системная категория («Между своими счетами», «Возврат», «Без категории» — `cat_uncategorized`)
+            — группа «Системные» сверху в выборе.
         kinds:
           type: array
           description: К каким записям применима. Неизвестные значения клиент пропускает.
@@ -3910,6 +3930,8 @@ components:
         id:
           type: string
           nullable: true
+          description: Ключ элемента; у категорий — `category_id` (у «Без категории» — `cat_uncategorized`). Нет — у элемента
+            нет ключа.
         icon:
           type: string
         title:

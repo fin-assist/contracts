@@ -278,7 +278,7 @@ type Operation struct {
 	PostedAt *timestamppb.Timestamp `protobuf:"bytes,21,opt,name=posted_at,json=postedAt,proto3,oneof" json:"posted_at,omitempty"`
 	// Развёрнутая версия note под категорией.
 	NoteDetails *string `protobuf:"bytes,22,opt,name=note_details,json=noteDetails,proto3,oneof" json:"note_details,omitempty"`
-	// Категория банка как есть; у пары — нет.
+	// Категория банка как в выписке, обрезанная до 64 символов; у пары — нет.
 	BankCategory *string `protobuf:"bytes,23,opt,name=bank_category,json=bankCategory,proto3,oneof" json:"bank_category,omitempty"`
 	// MCC торговой точки, если источник сообщает (в OFX Т-Банка нет).
 	Mcc *string `protobuf:"bytes,24,opt,name=mcc,proto3,oneof" json:"mcc,omitempty"`
@@ -1098,11 +1098,13 @@ func (x *ChangeCategoryResponse) GetTimeZone() string {
 type Category struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Стабильный ключ справочника («cat_supermarkets»).
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Название; у категории банка — из выписки, обрезано до 64 символов (категория определяется по
+	// обрезанному названию).
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// Ключ иконки из набора приложения.
 	Icon string `protobuf:"bytes,3,opt,name=icon,proto3" json:"icon,omitempty"`
-	// Системная категория («Между своими счетами», «Возврат»).
+	// Системная категория («Между своими счетами», «Возврат», «Без категории» — cat_uncategorized).
 	IsSystem bool `protobuf:"varint,4,opt,name=is_system,json=isSystem,proto3" json:"is_system,omitempty"`
 	// К каким записям применима.
 	Kinds []CategoryKind `protobuf:"varint,5,rep,packed,name=kinds,proto3,enum=finassist.statementdata.v1.CategoryKind" json:"kinds,omitempty"`
