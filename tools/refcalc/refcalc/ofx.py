@@ -128,6 +128,8 @@ def parse(text: str) -> Document:
                 amount = Decimal(f["TRNAMT"].strip()) if "TRNAMT" in f else None
             except InvalidOperation:
                 amount = None
+            if amount is not None and not amount.is_finite():
+                amount = None
             fitid = f.get("FITID", "").strip() or None
 
             def unread(reason, d=date):

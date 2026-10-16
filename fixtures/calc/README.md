@@ -77,6 +77,6 @@ python3 -m unittest discover -s tests -t .
 python3 -m refcalc.scenario ../../fixtures/calc --write --openapi ../../openapi/openapi.yaml
 ```
 
-`--openapi` проверяет ответы схемой `openapi.yaml` (до замены на `<ignored>`; нужны `pyyaml` и `openapi-schema-validator`). CI делает то же с `--check`: ожидаемые ответы должны совпадать с перегенерированными байт в байт и проходить схему.
+`--openapi` проверяет ответы схемой `openapi.yaml` (до замены на `<ignored>`; нужны `pyyaml`, `openapi-schema-validator` и `rfc3339-validator` — проверка формата `date-time`). CI делает то же с `--check`: ожидаемые ответы должны совпадать с перегенерированными байт в байт и проходить схему.
 
 Новый случай — шаг в `scenario.json` (и, если нужно, новая выписка) и перегенерация. Изменение ожидаемых ответов в PR — это изменение поведения обеих реализаций: в описании PR — какие ответы и почему поменялись, и клиентская задача на фейковый бэкенд.

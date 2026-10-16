@@ -25,6 +25,9 @@ class SchemaCheck:
         self.registry = Registry().with_resource("openapi.yaml", Resource.from_contents(spec, DRAFT4))
 
     def errors(self, kind: str, response) -> list:
-        schema = {"$ref": f"openapi.yaml#/components/schemas/{SCHEMAS[kind]}"}
-        validator = OAS30Validator(schema, registry=self.registry)
+        name = SCHEMAS[kind]
+        if isinstance(response, dict) and set(response) == {"status", "error"}:
+            name, response = "ErrorResponse", {"error": response["error"]}
+        schema = {"$ref": f"openapi.yaml#/components/schemas/{name}"}
+        validator = OAS30Validator(schema, registry=self.registry, format_checker=OAS30Validator.FORMAT_CHECKER)
         return [f"{'/'.join(map(str, e.absolute_path)) or '$'}: {e.message}" for e in validator.iter_errors(response)]

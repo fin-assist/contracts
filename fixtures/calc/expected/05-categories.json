@@ -420,7 +420,7 @@
     },
     {
       "id": "cat_repair",
-      "name": "Ремонт и мебель",
+      "name": "Ремонт и мебель",
       "icon": "hammer",
       "is_system": false,
       "kinds": [

@@ -316,7 +316,8 @@ class Ledger:
                 continue
             best = None
             for c in credits:
-                if c.pair or c.amount != debit.amount or c.account.id == debit.account.id:
+                if c.pair or c.amount != debit.amount or c.currency != debit.currency or \
+                        c.account.id == debit.account.id:
                     continue
                 if not (self.self_transfer(c) or (not c.manual and c.bank.name == TRANSFERS_NAME)):
                     continue

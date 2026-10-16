@@ -233,7 +233,8 @@ class Backend:
             return norm in s.lower().replace("ё", "е")
 
         try:
-            amount = int((Decimal(q.replace(" ", "").replace(",", ".")) * 100).to_integral_value())
+            d = Decimal(q.replace(" ", "").replace(",", "."))
+            amount = int((d * 100).to_integral_value()) if d.is_finite() else None
         except InvalidOperation:
             amount = None
         last4 = q if len(q) == 4 and q.isdigit() else None

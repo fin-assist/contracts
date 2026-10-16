@@ -53,6 +53,8 @@ class Registry:
         return r
 
     def add(self, c: Category) -> None:
+        if c.id in self.by_id and self.by_id[c.id].name != c.name:
+            raise ValueError(f"duplicate category id {c.id}")
         self.by_name[c.name] = c
         self.by_id[c.id] = c
 
@@ -64,7 +66,10 @@ class Registry:
             return self.by_id[UNCATEGORIZED]
         c = self.by_name.get(name)
         if c is None:
-            c = Category("cat_" + slug(name), name, "tag", ["expense", "income"])
+            cid, n = "cat_" + slug(name), 2
+            while cid in self.by_id:  # another name with the same slug
+                cid, n = f"cat_{slug(name)}_{n}", n + 1
+            c = Category(cid, name, "tag", ["expense", "income"])
             self.add(c)
         return c
 

@@ -430,16 +430,6 @@
       "assignable": true
     },
     {
-      "id": "cat_repair",
-      "name": "Ремонт и мебель",
-      "icon": "hammer",
-      "system": false,
-      "kinds": [
-        "expense"
-      ],
-      "assignable": true
-    },
-    {
       "id": "cat_other",
       "name": "Другое",
       "icon": "tag",

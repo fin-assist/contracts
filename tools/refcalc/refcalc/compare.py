@@ -48,7 +48,19 @@ def _moment(s):
     return None
 
 
-def compare(expected, actual, path: str = "$") -> list:
+def _extra_allowed(k: str, in_blocks: bool, parent_is_items: bool) -> bool:
+    """A field the reference does not have may appear only where redaction would have ignored it."""
+    if k in OPAQUE_KEYS and k != "id":
+        return True
+    if k not in TEXT_KEYS:
+        return False
+    if not in_blocks and k in DATA_TITLE_OUTSIDE_BLOCKS:
+        return False
+    return not (in_blocks and k == "title" and parent_is_items)
+
+
+def compare(expected, actual, path: str = "$", in_blocks: bool = False, parent_is_items: bool = False,
+            key: str = None) -> list:
     """Differences as `path: expected != actual`. Absent equals null; a block or tile without `status` is ready;
     moments are compared as instants; floats with a tolerance; arrays in order and of the same length. A field the
     reference does not have must be absent or null in the actual response, unless it is a text or an opaque id."""
@@ -60,13 +72,13 @@ def compare(expected, actual, path: str = "$") -> list:
         diffs = []
         for k in sorted(set(expected) | set(actual)):
             e, a = expected.get(k), actual.get(k)
-            if k == "status" and e == "ready" and a is None:
-                continue
+            if k == "status" and {e, a} <= {"ready", None}:
+                continue  # a block or a tile without status is ready
             if e is None and a is None:
                 continue
-            if k not in expected and (k in TEXT_KEYS or k in OPAQUE_KEYS):
-                continue  # a text or an id the reference does not have: not compared
-            diffs += compare(e, a, f"{path}.{k}")
+            if k not in expected and _extra_allowed(k, in_blocks, parent_is_items):
+                continue  # a text or an opaque id the reference does not have: not compared
+            diffs += compare(e, a, f"{path}.{k}", in_blocks or k == "blocks", False, k)
         return diffs
     if isinstance(expected, list):
         if not isinstance(actual, list):
@@ -75,13 +87,16 @@ def compare(expected, actual, path: str = "$") -> list:
             return [f"{path}: expected {len(expected)} elements, got {len(actual)}"]
         diffs = []
         for i, (e, a) in enumerate(zip(expected, actual)):
-            diffs += compare(e, a, f"{path}[{i}]")
+            diffs += compare(e, a, f"{path}[{i}]", in_blocks, key == "items", key)
         return diffs
-    if isinstance(expected, float) or isinstance(actual, float):
-        if isinstance(expected, (int, float)) and isinstance(actual, (int, float)) and \
-                math.isclose(expected, actual, rel_tol=0, abs_tol=FLOAT_TOLERANCE):
-            return []
-        return [f"{path}: {expected!r} != {actual!r}"]
+    numbers = (int, float)
+    if isinstance(expected, numbers) and isinstance(actual, numbers) and \
+            not isinstance(expected, bool) and not isinstance(actual, bool):
+        if isinstance(expected, int):
+            # Sums and counts are exact; 337280.0 equals 337280 (block values are JSON doubles).
+            return [] if actual == expected else [f"{path}: {expected!r} != {actual!r}"]
+        ok = math.isclose(expected, actual, rel_tol=0, abs_tol=FLOAT_TOLERANCE)
+        return [] if ok else [f"{path}: {expected!r} != {actual!r}"]
     me, ma = _moment(expected), _moment(actual)
     if me is not None and ma is not None:
         return [] if me == ma else [f"{path}: {expected} != {actual}"]

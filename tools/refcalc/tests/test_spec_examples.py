@@ -70,6 +70,27 @@ class SpecExamples(unittest.TestCase):
         row = self.block(s, "expense_categories")[0]["data"]["items"][0]
         self.assertEqual((row["id"], row["value"], "share" in row), ("cat_marketplaces", -120_000, False))
 
+    def refund_case(self, credit):
+        b = self.backend("2026-10-02T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260801", "20260930", [("d1", "20260828120000", -3000, "Ozon", "Маркетплейсы"), credit]))
+        return next(i for i in b.feed()["items"] if i["kind"] == "income")
+
+    def test_refund_by_bank_category_only(self):
+        r = self.refund_case(("c1", "20260903120000", 1200, "Другой магазин", "Маркетплейсы"))
+        self.assertEqual((r["category_id"], r["note"]), ("cat_refund", "возврат · Маркетплейсы"))
+
+    def test_refund_by_description_only(self):
+        r = self.refund_case(("c1", "20260903120000", 1200, "Ozon", "Финансы"))
+        self.assertEqual((r["category_id"], r["note"]), ("cat_refund", "возврат · Маркетплейсы"))
+
+    def test_refund_by_word_only(self):
+        r = self.refund_case(("c1", "20260903120000", 1700, "Возврат средств", "Финансы"))
+        self.assertEqual((r["category_id"], r["note"]), ("cat_refund", "возврат"))
+
+    def test_no_refund_sign_is_income(self):
+        r = self.refund_case(("c1", "20260903120000", 1700, "Поступление", "Финансы"))
+        self.assertEqual(r["category_id"], "cat_finance")
+
     def test_5_transfer_back_is_income(self):
         b = self.backend("2026-09-26T12:00:00+03:00")
         b.upload("a.ofx", stmt("20260901", "20260925", [
@@ -167,6 +188,17 @@ class SpecExamples(unittest.TestCase):
         self.assertEqual(self.block(self.screen(b, "2026-09"), "regular_payments")[0]["status"], "none")
 
 
+class Robustness(unittest.TestCase):
+    def test_non_finite_amount_is_unread(self):
+        b = Backend(Registry.load(os.path.join(ROOT, "categories.json")), MSK)
+        b.now = dt.datetime.fromisoformat("2026-09-26T12:00:00+03:00")
+        text = stmt("20260901", "20260925", [("d1", "20260910120000", -100, "Кафе", "Рестораны")]).replace(
+            "<TRNAMT>-100.00</TRNAMT>", "<TRNAMT>NaN</TRNAMT>")
+        r = b.upload("a.ofx", text)
+        self.assertEqual((r["operation_count"], r["unread_count"]), (0, 1))
+        self.assertEqual(b.search({"q": "NaN"})["total_count"], 0)
+
+
 class Rounding(unittest.TestCase):
     def test_tdiv_truncates_toward_zero(self):
         self.assertEqual((tdiv(7, 2), tdiv(-7, 2)), (3, -3))
@@ -188,6 +220,10 @@ class Comparison(unittest.TestCase):
         exp = {"at": "2026-09-25T21:40:00+03:00", "note": None, "status": "ready"}
         self.assertEqual(compare(exp, {"at": "2026-09-25T18:40:00Z"}), [])
         self.assertTrue(compare({"a": 1}, {"a": 1, "share": 0.5}))
+        self.assertTrue(compare({"amount": 100}, {"amount": 100.0000001}))
+        self.assertEqual(compare({"value": 337280}, {"value": 337280.0}), [])
+        self.assertEqual(compare({"type": "heading"}, {"type": "heading", "status": "ready"}), [])
+        self.assertTrue(compare({"categories": [{"id": "c"}]}, {"categories": [{"id": "c", "note": "не в тратах"}]}))
 
 
 if __name__ == "__main__":
