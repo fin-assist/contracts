@@ -275,6 +275,18 @@ var reserved = map[string]bool{
 	"err": true, "md": true, "st": true, "violations": true, "retryDelay": true, "codes": true, "status": true,
 }
 
+// retryAtKey is the metadata key that duplicates RetryInfo (RATE_LIMITED: error.retry_at and Retry-After).
+const retryAtKey = "retry_at"
+
+func hasKey(keys []string, key string) bool {
+	for _, k := range keys {
+		if k == key {
+			return true
+		}
+	}
+	return false
+}
+
 // isTimeKey: a metadata key with the _at suffix carries a moment in RFC 3339 (error_options.proto); the constructor
 // takes time.Time (its Location sets the offset in the string) and ToREST rejects a value that does not parse or is
 // the zero time.
@@ -309,6 +321,7 @@ func render(importPath string, registry protoreflect.FileDescriptor, codes []cod
 	p("package %s", pkg)
 	p("")
 	p("import (")
+	p("\t\"regexp\"")
 	p("\t\"strings\"")
 	p("\t\"time\"")
 	p("")
@@ -363,7 +376,10 @@ func render(importPath string, registry protoreflect.FileDescriptor, codes []cod
 				md = append(md, fmt.Sprintf("%q: %s", k, paramName(k)))
 			}
 		}
-		if c.RetryInfo {
+		// RetryInfo and retry_at say the same thing; when both are required, the delay is derived from retry_at so the
+		// REST body and Retry-After cannot disagree.
+		retryFromAt := c.RetryInfo && hasKey(c.MetadataKeys, retryAtKey)
+		if c.RetryInfo && !retryFromAt {
 			params = append(params, "retryDelay time.Duration")
 		}
 		if c.BadRequest {
@@ -380,7 +396,9 @@ func render(importPath string, registry protoreflect.FileDescriptor, codes []cod
 			mdArg = "map[string]string{" + strings.Join(md, ", ") + "}"
 		}
 		var extra []string
-		if c.RetryInfo {
+		if retryFromAt {
+			extra = append(extra, fmt.Sprintf("&errdetails.RetryInfo{RetryDelay: durationpb.New(delayUntil(%s))}", paramName(retryAtKey)))
+		} else if c.RetryInfo {
 			extra = append(extra, "&errdetails.RetryInfo{RetryDelay: durationpb.New(retryDelay)}")
 		}
 		if c.BadRequest {
@@ -394,7 +412,7 @@ func render(importPath string, registry protoreflect.FileDescriptor, codes []cod
 		p("}")
 		p("")
 	}
-	p(runtime)
+	b.WriteString(runtime)
 	src, err := format.Source(b.Bytes())
 	if err != nil {
 		return "", fmt.Errorf("format generated code: %w\n%s", err, b.String())
@@ -427,6 +445,30 @@ func Lookup(reason string) (spec Spec, ok bool) {
 	return spec, ok
 }
 
+// rfc3339 is stricter than time.Parse: the offset is within ±14:59 and minutes within 00–59.
+var rfc3339 = regexp.MustCompile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-](0\\d|1[0-4]):[0-5]\\d)$")
+
+// isMoment reports whether v is a non-zero RFC 3339 moment with a valid offset.
+func isMoment(v string) bool {
+	if !rfc3339.MatchString(v) {
+		return false
+	}
+	t, err := time.Parse(time.RFC3339, v)
+	return err == nil && !t.IsZero()
+}
+
+// delayUntil is the Retry-After for a moment: whole seconds, rounded up, at least one.
+func delayUntil(at time.Time) time.Duration {
+	d := time.Until(at)
+	if d < time.Second {
+		return time.Second
+	}
+	if rest := d % time.Second; rest != 0 {
+		d += time.Second - rest
+	}
+	return d
+}
+
 // REST is a registry error as bank-bff answers it.
 type REST struct {
 	// Spec of the code; Spec.Reason's name is the REST error code.
@@ -445,9 +487,8 @@ type REST struct {
 
 // ToREST reads a registry error from a gRPC error. ok is false when the error carries no finassist ErrorInfo, the
 // reason is not in the registry, a required metadata key is missing or empty (or, for an *_at key, not a non-zero
-// RFC 3339 moment), or a required detail is missing
-// (RetryInfo with a positive delay, BadRequest with at least one violation, each with a reason): bank-bff then
-// answers 500 INTERNAL_ERROR and counts finassist_unmapped_error_total. The status message never goes to the client.
+// RFC 3339 moment), or a required detail is missing (RetryInfo with a positive delay, BadRequest with at least one
+// violation, each with a reason): bank-bff then answers 500 INTERNAL_ERROR and counts finassist_unmapped_error_total. The status message never goes to the client.
 func ToREST(err error) (rest REST, ok bool) {
 	st, isStatus := status.FromError(err)
 	if !isStatus || st.Code() == codes.OK {
@@ -483,10 +524,8 @@ func ToREST(err error) (rest REST, ok bool) {
 			if !present || v == "" {
 				return REST{}, false
 			}
-			if strings.HasSuffix(k, "_at") {
-				if t, err := time.Parse(time.RFC3339, v); err != nil || t.IsZero() {
-					return REST{}, false
-				}
+			if strings.HasSuffix(k, "_at") && !isMoment(v) {
+				return REST{}, false
 			}
 			rest.Metadata[k] = v
 		}

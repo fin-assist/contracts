@@ -7,6 +7,7 @@
 package finerr
 
 import (
+	"regexp"
 	"strings"
 	"time"
 
@@ -152,8 +153,8 @@ func RetryNotAllowed() error {
 }
 
 // RateLimited returns RATE_LIMITED: Превышен лимит запросов; retry_at (RFC 3339) — когда можно повторить.
-func RateLimited(retryAt time.Time, retryDelay time.Duration) error {
-	return build("RATE_LIMITED", codes.ResourceExhausted, map[string]string{"retry_at": retryAt.Format(time.RFC3339)}, &errdetails.RetryInfo{RetryDelay: durationpb.New(retryDelay)})
+func RateLimited(retryAt time.Time) error {
+	return build("RATE_LIMITED", codes.ResourceExhausted, map[string]string{"retry_at": retryAt.Format(time.RFC3339)}, &errdetails.RetryInfo{RetryDelay: durationpb.New(delayUntil(retryAt))})
 }
 
 // InternalError returns INTERNAL_ERROR: Внутренняя ошибка. Сервисы обычно возвращают её голым INTERNAL / UNAVAILABLE / DEADLINE_EXCEEDED без ErrorInfo — bank-bff отдаёт 500 и без явного кода.
@@ -184,6 +185,30 @@ func Lookup(reason string) (spec Spec, ok bool) {
 	return spec, ok
 }
 
+// rfc3339 is stricter than time.Parse: the offset is within ±14:59 and minutes within 00–59.
+var rfc3339 = regexp.MustCompile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-](0\\d|1[0-4]):[0-5]\\d)$")
+
+// isMoment reports whether v is a non-zero RFC 3339 moment with a valid offset.
+func isMoment(v string) bool {
+	if !rfc3339.MatchString(v) {
+		return false
+	}
+	t, err := time.Parse(time.RFC3339, v)
+	return err == nil && !t.IsZero()
+}
+
+// delayUntil is the Retry-After for a moment: whole seconds, rounded up, at least one.
+func delayUntil(at time.Time) time.Duration {
+	d := time.Until(at)
+	if d < time.Second {
+		return time.Second
+	}
+	if rest := d % time.Second; rest != 0 {
+		d += time.Second - rest
+	}
+	return d
+}
+
 // REST is a registry error as bank-bff answers it.
 type REST struct {
 	// Spec of the code; Spec.Reason's name is the REST error code.
@@ -202,9 +227,8 @@ type REST struct {
 
 // ToREST reads a registry error from a gRPC error. ok is false when the error carries no finassist ErrorInfo, the
 // reason is not in the registry, a required metadata key is missing or empty (or, for an *_at key, not a non-zero
-// RFC 3339 moment), or a required detail is missing
-// (RetryInfo with a positive delay, BadRequest with at least one violation, each with a reason): bank-bff then
-// answers 500 INTERNAL_ERROR and counts finassist_unmapped_error_total. The status message never goes to the client.
+// RFC 3339 moment), or a required detail is missing (RetryInfo with a positive delay, BadRequest with at least one
+// violation, each with a reason): bank-bff then answers 500 INTERNAL_ERROR and counts finassist_unmapped_error_total. The status message never goes to the client.
 func ToREST(err error) (rest REST, ok bool) {
 	st, isStatus := status.FromError(err)
 	if !isStatus || st.Code() == codes.OK {
@@ -240,10 +264,8 @@ func ToREST(err error) (rest REST, ok bool) {
 			if !present || v == "" {
 				return REST{}, false
 			}
-			if strings.HasSuffix(k, "_at") {
-				if t, err := time.Parse(time.RFC3339, v); err != nil || t.IsZero() {
-					return REST{}, false
-				}
+			if strings.HasSuffix(k, "_at") && !isMoment(v) {
+				return REST{}, false
 			}
 			rest.Metadata[k] = v
 		}

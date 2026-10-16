@@ -53,6 +53,20 @@ func TestMetadataAndRetryInfo(t *testing.T) {
 	}
 }
 
+func TestRateLimitedDerivesRetryInfo(t *testing.T) {
+	retryAt := time.Now().Add(10 * time.Minute)
+	rest, ok := ToREST(RateLimited(retryAt))
+	if !ok || rest.Spec.HTTPStatus != 429 {
+		t.Fatalf("RateLimited: %+v, %v", rest, ok)
+	}
+	if rest.RetryAfter < 9*time.Minute || rest.RetryAfter > 10*time.Minute+time.Second || rest.RetryAfter%time.Second != 0 {
+		t.Fatalf("RetryAfter %v does not match retry_at", rest.RetryAfter)
+	}
+	if past, _ := ToREST(RateLimited(time.Now().Add(-time.Minute))); past.RetryAfter != time.Second {
+		t.Fatalf("past retry_at: RetryAfter %v", past.RetryAfter)
+	}
+}
+
 func TestViolations(t *testing.T) {
 	err := ValidationError(&errdetails.BadRequest_FieldViolation{Field: "phone", Reason: "INVALID_FORMAT", Description: "not E.164"})
 	rest, ok := ToREST(err)
@@ -66,6 +80,8 @@ func TestUnmapped(t *testing.T) {
 	unknown, _ := status.New(codes.NotFound, "x").WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: "NO_SUCH_CODE"})
 	noMetadata, _ := status.New(codes.ResourceExhausted, "x").WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: "LIMIT_EXCEEDED"})
 	badTime, _ := status.New(codes.ResourceExhausted, "x").WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: "LIMIT_EXCEEDED", Metadata: map[string]string{"resets_at": "через минуту"}})
+	badOffset, _ := status.New(codes.ResourceExhausted, "x").WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: "LIMIT_EXCEEDED", Metadata: map[string]string{"resets_at": "2026-10-17T00:00:00+24:00"}})
+	badMinutes, _ := status.New(codes.ResourceExhausted, "x").WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: "LIMIT_EXCEEDED", Metadata: map[string]string{"resets_at": "2026-10-17T00:00:00+03:60"}})
 	emptyKey, _ := status.New(codes.ResourceExhausted, "x").WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: "LIMIT_EXCEEDED", Metadata: map[string]string{"resets_at": ""}})
 	cases := map[string]error{
 		"nil":            nil,
@@ -75,6 +91,9 @@ func TestUnmapped(t *testing.T) {
 		"unknown reason": unknown.Err(),
 		"missing key":    noMetadata.Err(),
 		"empty key":      emptyKey.Err(),
+		"offset +24:00":  badOffset.Err(),
+		"offset :60":     badMinutes.Err(),
+		"bad zone":       LimitExceeded(time.Date(2026, 10, 17, 0, 0, 0, 0, time.FixedZone("bad", 24*60*60))),
 		"zero time":      LimitExceeded(time.Time{}),
 		"not RFC 3339":   badTime.Err(),
 		"no violations":  ValidationError(),
