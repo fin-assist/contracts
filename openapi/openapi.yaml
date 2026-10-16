@@ -3219,7 +3219,8 @@ components:
       properties:
         has_data:
           type: boolean
-          description: Есть ли у пользователя хоть одна операция. `false` — пустое состояние «Аналитики пока нет».
+          description: Есть ли у пользователя хоть одна операция и хоть один покрытый выпиской день. `false` — пустое состояние
+            «Аналитики пока нет».
         params:
           allOf:
           - $ref: '#/components/schemas/AnalyticsParams'
@@ -3274,12 +3275,12 @@ components:
       properties:
         previous:
           type: string
-          description: '`date` предыдущего периода с данными; `null` — стрелка недоступна.'
+          description: '`date` предыдущего периода с данными (сосед в `listAnalyticsPeriods`); `null` — стрелка недоступна.'
           pattern: ^\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$
           nullable: true
         next:
           type: string
-          description: '`date` следующего периода с данными; `null` — стрелка недоступна.'
+          description: '`date` следующего периода с данными (сосед в `listAnalyticsPeriods`); `null` — стрелка недоступна.'
           pattern: ^\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$
           nullable: true
     AnalyticsState:
@@ -3325,7 +3326,7 @@ components:
       properties:
         periods:
           type: array
-          description: Периоды с данными, новые первыми. Пустой — данных нет.
+          description: Периоды с покрытыми выпиской днями, новые первыми. Пустой — данных нет.
           items:
             $ref: '#/components/schemas/AnalyticsPeriodItem'
     AnalyticsPeriodItem:
