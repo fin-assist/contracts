@@ -6,7 +6,7 @@ import "finassist/common/v1/common.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/common/v1;commonv1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/common/v1;commonv1";
 
 // Блок общего каталога (api.md «Блоки», FIN-4): экран «Аналитика» и ответ помощника. bank-bff переводит его в
 // REST как есть: поля — один к одному, data — JSON-объект. Коды (type, status, lock.reason, action.type) —

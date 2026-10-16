@@ -4,7 +4,7 @@ package finassist.common.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/common/v1;commonv1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/common/v1;commonv1";
 
 // Общие типы. Соглашения (подробнее — grpc-api.md):
 // - Деньги: int64 в минимальных единицах валюты (копейки), суффикс поля `_minor`.
@@ -98,9 +98,11 @@ message AnalyticsParams {
 // Границы данных внутри календарного периода.
 message DataBounds {
   Coverage coverage = 1;
-  // Первая операция внутри периода.
+  // Границы данных внутри периода — по дням, покрытым периодом выписки (DTSTART..DTEND), а не по
+  // операциям. data_from — начало (00:00) первого покрытого дня в периоде; нет — покрытых дней нет.
   optional google.protobuf.Timestamp data_from = 2;
-  // Последняя операция внутри периода.
+  // Время последней операции, если она в последний покрытый день периода, иначе конец этого дня
+  // (23:59:59). Момент внутри дня, не граница: день берётся как есть.
   optional google.protobuf.Timestamp data_to = 3;
   // Дни внутри данных, которых нет ни в одной загрузке.
   repeated TimeRange gaps = 4;

@@ -128,6 +128,9 @@ user ──(системный, outbox)──► usersettings.SetUserTimezone н
 2. **Реестр один на все сервисы.** Своих enum ошибок у сервисов нет: сервис берёт общий код или предлагает новый по правилу 1.
 3. **В реестре только то, что доходит до клиента.** Внутренние отказы между сервисами — голый код gRPC без `ErrorInfo`: ретраи и метрики работают по коду. Поэтому `CALLER_NOT_ALLOWED` удалён — чужой вызывающий получает голый `PERMISSION_DENIED`, `bank-bff` отдаёт 500 и поднимает алерт.
 4. **Реестр меняется только вместе с разделом 8 `api.md`**, через задачу FIN. Удалённые номера и имена — в `reserved`.
+5. **`error_spec` существующего кода не меняется.** `buf breaking` опций не сравнивает (это проверяет `scripts/check_error_spec_stable.py` против базы PR; изменение принимает владелец меткой `breaking-accepted`), а новый ключ `metadata`, деталь или статус меняют сигнатуру конструктора `finerr` и при разъезде версий модуля превращают ошибку в 500 у `bank-bff`. Нужна другая реакция клиента — новый код по правилу 1; если без изменения не обойтись (решение владельца), последней выкатывается сторона, которая начинает требовать больше: добавление ключа или детали — сначала все сервисы, потом `bank-bff`; удаление — сначала `bank-bff`, потом сервисы; смена `http_status`/`grpc_code` порядка не требует.
+
+**`BadRequest` → REST `details[]`:** `field` → `field`, `reason` → `code` (`REQUIRED`, `INVALID_FORMAT`, `OUT_OF_RANGE`, …), `description` → `message` (для логов, в интерфейсе не показывается); `localized_message` не используется. `VALIDATION_ERROR` без единого нарушения или с нарушением без `reason`, `REQUEST_IN_PROGRESS`/`RATE_LIMITED` без `RetryInfo` с положительной задержкой, пустое значение обязательного ключа `metadata` и ключ с суффиксом `_at`, который не является моментом RFC 3339 (смещение в пределах ±14:59) или равен нулевому времени (конструктор принимает для него `time.Time`; смещение в строке — `Location` переданного времени, поэтому если REST фиксирует пояс, как `resets_at` с `+03:00` в api.md 7.5, сервис передаёт время в этом поясе), — неполная ошибка: `bank-bff` отвечает 500 и считает `finassist_unmapped_error_total` (`finerr.ToREST`).
 
 ### 5.2 Контроль
 
@@ -136,7 +139,7 @@ user ──(системный, outbox)──► usersettings.SetUserTimezone н
 | Механизм | Что не даёт сделать | Где |
 | --- | --- | --- |
 | Опция `error_spec` у каждого кода | завести код без кода gRPC, HTTP-статуса или с ключами `metadata` не в snake_case | `.proto` + проверка CI |
-| Генерация из опций: конструкторы ошибок для сервисов (`finerr.NotFound()`, `finerr.LimitExceeded(resetsAt)`) и таблица перевода для `bank-bff` | вручную собрать `ErrorInfo` с опечаткой в `reason`, забыть обязательный ключ `metadata` (это параметр конструктора), разойтись с маппингом `bank-bff` (его не пишут руками) | генератор в бэкенд-репозитории |
+| Генерация из опций: конструкторы ошибок для сервисов (`finerr.NotFound()`, `finerr.LimitExceeded(resetsAt)`) и таблица перевода для `bank-bff` (`finerr.ToREST`) | вручную собрать `ErrorInfo` с опечаткой в `reason`, забыть обязательный ключ `metadata` (это параметр конструктора), разойтись с маппингом `bank-bff` (его не пишут руками) | `tools/protoc-gen-finerr` в `fin-assist/contracts`, результат — пакет `finerr` модуля `gen/go` (раздел 10) |
 | Линтер (`golangci-lint`, правило `forbidigo`): `status.Error`, `status.New`, `errdetails.ErrorInfo` запрещены вне пакета `finerr` | обойти конструкторы | CI сервисов |
 | `scripts/check_error_registry.py` | разойтись с разделом 8 `api.md` (коды и HTTP-статусы), завести `error_spec` в другом enum (свой реестр сервиса), превысить лимит в 30 кодов | CI `proto/` |
 | `buf breaking` | переиспользовать удалённый номер или имя | CI `proto/` |
@@ -283,7 +286,7 @@ REST 1.x и 2.x один к одному. Дополнительно:
 
 - точный ключ периода по `period` + `period_key` (`quarter` + `2026-09` → `2026-Q3`) в поясе пользователя;
 - `is_current` — `now` внутри `range`;
-- `stale` — `now ≥ stale_after` (порог присылает `bank-statement-data` готовым моментом, `analytics` его не знает);
+- `stale` — `now ≥ stale_after` (порог присылает `bank-statement-data` готовым моментом, `analytics` его не знает). `stale_after` — начало 15-го календарного дня после последнего покрытого выпиской дня (`DTEND` по всем загрузкам, в том числе без операций) в поясе пользователя, а не от последней операции (FIN-124); тот же момент `bank-statement-data` использует для `FeedState.stale` ленты и блокировки прогноза `stale_data`;
 - `navigation`, `ListPeriods` — по списку периодов, для которых есть снимки. Поэтому `bank-statement-data` присылает снимок на **каждый** период, где есть хоть один покрытый выпиской день, в том числе без операций (метрики по своим правилам: обычно `none`, но метрики с базой вне периода считаются — например, `small_frequent` неполного месяца по последнему полному месяцу до него), и удаляет (`removed_periods`) период, в котором покрытых дней не осталось (api.md 6.2, FIN-127);
 - сборка дерева ответа из плоских снимков метрик.
 
@@ -342,11 +345,13 @@ REST 7.x один к одному. Порядок в `AskQuestion`: `GetAssistan
 
 ## 10. Кодогенерация и CI
 
-- `.proto` — один каталог `proto/` в бэкенд-монорепозитории (репозитория пока нет; путь `go_package` — `github.com/fin-assist/backend/gen/go/...`, поменять при создании).
-- Сгенерированный Go-код — в git (`gen/go`), чтобы сборка сервиса не требовала `protoc`.
+- `.proto` — каталог `proto/` в `fin-assist/contracts`. Бэкенд — отдельный репозиторий на каждый сервис и отдельные репозитории библиотек (решение 16.10.2026, FIN-116), поэтому генерация одна — здесь, а не в каждом сервисе.
+- Сгенерированный Go-код — в git этого репозитория, Go-модуль `github.com/fin-assist/contracts/gen/go` (каталог `gen/go`, свой `go.mod`; `go_package` — `github.com/fin-assist/contracts/gen/go/finassist/<сервис>/v1`), чтобы сборка сервиса не требовала `protoc` и `buf`. Сервис подключает его как обычную зависимость: `go get github.com/fin-assist/contracts/gen/go@vX.Y.Z`. Версии — теги `gen/go/vX.Y.Z`, выпуск и правило версий — `README.md` («Go-модуль `gen/go`»).
+- Состав модуля: `finassist/<сервис>/v1` — сообщения (`protoc-gen-go`) и клиенты/серверы gRPC (`protoc-gen-go-grpc`); `finerr` — конструкторы ошибок реестра (по одному на код `ErrorReason`, обязательные ключи `metadata` — параметры, `BadRequest` и `RetryInfo` — параметры там, где их требует `error_spec`; если код требует и `RetryInfo`, и ключ `retry_at` (`RATE_LIMITED`), задержка вычисляется из `retry_at`, чтобы `Retry-After` и тело ответа не расходились), `Lookup` (спецификация кода по `reason`) и `ToREST` — перевод статуса в REST для `bank-bff` (`ok = false` — неполная или не из реестра ошибка по правилам раздела 5: 500 и метрика `finassist_unmapped_error_total`).
+- Генерация — `scripts/generate.sh`: собирает закреплённые в `tools/go.mod` `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` и `tools/protoc-gen-finerr`, запускает `buf generate` (`proto/buf.gen.yaml`). CI перегенерирует и требует, чтобы `gen/go` не изменился, затем `go build`, `go vet`, `go test` модуля.
 - Проверки в CI (аналог `oasdiff` для REST): lint (STANDARD), несовместимые изменения против `main` (`FILE`), запрет повторного использования номеров полей (`reserved`), реестр ошибок — `scripts/check_error_registry.py <дескрипторы> <api.md>` (5.2).
 - Из опций `error_spec` генерируются пакет `finerr` (конструкторы ошибок) и таблица перевода ошибок для `bank-bff` (5.2).
-- **Инструмент — `buf`** (решено 14.10.2026): `buf build`, `buf lint` (STANDARD), `buf breaking` против `main`, `buf generate` с локальными плагинами `protoc-gen-go` и `protoc-gen-go-grpc`, `buf format`. Версия `buf` закреплена в одном месте (инструментальные зависимости Go-модуля). BSR не используем: нужные `.proto` googleapis (`google/rpc/error_details.proto` и др.) лежат в репозитории.
+- **Инструмент — `buf`** (решено 14.10.2026): `buf build`, `buf lint` (STANDARD), `buf breaking` против `main`, `buf generate` с локальными плагинами `protoc-gen-go`, `protoc-gen-go-grpc` и `protoc-gen-finerr`, `buf format`. Версии `buf` и плагинов закреплены в инструментальных зависимостях модуля `tools/go.mod`; `BUF_VERSION` в CI сверяется с ним. BSR не используем; если понадобятся `.proto` googleapis (`google/rpc/error_details.proto` и др.), они кладутся в репозиторий.
 
 Проверено 12.10: все файлы проходят `buf build` и `buf lint` STANDARD (единственное исключение — префикс значений `ErrorReason`); `check_error_registry.py` — 20 из 30 кодов, совпадает с `api.md`.
 

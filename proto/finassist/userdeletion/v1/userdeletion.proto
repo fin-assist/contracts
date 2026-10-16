@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package finassist.userdeletion.v1;
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/userdeletion/v1;userdeletionv1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/userdeletion/v1;userdeletionv1";
 
 // Удаление данных пользователя при удалении аккаунта. Реализует каждый сервис, где хранятся
 // данные пользователя: bank-statement-data, analytics, assistant. Вызывает только `user`

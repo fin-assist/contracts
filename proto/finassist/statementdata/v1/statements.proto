@@ -5,7 +5,7 @@ package finassist.statementdata.v1;
 import "finassist/common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/statementdata/v1;statementdatav1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/statementdata/v1;statementdatav1";
 
 // Сервис `bank-statement-data`, часть «Выписки» (REST 3.x). Вызывающий: bank-bff, токен пользователя.
 
@@ -242,6 +242,8 @@ message ImportAccount {
 message IncompleteMonth {
   string month = 1;
   finassist.common.v1.TimeRange range = 2;
+  // Границы покрытых дней месяца, как DataBounds: 00:00 первого покрытого дня и время последней
+  // операции в последний покрытый день или 23:59:59 этого дня.
   google.protobuf.Timestamp data_from = 3;
   google.protobuf.Timestamp data_to = 4;
   // Дни без данных ни в одном файле.
@@ -326,13 +328,17 @@ message ImportResult {
   optional ImportTotals totals = 8;
   // Счета в файле.
   repeated ImportAccount accounts = 9;
-  // Операций с проставленной категорией.
+  // Операций с проставленной категорией: новые операции, не вошедшие в uncategorized_count,
+  // new_count − uncategorized_count.
   int64 categorized_count = 10;
   // Из них — переводы между своими счетами (две операции на пару).
   int64 own_transfer_count = 11;
-  // Без категории; входят в суммы.
+  // Без категории; входят в суммы. Новые операции в категории cat_uncategorized (категория банка
+  // пустая или буквально «Без категории») плюс возвраты, для которых не нашлась расходная категория
+  // (FIN-126).
   int64 uncategorized_count = 12;
-  // Переход к операциям без категории — чтобы пользователь мог их разобрать.
+  // Переход к операциям без категории — чтобы пользователь мог их разобрать: selection «Без
+  // категории» за дни новых операций загрузки (from/to).
   optional finassist.common.v1.OperationsFilter uncategorized_filters = 13;
   ImportCoverage coverage = 14;
   // Особые ситуации.
