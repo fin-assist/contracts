@@ -3,7 +3,7 @@ name: ci
 on:
   push:
   pull_request:
-    # labeled/unlabeled: the `breaking-accepted` label changes the oasdiff verdict.
+    # labeled/unlabeled: the `breaking-accepted` label changes the oasdiff and check_error_spec_stable verdicts.
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
 permissions:
