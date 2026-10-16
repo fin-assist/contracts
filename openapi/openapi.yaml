@@ -1069,8 +1069,7 @@ paths:
       operationId: listCategories
       summary: Справочник категорий
       description: Для выбора категории, иконок и подписей. Клиент кэширует и перечитывает при запуске приложения, после
-        каждой успешной загрузки (`complete` в `streamStatementProgress`) и при ответе 422 `CATEGORY_NOT_ASSIGNABLE` (эти два
-        раза — с заголовком `X-Read-Primary` = 1) — новая
+        каждой успешной загрузки (`complete` в `streamStatementProgress`) и при ответе 422 `CATEGORY_NOT_ASSIGNABLE` — новая
         категория банка появляется при первой встрече в выписке, а у известной может смениться `kinds`.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
