@@ -439,7 +439,7 @@
             "share": 0.0043151261673867606
           },
           {
-            "id": "cat_ochen_dlinnaya_kategoriya_banka_kotoroy_net_v_spiske_izvestnyh_ka",
+            "id": "<ignored>",
             "icon": "tag",
             "title": "Очень длинная категория банка, которой нет в списке известных ка",
             "value": 120000,
@@ -449,7 +449,7 @@
               "filter": {
                 "from": "2026-09-01T00:00:00+03:00",
                 "to": "2026-10-01T00:00:00+03:00",
-                "category_id": "cat_ochen_dlinnaya_kategoriya_banka_kotoroy_net_v_spiske_izvestnyh_ka",
+                "category_id": "<ignored>",
                 "kind": "expense",
                 "transfer_mode": "without"
               }
@@ -635,7 +635,7 @@
             "share": 0.12145096802365088
           },
           {
-            "id": "cat_kripto",
+            "id": "<ignored>",
             "icon": "tag",
             "title": "Крипто",
             "value": 500000,
@@ -646,7 +646,7 @@
               "filter": {
                 "from": "2026-09-01T00:00:00+03:00",
                 "to": "2026-10-01T00:00:00+03:00",
-                "category_id": "cat_kripto",
+                "category_id": "<ignored>",
                 "kind": "income",
                 "transfer_mode": "without"
               }

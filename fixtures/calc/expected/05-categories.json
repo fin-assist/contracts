@@ -549,7 +549,7 @@
       "assignable": true
     },
     {
-      "id": "cat_kripto",
+      "id": "<ignored>",
       "name": "Крипто",
       "icon": "tag",
       "is_system": false,
@@ -560,7 +560,7 @@
       "assignable": true
     },
     {
-      "id": "cat_ochen_dlinnaya_kategoriya_banka_kotoroy_net_v_spiske_izvestnyh_ka",
+      "id": "<ignored>",
       "name": "Очень длинная категория банка, которой нет в списке известных ка",
       "icon": "tag",
       "is_system": false,

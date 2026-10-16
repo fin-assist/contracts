@@ -216,6 +216,13 @@ class Comparison(unittest.TestCase):
         self.assertEqual(compare(exp, {"items": [{"id": "y", "title": "Пятёрочка"}],
                                        "blocks": [{"id": "tiles", "title": "Плитки"}]}), [])
 
+    def test_new_bank_category_id_is_opaque(self):
+        known = frozenset({"cat_supermarkets"})
+        exp = redact({"items": [{"id": "x", "category_id": "cat_kripto", "category_name": "Крипто"},
+                                {"id": "y", "category_id": "cat_supermarkets", "category_name": "Супермаркеты"}]},
+                     known=known)
+        self.assertEqual([i["category_id"] for i in exp["items"]], [IGNORED, "cat_supermarkets"])
+
     def test_moments_absent_null_and_extra(self):
         exp = {"at": "2026-09-25T21:40:00+03:00", "note": None, "status": "ready"}
         self.assertEqual(compare(exp, {"at": "2026-09-25T18:40:00Z"}), [])

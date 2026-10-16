@@ -22,23 +22,31 @@ RFC3339 = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:
 FLOAT_TOLERANCE = 1e-9
 
 
-def redact(value, in_blocks: bool = False, parent_is_items: bool = False, key: str = None):
+def redact(value, in_blocks: bool = False, parent_is_items: bool = False, key: str = None, known: frozenset = None):
+    """`known` — category ids of fixtures/calc/categories.json. A category the statement brought (not in the registry)
+    has an opaque id: it is matched by name, its id is ignored."""
+    def category_id(v):
+        return v if known is None or not str(v).startswith("cat_") or v in known else IGNORED
+
     if isinstance(value, dict):
         out = {}
         for k, v in value.items():
             if v is None:
                 out[k] = None
+            elif k == "category_id":
+                out[k] = category_id(v)
             elif k in OPAQUE_KEYS:
                 # `id` of a block, a tile, a ranked item (category) and a category in 5.1 is a stable key, not opaque.
-                out[k] = v if (k == "id" and (in_blocks or key == "categories")) else IGNORED
+                stable = k == "id" and (in_blocks or key == "categories")
+                out[k] = category_id(v) if stable else IGNORED
             elif k in TEXT_KEYS and (in_blocks or k not in DATA_TITLE_OUTSIDE_BLOCKS):
                 keep = in_blocks and k == "title" and parent_is_items
                 out[k] = v if keep else IGNORED
             else:
-                out[k] = redact(v, in_blocks or k == "blocks", False, k)
+                out[k] = redact(v, in_blocks or k == "blocks", False, k, known)
         return out
     if isinstance(value, list):
-        return [redact(v, in_blocks, key == "items", key) for v in value]
+        return [redact(v, in_blocks, key == "items", key, known) for v in value]
     return value
 
 

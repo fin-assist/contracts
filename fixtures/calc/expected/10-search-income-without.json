@@ -402,7 +402,7 @@
       "amount": 500000,
       "currency": "RUB",
       "title": "Биржа",
-      "category_id": "cat_kripto",
+      "category_id": "<ignored>",
       "category_name": "Крипто",
       "category_icon": "tag",
       "is_category_manual": false,

@@ -35,6 +35,8 @@ class Runner:
         self.backend = Backend(Registry.load(os.path.join(root, "categories.json")),
                                ZoneInfo(self.scenario["time_zone"]))
         self.responses = {}
+        with open(os.path.join(root, "categories.json"), encoding="utf-8") as f:
+            self.known = frozenset(c["id"] for c in json.load(f)["categories"])
         self.raw = {}  # expect path → (schema kind, response before redaction)
 
     def get(self, request: str):
@@ -99,7 +101,7 @@ class Runner:
                 resp = {"status": e.status, "error": {"code": e.code}}
             self.responses[step["name"]] = resp
             if step.get("expect"):
-                out[step["expect"]] = redact(resp)
+                out[step["expect"]] = redact(resp, known=self.known)
                 kind = do if do != "get" else urlsplit((request or "").split(" ", 1)[1]).path
                 self.raw[step["expect"]] = (kind, resp)
         return out
