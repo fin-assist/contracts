@@ -2614,6 +2614,7 @@ components:
             $ref: '#/components/schemas/ImportAccount'
         categorized_count:
           type: integer
+          description: Новые операции вне «Без категории» — `new_count` − `uncategorized_count`.
         own_transfer_count:
           type: integer
           description: Из `categorized_count` — операций (две на пару) в категории «Между своими счетами».
@@ -2626,7 +2627,8 @@ components:
           nullable: true
           allOf:
           - $ref: '#/components/schemas/OperationsFilter'
-          description: Выборка для ссылки «разобрать».
+          description: Выборка для ссылки «разобрать» — `selection` «Без категории» за дни новых операций загрузки
+            (`from`/`to`); может включать операции «Без категории» прошлых загрузок за те же дни.
           type: object
         coverage:
           $ref: '#/components/schemas/ImportCoverage'
