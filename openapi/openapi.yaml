@@ -2614,7 +2614,7 @@ components:
             $ref: '#/components/schemas/ImportAccount'
         categorized_count:
           type: integer
-          description: Новые операции вне «Без категории» — `new_count` − `uncategorized_count`.
+          description: Новые операции, не вошедшие в `uncategorized_count`, — `new_count` − `uncategorized_count`.
         own_transfer_count:
           type: integer
           description: Из `categorized_count` — операций (две на пару) в категории «Между своими счетами».
@@ -3176,7 +3176,7 @@ components:
         category_id:
           type: string
           description: Категория с `assignable`, у которой `kinds` включает `kind` записи; для пары — любая с `assignable`.
-            Иначе 422 `CATEGORY_NOT_ASSIGNABLE`.
+            Иначе 422 `CATEGORY_NOT_ASSIGNABLE` — клиент перечитывает справочник (`listCategories`) и перестраивает выбор.
     ChangeCategoryResponse:
       type: object
       required:

@@ -326,7 +326,7 @@ message ImportResult {
   optional ImportTotals totals = 8;
   // Счета в файле.
   repeated ImportAccount accounts = 9;
-  // Операций с проставленной категорией: новые операции вне «Без категории»,
+  // Операций с проставленной категорией: новые операции, не вошедшие в uncategorized_count,
   // new_count − uncategorized_count.
   int64 categorized_count = 10;
   // Из них — переводы между своими счетами (две операции на пару).
