@@ -4,7 +4,7 @@ package finassist.common.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/common/v1;commonv1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/common/v1;commonv1";
 
 // Общие типы. Соглашения (подробнее — grpc-api.md):
 // - Деньги: int64 в минимальных единицах валюты (копейки), суффикс поля `_minor`.

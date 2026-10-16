@@ -6,7 +6,7 @@ import "finassist/common/v1/common.proto";
 import "finassist/statementdata/v1/operations.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/statementdata/v1;statementdatav1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/statementdata/v1;statementdatav1";
 
 // Системные сервисы bank-statement-data: явный user_id, только сервисная идентичность.
 // Синхронизация часового пояса — в finassist.usersettings.v1 (общий контракт с assistant).

@@ -4,7 +4,7 @@ package finassist.common.v1;
 
 import "google/protobuf/descriptor.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/common/v1;commonv1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/common/v1;commonv1";
 
 // Машиночитаемое описание кода ошибки из реестра ErrorReason. Из этих опций генерируются
 // конструкторы ошибок для сервисов и таблица перевода в REST для bank-bff, поэтому код без
@@ -23,6 +23,9 @@ message ErrorSpec {
   int32 http_status = 2;
   // Ключи google.rpc.ErrorInfo.metadata, которые сервис обязан заполнить (snake_case).
   // Конструктор ошибки принимает их как обязательные параметры; другие ключи передать нельзя.
+  // Ключ с суффиксом _at — момент в RFC 3339 (конструктор принимает время, некорректное или
+  // нулевое значение bank-bff считает неполной ошибкой). Смещение в строке — пояс переданного
+  // времени: если REST фиксирует пояс (resets_at — +03:00), сервис передаёт время в нём.
   repeated string metadata_keys = 3;
   // Какие стандартные детали google.rpc прикладываются к статусу.
   repeated ErrorDetail details = 4;
