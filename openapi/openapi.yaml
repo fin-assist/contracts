@@ -1274,20 +1274,6 @@ paths:
                       }
                     },
                     {
-                      "id": "monthly_chart",
-                      "type": "chart",
-                      "v": 1,
-                      "status": "locked",
-                      "title": "Расходы по месяцам",
-                      "alt_text": "График по месяцам пока закрыт",
-                      "lock": {
-                        "reason": "need_months_with_data",
-                        "text": "Нужно 2 месяца с данными, есть 1",
-                        "required": 2,
-                        "available": 1
-                      }
-                    },
-                    {
                       "id": "expense_categories",
                       "type": "ranked_list",
                       "v": 1,
@@ -1391,7 +1377,8 @@ paths:
       - analytics
       operationId: listAnalyticsPeriods
       summary: Периоды с данными
-      description: Для шторки выбора периода. Без пагинации — даже за 10 лет это 120 месяцев. Клиент запрашивает при открытии
+      description: Для шторки выбора периода. Периоды, где есть хоть один день, покрытый периодом выписки (`DTSTART..DTEND`)
+        хотя бы одной загрузки, — даже без операций. Без пагинации — даже за 10 лет это 120 месяцев. Клиент запрашивает при открытии
         шторки.
       parameters:
       - name: period
@@ -1441,17 +1428,20 @@ paths:
     - name: id
       in: path
       required: true
-      description: ID регулярного платежа (`RegularPayment.id`), стабилен между пересчётами.
+      description: ID регулярного платежа (`RegularPayment.id`), стабилен между пересчётами. ID по общему правилу (сейчас
+        UUIDv7, соответствие ключа платежа и ID хранит сервер), а не описание операции и не его кодирование — описание
+        является персональными данными и в URL и логи не попадает. Не UUID — 400 `VALIDATION_ERROR`.
       schema:
         type: string
+        pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
     put:
       tags:
       - analytics
       operationId: dismissRegularPayment
       summary: «Не подписка»
       description: |
-        Платёж исчезает из карточки, итог пересчитывается. Отметка привязана к платежу (продавцу и
-        периодичности), а не к периоду. Пока итог не пересчитан, `getAnalytics` отдаёт `state.recalculating: true`.
+        Платёж исчезает из карточки, итог пересчитывается. Отметка привязана к ключу платежа — описанию
+        операции из выписки (точное совпадение), а не к периоду. Пока итог не пересчитан, `getAnalytics` отдаёт `state.recalculating: true`.
         Идемпотентно.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
@@ -3270,7 +3260,8 @@ components:
       properties:
         has_data:
           type: boolean
-          description: Есть ли у пользователя хоть одна операция. `false` — пустое состояние «Аналитики пока нет».
+          description: Есть ли у пользователя хоть одна операция и хоть один покрытый выпиской день. `false` — пустое состояние
+            «Аналитики пока нет».
         params:
           allOf:
           - $ref: '#/components/schemas/AnalyticsParams'
@@ -3329,12 +3320,12 @@ components:
       properties:
         previous:
           type: string
-          description: '`date` предыдущего периода с данными; `null` — стрелка недоступна.'
+          description: '`date` предыдущего периода с данными (сосед в `listAnalyticsPeriods`); `null` — стрелка недоступна.'
           pattern: ^\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$
           nullable: true
         next:
           type: string
-          description: '`date` следующего периода с данными; `null` — стрелка недоступна.'
+          description: '`date` следующего периода с данными (сосед в `listAnalyticsPeriods`); `null` — стрелка недоступна.'
           pattern: ^\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$
           nullable: true
     AnalyticsState:
@@ -3384,7 +3375,7 @@ components:
       properties:
         periods:
           type: array
-          description: Периоды с данными, новые первыми. Пустой — данных нет.
+          description: Периоды с покрытыми выпиской днями, новые первыми. Пустой — данных нет.
           items:
             $ref: '#/components/schemas/AnalyticsPeriodItem'
     AnalyticsPeriodItem:
@@ -3696,6 +3687,8 @@ components:
         payment_id:
           type: string
           nullable: true
+          pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
+          description: ID регулярного платежа (UUID) для 6.3.
         label:
           type: string
           nullable: true

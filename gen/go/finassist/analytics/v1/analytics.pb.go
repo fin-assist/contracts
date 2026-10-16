@@ -155,7 +155,10 @@ func (LockReason) EnumDescriptor() ([]byte, []int) {
 
 // Причина блокировки метрики и условие открытия: сколько данных нужно и сколько есть (например,
 // нужно 3 полных месяца, есть 1). При нуле полных месяцев клиент опирается на границы данных из
-// ScreenState.
+// ScreenState. У метрик с окном от выбранного месяца — «полные месяцы до выбранного включительно»
+// (регулярные платежи, мелкие частые траты) или «перед выбранным» (заметные траты) — available
+// только такие месяцы, а текст при нуле — по данным до конца выбранного периода, не по всем
+// загрузкам.
 type MetricLock struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Reason LockReason             `protobuf:"varint,1,opt,name=reason,proto3,enum=finassist.analytics.v1.LockReason" json:"reason,omitempty"`
@@ -305,7 +308,8 @@ type Metric struct {
 	Lock *MetricLock `protobuf:"bytes,2,opt,name=lock,proto3,oneof" json:"lock,omitempty"`
 	// За какой период истории посчитана метрика («обычно около 3 100 ₽ — апрель — август»).
 	// Заполнено при READY / TENTATIVE / NONE у метрик, опирающихся на прошлые месяцы:
-	// «обычно», регулярные платежи, заметные траты, прогноз квартала и года.
+	// «обычно», регулярные платежи, заметные траты, прогноз квартала и года, мелкие частые траты
+	// неполного месяца (последний полный месяц до него).
 	Basis *MetricBasis `protobuf:"bytes,3,opt,name=basis,proto3,oneof" json:"basis,omitempty"`
 	// Переход к операциям: готовый набор фильтров (период, категория, направление, режим переводов,
 	// выборка), по которому поиск операций вернёт ровно те операции, из которых сложилось значение
@@ -875,15 +879,20 @@ func (x *MonthlyChart) GetPoints() []*MonthlyPoint {
 type RegularPayment struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ID платежа — для исключения из регулярных (RegularPaymentsService.Dismiss). Стабилен между
-	// пересчётами: привязан к продавцу и периодичности.
+	// пересчётами: привязан к ключу платежа — описанию операции из выписки (точное совпадение).
+	// UUID в каноничной записи (сейчас UUIDv7, соответствие ключа и ID хранит сервис), а не описание и
+	// не его кодирование: описание — персональные данные и не должно попадать в URL и логи. bank-bff
+	// отклоняет не-UUID до вызова сервиса.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Название для показа («Спортзал», «Яндекс Плюс»).
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	// Сумма одного списания, копейки.
 	AmountMinor int64 `protobuf:"varint,3,opt,name=amount_minor,json=amountMinor,proto3" json:"amount_minor,omitempty"`
-	// Сумма в пересчёте на месяц (недельные и годовые платежи приводятся к месяцу), копейки.
+	// Сумма в месяц, копейки. В MVP распознаются только платежи с одним списанием в месяц, и «в месяц» —
+	// медиана сумм списаний, как amount_minor (спецификация FIN-106, раздел 5); поле оставлено для
+	// других периодичностей.
 	MonthlyAmountMinor int64 `protobuf:"varint,4,opt,name=monthly_amount_minor,json=monthlyAmountMinor,proto3" json:"monthly_amount_minor,omitempty"`
-	// Когда списывается, готовая человекочитаемая строка («1-го числа», «по понедельникам», «12 марта»).
+	// Когда списывается, готовая человекочитаемая строка («15-го числа»; в MVP только ежемесячные).
 	ScheduleName string `protobuf:"bytes,5,opt,name=schedule_name,json=scheduleName,proto3" json:"schedule_name,omitempty"`
 	// Категория платежа.
 	CategoryId string `protobuf:"bytes,6,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
@@ -973,6 +982,8 @@ func (x *RegularPayment) GetFilters() *v1.OperationsFilter {
 }
 
 // Детали метрики insights.regular_payments; итог в месяц — в Metric.value_minor.
+// Полные месяцы считаются до выбранного включительно; окно распознавания — последние до 3 из них;
+// блокировка — как в MetricLock для такого окна.
 // 2 полных месяца — TENTATIVE, 3 и больше — READY.
 type RegularPayments struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1118,7 +1129,8 @@ func (x *NotableSpendingItem) GetFilters() *v1.OperationsFilter {
 }
 
 // Детали метрики insights.notable_spending — категории с расходами заметно выше обычного.
-// Порог — 3 полных месяца; база — в Metric.basis.
+// База — 3 полных месяца перед выбранным (сам месяц не входит), в Metric.basis; порог — эти
+// 3 месяца, блокировка — как в MetricLock для такого окна.
 type NotableSpending struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Items         []*NotableSpendingItem `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
@@ -1302,8 +1314,10 @@ func (x *SmallFrequentGroup) GetFilters() *v1.OperationsFilter {
 }
 
 // Детали метрики insights.small_frequent — мелкие частые траты; итог в месяц по всем группам —
-// в Metric.value_minor.
-// Порог — 1 полный месяц.
+// в Metric.value_minor. Считается за полный месяц: выбранный неполный месяц — за последний полный
+// до него: этот месяц — база расчёта (Metric.basis), и переходы к операциям (filters) — за него.
+// Порог — 1 полный месяц до выбранного включительно; нет — LOCKED (need_full_months, available и
+// текст — как в MetricLock для такого окна), а не расчёт по более позднему месяцу.
 type SmallFrequent struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Группы по убыванию суммы в месяц.
@@ -1873,7 +1887,8 @@ func (x *ScreenState) GetRecalculating() bool {
 // Аналитика за период целиком.
 type GetAnalyticsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Есть ли у пользователя хоть одна операция. false — остальных полей нет, аналитики пока нет.
+	// Есть ли у пользователя хоть одна операция и хоть один покрытый выпиской день. false — остальных
+	// полей нет, аналитики пока нет.
 	HasData bool `protobuf:"varint,1,opt,name=has_data,json=hasData,proto3" json:"has_data,omitempty"`
 	// Фактические параметры ответа: тип периода, точный ключ периода, режим переводов.
 	Params *v1.AnalyticsParams `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty"`
@@ -2161,10 +2176,10 @@ func (x *PeriodItem) GetCoverage() v1.Coverage {
 	return v1.Coverage(0)
 }
 
-// Периоды с данными выбранного типа.
+// Периоды с данными выбранного типа: где есть хоть один день, покрытый периодом выписки.
 type ListPeriodsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Периоды с данными, новые первыми; пустой список — данных нет. Без пагинации.
+	// Периоды с покрытыми выпиской днями, новые первыми; пустой список — данных нет. Без пагинации.
 	Periods       []*PeriodItem `protobuf:"bytes,1,rep,name=periods,proto3" json:"periods,omitempty"`
 	TimeZone      string        `protobuf:"bytes,2,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -2456,7 +2471,7 @@ func (x *PeriodRef) GetPeriodKey() string {
 // Состояние данных пользователя — источник для ScreenState и ListPeriods.
 type UserDataState struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Есть ли хоть одна операция.
+	// Есть ли хоть одна операция и хоть один покрытый выпиской день.
 	HasData bool `protobuf:"varint,1,opt,name=has_data,json=hasData,proto3" json:"has_data,omitempty"`
 	// Границы покрытых дней по всем загрузкам (по периоду выписки DTSTART..DTEND), полуинтервал:
 	// начало первого покрытого дня и начало дня после последнего.
