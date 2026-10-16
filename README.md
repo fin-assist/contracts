@@ -82,7 +82,7 @@ import (
 	"github.com/fin-assist/contracts/gen/go/finerr"
 )
 
-return nil, finerr.LimitExceeded(resetsAt) // resetsAt time.Time: *_at keys are RFC 3339 moments
+return nil, finerr.LimitExceeded(resetsAt.In(moscow)) // *_at keys are RFC 3339 moments; the Location sets the offset the client sees (resets_at: +03:00, api.md 7.5)
 ```
 
 - **Изменение `.proto`** — в том же PR `scripts/generate.sh` и коммит `gen/go`; CI сверяет. Новый импорт в сгенерированном коде (ещё один well-known type) — `go get` в `gen/go`: `go.mod` модуля скрипт не трогает.

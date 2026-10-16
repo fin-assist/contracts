@@ -201,8 +201,8 @@ type REST struct {
 }
 
 // ToREST reads a registry error from a gRPC error. ok is false when the error carries no finassist ErrorInfo, the
-// reason is not in the registry, a required metadata key is missing or empty (or, for an *_at key, not an RFC 3339
-// moment), or a required detail is missing
+// reason is not in the registry, a required metadata key is missing or empty (or, for an *_at key, not a non-zero
+// RFC 3339 moment), or a required detail is missing
 // (RetryInfo with a positive delay, BadRequest with at least one violation, each with a reason): bank-bff then
 // answers 500 INTERNAL_ERROR and counts finassist_unmapped_error_total. The status message never goes to the client.
 func ToREST(err error) (rest REST, ok bool) {

@@ -178,8 +178,9 @@ type ErrorSpec struct {
 	HttpStatus int32 `protobuf:"varint,2,opt,name=http_status,json=httpStatus,proto3" json:"http_status,omitempty"`
 	// Ключи google.rpc.ErrorInfo.metadata, которые сервис обязан заполнить (snake_case).
 	// Конструктор ошибки принимает их как обязательные параметры; другие ключи передать нельзя.
-	// Ключ с суффиксом _at — момент в RFC 3339 (конструктор принимает время, некорректное значение
-	// bank-bff считает неполной ошибкой).
+	// Ключ с суффиксом _at — момент в RFC 3339 (конструктор принимает время, некорректное или
+	// нулевое значение bank-bff считает неполной ошибкой). Смещение в строке — пояс переданного
+	// времени: если REST фиксирует пояс (resets_at — +03:00), сервис передаёт время в нём.
 	MetadataKeys []string `protobuf:"bytes,3,rep,name=metadata_keys,json=metadataKeys,proto3" json:"metadata_keys,omitempty"`
 	// Какие стандартные детали google.rpc прикладываются к статусу.
 	Details       []ErrorDetail `protobuf:"varint,4,rep,packed,name=details,proto3,enum=finassist.common.v1.ErrorDetail" json:"details,omitempty"`
