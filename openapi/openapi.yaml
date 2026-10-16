@@ -1418,9 +1418,10 @@ paths:
       required: true
       description: ID регулярного платежа (`RegularPayment.id`), стабилен между пересчётами. ID по общему правилу (сейчас
         UUIDv7, соответствие ключа платежа и ID хранит сервер), а не описание операции и не его кодирование — описание
-        является персональными данными и в URL и логи не попадает.
+        является персональными данными и в URL и логи не попадает. Не UUID — 400 `VALIDATION_ERROR`.
       schema:
         type: string
+        pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
     put:
       tags:
       - analytics
@@ -3640,6 +3641,8 @@ components:
         payment_id:
           type: string
           nullable: true
+          pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
+          description: ID регулярного платежа (UUID) для 6.3.
         label:
           type: string
           nullable: true
