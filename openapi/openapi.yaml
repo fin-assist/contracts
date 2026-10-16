@@ -3084,7 +3084,8 @@ components:
           bank_category:
             type: string
             nullable: true
-            description: Категория банка как есть; у пары — нет.
+            maxLength: 64
+            description: Категория банка как в выписке, обрезанная до 64 символов; у пары — нет.
           mcc:
             type: string
             nullable: true
@@ -3219,6 +3220,7 @@ components:
           description: Стабильный непрозрачный ключ (`cat_supermarkets`).
         name:
           type: string
+          maxLength: 64
           description: Название; у категории банка — из выписки, обрезано до 64 символов.
         icon:
           type: string

@@ -122,7 +122,7 @@ message Operation {
   optional google.protobuf.Timestamp posted_at = 21;
   // Развёрнутая версия note под категорией.
   optional string note_details = 22;
-  // Категория банка как есть; у пары — нет.
+  // Категория банка как в выписке, обрезанная до 64 символов; у пары — нет.
   optional string bank_category = 23;
   // MCC торговой точки, если источник сообщает (в OFX Т-Банка нет).
   optional string mcc = 24;
@@ -230,6 +230,8 @@ enum CategoryKind {
 message Category {
   // Стабильный ключ справочника («cat_supermarkets»).
   string id = 1;
+  // Название; у категории банка — из выписки, обрезано до 64 символов (категория определяется по
+  // обрезанному названию).
   string name = 2;
   // Ключ иконки из набора приложения.
   string icon = 3;
