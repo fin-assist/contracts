@@ -98,9 +98,9 @@ message AnalyticsParams {
 // Границы данных внутри календарного периода.
 message DataBounds {
   Coverage coverage = 1;
-  // Первая операция внутри периода.
+  // Первая операция внутри периода — момент внутри первого дня данных, не граница дня (FIN-150).
   optional google.protobuf.Timestamp data_from = 2;
-  // Последняя операция внутри периода.
+  // Последняя операция внутри периода — момент внутри последнего дня данных, не граница дня.
   optional google.protobuf.Timestamp data_to = 3;
   // Дни внутри данных, которых нет ни в одной загрузке.
   repeated TimeRange gaps = 4;
