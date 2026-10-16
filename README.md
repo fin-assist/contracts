@@ -68,8 +68,6 @@ scripts/generate.sh
 cd gen/go && go build ./... && go vet ./... && go test ./...
 ```
 
-`buf breaking` пока с разовым исключением `FILE_SAME_GO_PACKAGE` в `proto/buf.yaml` (смена `go_package` в FIN-116, потребителей ещё нет) — его убирает следующий PR после мержа FIN-116.
-
 ## Go-модуль `gen/go`
 
 Сервисы подключают одну версию контрактов:
