@@ -1796,13 +1796,17 @@ type ImportResult struct {
 	Totals *ImportTotals `protobuf:"bytes,8,opt,name=totals,proto3,oneof" json:"totals,omitempty"`
 	// Счета в файле.
 	Accounts []*ImportAccount `protobuf:"bytes,9,rep,name=accounts,proto3" json:"accounts,omitempty"`
-	// Операций с проставленной категорией.
+	// Операций с проставленной категорией: новые операции, не вошедшие в uncategorized_count,
+	// new_count − uncategorized_count.
 	CategorizedCount int64 `protobuf:"varint,10,opt,name=categorized_count,json=categorizedCount,proto3" json:"categorized_count,omitempty"`
 	// Из них — переводы между своими счетами (две операции на пару).
 	OwnTransferCount int64 `protobuf:"varint,11,opt,name=own_transfer_count,json=ownTransferCount,proto3" json:"own_transfer_count,omitempty"`
-	// Без категории; входят в суммы.
+	// Без категории; входят в суммы. Новые операции в категории cat_uncategorized (категория банка
+	// пустая или буквально «Без категории») плюс возвраты, для которых не нашлась расходная категория
+	// (FIN-126).
 	UncategorizedCount int64 `protobuf:"varint,12,opt,name=uncategorized_count,json=uncategorizedCount,proto3" json:"uncategorized_count,omitempty"`
-	// Переход к операциям без категории — чтобы пользователь мог их разобрать.
+	// Переход к операциям без категории — чтобы пользователь мог их разобрать: selection «Без
+	// категории» за дни новых операций загрузки (from/to).
 	UncategorizedFilters *v1.OperationsFilter `protobuf:"bytes,13,opt,name=uncategorized_filters,json=uncategorizedFilters,proto3,oneof" json:"uncategorized_filters,omitempty"`
 	Coverage             *ImportCoverage      `protobuf:"bytes,14,opt,name=coverage,proto3" json:"coverage,omitempty"`
 	// Особые ситуации.

@@ -584,8 +584,10 @@ func (x *BalanceDetails) GetShareOfIncome() float64 {
 // Одна категория в разбивке по категориям.
 type CategoryAmount struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// ID категории. Отсутствует — операции без категории: возвраты, для которых не нашлось
-	// расходной категории.
+	// ID категории. «Без категории» — cat_uncategorized: операции с пустой или буквально «Без категории»
+	// категорией банка плюс возвраты, для которых не нашлось расходной категории (FIN-126). Сервер
+	// заполняет всегда;
+	// отсутствие клиент обрабатывает как строку без перехода по категории.
 	CategoryId *string `protobuf:"bytes,1,opt,name=category_id,json=categoryId,proto3,oneof" json:"category_id,omitempty"`
 	// Название для показа («Супермаркеты», «Без категории»).
 	CategoryName string `protobuf:"bytes,2,opt,name=category_name,json=categoryName,proto3" json:"category_name,omitempty"`
