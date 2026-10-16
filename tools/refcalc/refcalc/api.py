@@ -128,6 +128,8 @@ class Backend:
     # ---- 4.1 ----
 
     def feed(self, before: Optional[str] = None) -> dict:
+        if before and parse_iso(before) != start_of_day(month_start(day_of(parse_iso(before), self.zone)), self.zone):
+            raise ApiError(400, "VALIDATION_ERROR")  # `before` is the start of a month (docs/calc.md, section 6)
         recs = records(self.ledger)
         cov = self.ledger.coverage(self.today)
         a = Analytics(self.ledger, self.now)

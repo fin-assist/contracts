@@ -454,7 +454,8 @@ func (x *Operation) GetSourceName() string {
 // Запрос порции ленты.
 type ListFeedRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Вернуть 3 месяца до этого момента; нет — заканчивая последним месяцем с данными.
+	// Вернуть 3 календарных месяца до этого момента; нет — заканчивая последним месяцем с данными.
+	// Только начало месяца в поясе пользователя (значение next_before), иначе INVALID_ARGUMENT.
 	Before        *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=before,proto3,oneof" json:"before,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
