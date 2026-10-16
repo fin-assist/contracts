@@ -3,7 +3,7 @@ name: ci
 on:
   push:
   pull_request:
-    # labeled/unlabeled: the `breaking-accepted` label changes the oasdiff verdict.
+    # labeled/unlabeled: the `breaking-accepted` label changes the oasdiff and check_error_spec_stable verdicts.
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
 permissions:
@@ -79,3 +79,52 @@ jobs:
       - name: Check registry
         working-directory: proto
         run: python3 scripts/check_error_registry.py "$RUNNER_TEMP/fd.binpb" ../docs/api.md
+      # error_spec of existing codes must not change (grpc-api.md 5.1, rule 5): buf breaking does not compare
+      # custom options. The owner accepts a change with the `breaking-accepted` label.
+      - name: Build base descriptors
+        if: github.event_name == 'pull_request'
+        working-directory: proto
+        run: buf build '${{ github.event.repository.clone_url }}#format=git,commit=${{ github.event.pull_request.base.sha }},subdir=proto' -o "$RUNNER_TEMP/base.binpb"
+      - name: error_spec of existing codes is unchanged
+        if: github.event_name == 'pull_request'
+        working-directory: proto
+        run: >-
+          python3 scripts/check_error_spec_stable.py "$RUNNER_TEMP/base.binpb" "$RUNNER_TEMP/fd.binpb"
+          ${{ contains(github.event.pull_request.labels.*.name, 'breaking-accepted') && '--accepted' || '' }}
+
+  go-module:
+    name: Go module gen/go (generation, build, tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: gen/go/go.mod
+          cache-dependency-path: |
+            tools/go.sum
+            gen/go/go.sum
+      # buf is pinned in tools/go.mod; BUF_VERSION above (buf-action) must be the same version.
+      - name: buf version is the same in tools/go.mod and BUF_VERSION
+        working-directory: tools
+        run: test "$(go list -m -f '{{.Version}}' github.com/bufbuild/buf)" = "v${BUF_VERSION}"
+      - name: Vet the generator
+        working-directory: tools
+        run: go vet ./...
+      # gen/go must be exactly what proto/ generates with the pinned plugins.
+      - name: Regenerate
+        run: scripts/generate.sh
+      - name: gen/go matches proto/
+        run: |
+          if [ -n "$(git status --porcelain -- gen/go)" ]; then
+            git status --porcelain -- gen/go
+            git diff -- gen/go | head -200
+            echo "::error::gen/go is out of date: run scripts/generate.sh and commit the result"
+            exit 1
+          fi
+      - name: Build, vet and test
+        working-directory: gen/go
+        run: |
+          go build ./...
+          go vet ./...
+          go test ./...

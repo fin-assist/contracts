@@ -5,7 +5,7 @@ package finassist.statementdata.v1;
 import "finassist/common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/statementdata/v1;statementdatav1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/statementdata/v1;statementdatav1";
 
 // Сервис `bank-statement-data`, часть «Выписки» (REST 3.x). Вызывающий: bank-bff, токен пользователя.
 
@@ -242,6 +242,8 @@ message ImportAccount {
 message IncompleteMonth {
   string month = 1;
   finassist.common.v1.TimeRange range = 2;
+  // Границы покрытых дней месяца, как DataBounds: 00:00 первого покрытого дня и время последней
+  // операции в последний покрытый день или 23:59:59 этого дня.
   google.protobuf.Timestamp data_from = 3;
   google.protobuf.Timestamp data_to = 4;
   // Дни без данных ни в одном файле.

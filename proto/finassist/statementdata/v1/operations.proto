@@ -5,7 +5,7 @@ package finassist.statementdata.v1;
 import "finassist/common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/statementdata/v1;statementdatav1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/statementdata/v1;statementdatav1";
 
 // Сервис `bank-statement-data`: операции, категории, регулярные платежи (REST 4.x, 5.1, 6.3).
 // Вызывающий: bank-bff, токен пользователя.
@@ -144,16 +144,25 @@ message MonthSummary {
   int64 expense_minor = 3;
   // Доходы, со знаком.
   int64 income_minor = 4;
-  // Есть, если месяц неполный: данные по этот момент.
+  // Есть, если месяц неполный: конец данных по покрытым дням, как DataBounds.data_to (время
+  // последней операции в последний покрытый день или 23:59:59 этого дня).
   optional google.protobuf.Timestamp data_to = 5;
 }
 
 // Состояние данных: актуальна ли выписка.
 message FeedState {
-  // Последняя операция больше двух недель назад; порог — на сервере.
+  // Выписка устарела: последний день, покрытый периодом выписки (DTEND по всем загрузкам), больше
+  // двух недель назад; от последней операции не зависит (FIN-124). true с того же момента, что
+  // analytics.v1.UserDataState.stale_after: начало 15-го календарного дня после последнего
+  // покрытого в поясе профиля. Загрузка без операций тоже покрывает дни. Нет покрытых дней — true,
+  // data_to тогда нет.
   bool stale = 1;
+  // Время последней операции; для устаревания не используется.
   optional google.protobuf.Timestamp last_operation_at = 2;
   optional google.protobuf.Timestamp last_uploaded_at = 3;
+  // Конец данных по всем загрузкам: начало дня, следующего за последним покрытым днём
+  // (полуинтервал). Нет — нет ни одной загрузки в статусе done с покрытыми днями.
+  optional google.protobuf.Timestamp data_to = 4;
 }
 
 // Порция ленты операций со сводкой по месяцам.

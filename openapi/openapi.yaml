@@ -919,6 +919,7 @@ paths:
                       data_to: '2026-09-25T21:40:00+03:00'
                     state:
                       stale: false
+                      data_to: '2026-09-26T00:00:00+03:00'
                       last_operation_at: '2026-09-25T21:40:00+03:00'
                       last_uploaded_at: '2026-09-25T21:50:00+03:00'
                     range:
@@ -1210,7 +1211,7 @@ paths:
                     },
                     "is_current": true,
                     "coverage": "partial",
-                    "data_from": "2026-09-01T08:15:00+03:00",
+                    "data_from": "2026-09-01T00:00:00+03:00",
                     "data_to": "2026-09-25T21:40:00+03:00",
                     "gaps": []
                   },
@@ -1366,8 +1367,8 @@ paths:
                   "state": {
                     "stale": false,
                     "last_operation_at": "2026-09-25T21:40:00+03:00",
-                    "data_from": "2026-09-01T08:15:00+03:00",
-                    "data_to": "2026-09-25T21:40:00+03:00",
+                    "data_from": "2026-09-01T00:00:00+03:00",
+                    "data_to": "2026-09-26T00:00:00+03:00",
                     "full_months": 0,
                     "unread_lines_count": 0,
                     "calculated_at": "2026-09-25T21:52:00+03:00",
@@ -2740,9 +2741,11 @@ components:
         data_from:
           type: string
           format: date-time
+          description: 00:00 первого покрытого выпиской дня месяца (docs/api.md, «Формат»).
         data_to:
           type: string
           format: date-time
+          description: Время последней операции, если она в последний покрытый день месяца, иначе 23:59:59 этого дня.
         gaps:
           type: array
           description: Дни без данных ни в одном файле.
@@ -3154,7 +3157,9 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: Есть, если месяц неполный — данные по этот момент.
+          description: Есть, если месяц неполный — конец данных по покрытым дням (docs/api.md, «Формат») — время последней
+            операции, если она в последний покрытый день, иначе 23:59:59 этого дня. День берётся как есть («по 25
+            сентября»); не граница дня, в отличие от `FeedState.data_to`.
     FeedState:
       type: object
       description: Только в ленте.
@@ -3163,11 +3168,24 @@ components:
       properties:
         stale:
           type: boolean
-          description: Последняя операция больше двух недель назад. Порог — на сервере.
+          description: Выписка устарела — последний покрытый периодом выписки день (`DTEND`, по всем загрузкам) больше
+            двух недель назад; от последней операции не зависит (FIN-124). Переключается в начале 15-го календарного дня
+            после последнего покрытого в поясе профиля — одновременно с `AnalyticsState.stale`. Загрузка без операций тоже
+            покрывает дни. Нет покрытых дней — `true`, `data_to` нет. Плашка — при `data_to` и `last_operation_at`; без
+            `last_operation_at` — пустое состояние без плашки.
+            Порог — на сервере.
+        data_to:
+          type: string
+          format: date-time
+          nullable: true
+          description: Конец данных по всем загрузкам — начало дня, следующего за последним покрытым днём (полуинтервал).
+            Последний покрытый день — день перед `data_to` («Данные в приложении по 25 сентября»). Покрытые дни дают и
+            загрузки без операций. Нет — нет ни одной загрузки в статусе `done` с покрытыми днями.
         last_operation_at:
           type: string
           format: date-time
           nullable: true
+          description: Время последней операции; для устаревания не используется.
         last_uploaded_at:
           type: string
           format: date-time
@@ -3292,11 +3310,15 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: Начало данных внутри периода; нет, если данных нет.
+          description: Начало данных внутри периода — 00:00 первого покрытого выпиской дня в периоде (docs/api.md,
+            «Формат»); нет — в периоде нет покрытых дней.
         data_to:
           type: string
           format: date-time
           nullable: true
+          description: Конец данных внутри периода — время последней операции, если она в последний покрытый день, иначе
+            23:59:59 этого дня. День берётся как есть («1–25 сентября»); не граница дня, в отличие от
+            `AnalyticsState.data_to`.
         gaps:
           type: array
           description: Дни внутри данных, которых нет ни в одной загрузке.
@@ -3328,18 +3350,22 @@ components:
       properties:
         stale:
           type: boolean
-          description: Выписка устарела. Порог — на сервере.
+          description: Выписка устарела — последний покрытый периодом выписки день (`DTEND`, по всем загрузкам) больше
+            двух недель назад; от последней операции не зависит (FIN-124). Порог — на сервере.
         last_operation_at:
           type: string
           format: date-time
           nullable: true
+          description: Время последней загруженной операции; для устаревания не используется.
         data_from:
           type: string
           format: date-time
-          description: Границы данных по всем загрузкам — для текста блокировки при нуле полных месяцев.
+          description: Начало первого покрытого дня по всем загрузкам — для текста блокировки при нуле полных месяцев.
         data_to:
           type: string
           format: date-time
+          description: Начало дня, следующего за последним покрытым днём по всем загрузкам (полуинтервал); плашка
+            устаревания — «Данные в приложении по <день перед data_to>».
         full_months:
           type: integer
         unread_lines_count:
