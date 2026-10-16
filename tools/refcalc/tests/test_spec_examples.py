@@ -1,4 +1,4 @@
-"""Examples of spec FIN-106, section 9, on the reference calculation (Confluence «Расчёт метрик и правила учёта»)."""
+"""Examples of docs/calc.md, section 9, on the reference calculation."""
 import datetime as dt
 import os
 import unittest
@@ -188,6 +188,29 @@ class SpecExamples(unittest.TestCase):
         self.assertEqual(self.block(self.screen(b, "2026-09"), "regular_payments")[0]["status"], "none")
 
 
+    def test_19_gap_crossing_the_period_is_whole(self):
+        b = self.backend("2026-09-05T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260701", "20260710", [("d1", "20260705120000", -100, "Кафе", "Рестораны")]))
+        b.upload("b.ofx", stmt("20260804", "20260831", [("d2", "20260825120000", -100, "Кафе", "Рестораны")]))
+        p = self.screen(b, "2026-08")["period"]
+        self.assertEqual(p["gaps"], [{"from": "2026-07-11T00:00:00+03:00", "to": "2026-08-04T00:00:00+03:00"}])
+
+    def test_20_no_pair_across_currencies(self):
+        b = self.backend("2026-09-26T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260901", "20260925", [("d1", "20260918093000", -1000, "Между своими счетами", "Переводы")], SAV, "SAVINGS"))
+        b.upload("b.ofx", stmt("20260901", "20260925", [("c1", "20260918093100", 1000, "Иван", "Переводы")]).replace(
+            "<CURSYM>RUB</CURSYM>", "<CURSYM>USD</CURSYM>"))
+        kinds = sorted((i["kind"], i["category_id"]) for i in b.feed()["items"])
+        self.assertEqual(kinds, [("expense", "cat_own_transfer"), ("income", "cat_transfers")])
+
+    def test_21_search_like_analytics_drops_single_transfer_to_self(self):
+        b = self.backend("2026-09-26T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260901", "20260925", [
+            ("d1", "20260910120000", -5000, "Себе в другой банк", "Переводы"),
+            ("d2", "20260911120000", -100, "Кафе", "Рестораны")]))
+        self.assertEqual(b.search({})["total_count"], 2)
+        self.assertEqual(b.search({"transfer_mode": "with"})["total_count"], 1)
+
 class Robustness(unittest.TestCase):
     def test_non_finite_amount_is_unread(self):
         b = Backend(Registry.load(os.path.join(ROOT, "categories.json")), MSK)
@@ -197,7 +220,6 @@ class Robustness(unittest.TestCase):
         r = b.upload("a.ofx", text)
         self.assertEqual((r["operation_count"], r["unread_count"]), (0, 1))
         self.assertEqual(b.search({"q": "NaN"})["total_count"], 0)
-
 
 class Rounding(unittest.TestCase):
     def test_tdiv_truncates_toward_zero(self):

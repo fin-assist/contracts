@@ -5,9 +5,9 @@
     "InsightItem.muted": "Ни одна карточка 6.1 в составе MVP не отдаёт приглушённых строк.",
     "OperationDetails.mcc": "В OFX Т-Банка MCC нет (api.md 4.2: «есть, только если источник сообщает»).",
     "OperationDetails.posted_at": "В OFX Т-Банка времени проведения нет (api.md 4.2).",
-    "OperationsFilter.amount_from": "Переходы 6.1 и итога импорта не фильтруют по сумме: выборки — через selection (спецификация FIN-106, раздел 5, «Выборки»); поиск по сумме проверяется запросами, а не ответами.",
+    "OperationsFilter.amount_from": "Переходы 6.1 и итога импорта не фильтруют по сумме: выборки — через selection (docs/calc.md, раздел 5, «Выборки»); поиск по сумме проверяется запросами, а не ответами.",
     "OperationsFilter.amount_to": "То же, что amount_from.",
-    "OperationsFilter.q": "Текстовый q для выборок не используется (спецификация FIN-106, раздел 5, «Выборки»).",
+    "OperationsFilter.q": "Текстовый q для выборок не используется (docs/calc.md, раздел 5, «Выборки»).",
     "RankedListData.empty_text": "Пустой список приходит блоком со status: none и текстом в empty_text оболочки, без data."
   }
 }

@@ -1,4 +1,4 @@
-"""Operations of one user and the accounting rules of spec FIN-106, sections 2–4."""
+"""Operations of one user and the accounting rules of docs/calc.md, sections 2–4."""
 from __future__ import annotations
 
 import datetime as dt

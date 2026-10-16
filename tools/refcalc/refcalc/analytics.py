@@ -1,4 +1,4 @@
-"""Analytics screen 6.1 and periods 6.2: metrics of spec FIN-106, sections 4–5, laid out as api.md blocks.
+"""Analytics screen 6.1 and periods 6.2: metrics of docs/calc.md, sections 4–5, laid out as api.md blocks.
 
 Texts are plain placeholders: the fixtures do not compare them (README, «Правила сравнения»).
 """
@@ -256,7 +256,7 @@ class Ctx:
                 out.append(s)
 
     def chart_notes(self, points: list) -> list:
-        """Rows under «Расходы по месяцам» (spec FIN-106, section 5): month — the comparison «к тому же дню» (the
+        """Rows under «Расходы по месяцам» (docs/calc.md, section 5): month — the comparison «к тому же дню» (the
         previous month is full) and «обычно» (2 full previous months); quarter — the peak month and «обычно» (2 full
         previous quarters); year — the peak month and the total by months. Texts are placeholders."""
         notes = []

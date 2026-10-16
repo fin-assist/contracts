@@ -1,4 +1,4 @@
-"""Category registry (spec FIN-106, 3.1): known bank categories with their directions, plus the system ones."""
+"""Category registry (docs/calc.md, 3.1): known bank categories with their directions, plus the system ones."""
 from __future__ import annotations
 
 import json

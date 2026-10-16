@@ -13,7 +13,9 @@ same PR.
 ## Where things are decided
 
 - Here: `docs/api.md` (meaning of fields — wins over `openapi/openapi.yaml` when they differ), `openapi/openapi.yaml`,
-  `docs/grpc-api.md`, `proto/`. Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) holds only a summary
+  `docs/calc.md` (how the fields are calculated — accounting rules and metrics, FIN-158), `docs/grpc-api.md`, `proto/`.
+  For calculation the order is: the owner's latest decision → `docs/calc.md` → `docs/api.md` / `openapi.yaml` →
+  `fixtures/calc` (an executable copy of the first two). Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) holds only a summary
   and a link here; MVP scope, architecture and product decisions live there («Состав MVP», «Архитектура»,
   «Продуктовые решения»).
 - Version 0.2 is crystallized: every change goes through a YouTrack issue (`FIN-<n>`, finassist.youtrack.cloud) and
@@ -37,13 +39,14 @@ same PR.
 | Error registry | `docs/api.md`, section 8; `proto/finassist/common/v1/errors.proto` (`ErrorReason`), `error_options.proto` |
 | Extensibility decisions | `docs/api.md`, «Расширяемость» and «Решения по расширяемости» |
 | OpenAPI 3.0.3 of the same API | `openapi/openapi.yaml`; lint config `redocly.yaml` |
+| Calculation rules: transfer pairs, refunds, coverage and gaps, Analytics metrics, thresholds, order and composition of blocks | `docs/calc.md` |
 | Services, call models (user / system), service identity, metadata, errors, idempotency, outbox | `docs/grpc-api.md` |
 | Service contracts | `proto/finassist/<service>/v1/*.proto`, shared types `proto/finassist/common/v1/` |
 | Registry check | `proto/scripts/check_error_registry.py` |
 | Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
 | Calculation fixtures: statements, scenario, expected responses, comparison rules (FIN-107) | `fixtures/calc/` (format and rules — `fixtures/calc/README.md`) |
-| Reference calculation that produces the expected responses (spec FIN-106) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
+| Reference calculation that produces the expected responses (`docs/calc.md`) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
 | PR review by Claude | `.github/workflows/claude.yml` |
 
 ## Checks
@@ -57,8 +60,10 @@ unchanged against the PR base; the owner accepts a change with `breaking-accepte
 calculation tests and requires `fixtures/calc/expected` to equal a fresh scenario run that passes `openapi.yaml`
 (block `data` against its primitive's schema) and covers every response field — an uncovered field needs a scenario
 step, or an entry with a reason in `fixtures/calc/coverage-exceptions.json` (FIN-157).
-A PR that changes calculation rules (spec FIN-106, the meaning of analytics/feed/import fields in `docs/api.md`)
-updates `tools/refcalc` and regenerates `fixtures/calc/expected` in the same PR, and says which responses changed.
+A PR that changes calculation rules changes `docs/calc.md` (and `docs/api.md` when the meaning of analytics, feed or
+import fields changes), updates `tools/refcalc` and regenerates `fixtures/calc/expected` in the same PR, and says which
+responses changed. A rule that lives only in `tools/refcalc` or `fixtures/calc/README.md` is a defect: rules go to
+`docs/calc.md`, the fixtures README keeps only how responses are compared.
 
 A breaking change fails `oasdiff` / `buf breaking`. In the alpha the owner may accept it with the PR label
 `breaking-accepted` — for REST (`oasdiff`) and for a changed `error_spec` of an existing code
