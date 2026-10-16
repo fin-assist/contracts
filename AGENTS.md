@@ -96,7 +96,11 @@ The rules below are the ones the review checks (Code Review Rules); the full tex
 
   ```
   @codex @claude проведите ревью этого PR по Code Review Rules в AGENTS.md, включая разделы Security и
-  Extensibility. Замечания — на русском, inline на изменённых строках. Особое внимание: <что именно и почему>.
+  Extensibility. Замечания — на русском, inline на изменённых строках. Не придирайтесь к формулировкам
+  документации: стиль, словоупотребление, опечатки и неточности, не меняющие смысл, не комментируйте — замечание по
+  тексту только если формулировка искажает смысл поля или поведения, допускает двойное прочтение при реализации
+  или противоречит openapi/proto либо другой части документации; на проходы Security и Extensibility это
+  ограничение не распространяется. Особое внимание: <что именно и почему>.
   ```
 
   - `@claude` — `.github/workflows/claude.yml` (runs from the default branch), Claude Fable 5.1 (`claude-fable-5-1`,
@@ -125,6 +129,12 @@ its first implementation: a flaw merged here is copied into the backend and ever
   stay as they are.
 - Report only verified problems with a concrete failure scenario: which client or service, which request or
   response, what goes wrong. Skip style nits and wording preferences.
+- Wording of the documentation (`docs/*.md`, descriptions in `openapi.yaml`, comments in `.proto`) is reviewed for
+  meaning only. Do not comment on style, word choice, word order, typos and inaccuracies that do not change what a
+  client or service implementer would build. A comment on the text is justified only when the wording distorts the
+  meaning of a field or behaviour, allows two readings that lead to different implementations, or contradicts
+  `openapi.yaml` / `proto/` / another part of the docs, and the comment names that failure. This limit does not apply
+  to the Security and Extensibility passes.
 - Post each finding as an inline comment on the changed line (a review conversation that can be resolved), not only
   in a summary comment. The summary lists what was checked, with a «Безопасность» part and a «Расширяемость» part;
   «not affected» is a valid answer for either, with one line why.
@@ -195,7 +205,8 @@ The decision of 13.10.2026 («Расширяемость» and «Нотация�
 
 - The meaning of every new or changed field is unambiguous from `docs/api.md` alone: type, unit, time zone, inclusive
   or exclusive bounds, when absent or `null`, who computes it (server or client). A reader should not have to guess
-  from the name.
+  from the name. The criterion is a missing or ambiguous fact, not the quality of the phrasing: a clumsy but
+  unambiguous sentence is not a finding.
 - Names follow the existing ones (`snake_case`, the same word for the same thing across endpoints, `*_name` for
   display texts, `from` / `to` half-open ranges); no synonyms for an existing concept.
 - `docs/api.md`, `openapi.yaml`, `docs/grpc-api.md` and `proto/` agree: same fields, types, optionality, codes and
