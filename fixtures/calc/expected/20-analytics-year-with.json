@@ -926,24 +926,6 @@
             "share": 6.214683564215958e-05
           },
           {
-            "id": "cat_bank_fees",
-            "icon": "landmark",
-            "title": "Услуги банка",
-            "value": 120000,
-            "value_kind": "amount",
-            "action": {
-              "type": "open_operations",
-              "filter": {
-                "from": "2026-01-01T00:00:00+03:00",
-                "to": "2027-01-01T00:00:00+03:00",
-                "category_id": "cat_bank_fees",
-                "kind": "expense",
-                "transfer_mode": "with"
-              }
-            },
-            "share": 5.2334177382871227e-05
-          },
-          {
             "id": "<ignored>",
             "icon": "tag",
             "title": "Очень длинная категория банка, которой нет в списке известных ка",
@@ -955,6 +937,24 @@
                 "from": "2026-01-01T00:00:00+03:00",
                 "to": "2027-01-01T00:00:00+03:00",
                 "category_id": "<ignored>",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 5.2334177382871227e-05
+          },
+          {
+            "id": "cat_bank_fees",
+            "icon": "landmark",
+            "title": "Услуги банка",
+            "value": 120000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-01-01T00:00:00+03:00",
+                "to": "2027-01-01T00:00:00+03:00",
+                "category_id": "cat_bank_fees",
                 "kind": "expense",
                 "transfer_mode": "with"
               }

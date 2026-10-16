@@ -290,7 +290,7 @@ class Ctx:
             g[1] += amount
             g[2] += 1
         items = []
-        for cat, total, count in sorted(groups.values(), key=lambda g: (-g[1], g[0].id)):
+        for cat, total, count in sorted(groups.values(), key=lambda g: (-g[1], g[0].name)):
             it = {"id": cat.id, "icon": cat.icon, "title": cat.name, **value(total),
                   "action": self.open(self.filt(category_id=cat.id, kind="expense"))}
             if self.E > 0 and total >= 0:
@@ -312,7 +312,7 @@ class Ctx:
             g = groups.setdefault(o.category.id, [o.category, 0])
             g[1] += o.amount
         items = []
-        for cat, total in sorted(groups.values(), key=lambda g: (-g[1], g[0].id)):
+        for cat, total in sorted(groups.values(), key=lambda g: (-g[1], g[0].name)):
             it = {"id": cat.id, "icon": cat.icon, "title": cat.name, **value(total), "show_plus": True,
                   "action": self.open(self.filt(category_id=cat.id, kind="income"))}
             if self.I > 0:
@@ -402,7 +402,7 @@ class Ctx:
                 found.append((amount - typ, cat, amount))
         if not found:
             return [self.card("notable_spending", "none", empty, empty_text="Заметных трат не нашли")]
-        found.sort(key=lambda f: (-f[0], f[1].id))
+        found.sort(key=lambda f: (-f[0], f[1].name))
         return [self.card("notable_spending", "ready",
                           {"icon": cat.icon, "title": cat.name, **value(amount), "description": "обычно"},
                           action=self.open(self.filt(category_id=cat.id, kind="expense")))
