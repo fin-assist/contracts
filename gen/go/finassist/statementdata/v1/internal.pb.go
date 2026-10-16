@@ -294,7 +294,9 @@ type GetDataOverviewResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Есть ли хоть одна операция.
 	HasData bool `protobuf:"varint,1,opt,name=has_data,json=hasData,proto3" json:"has_data,omitempty"`
-	// Границы данных по всем загрузкам.
+	// Границы покрытых дней по всем загрузкам (по периоду выписки DTSTART..DTEND), полуинтервал, как
+	// UserDataState: начало первого покрытого дня и начало дня после последнего. Последний покрытый
+	// день — день перед data_to.
 	DataFrom *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=data_from,json=dataFrom,proto3,oneof" json:"data_from,omitempty"`
 	DataTo   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=data_to,json=dataTo,proto3,oneof" json:"data_to,omitempty"`
 	// Полных месяцев.

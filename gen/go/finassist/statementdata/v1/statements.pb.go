@@ -1525,9 +1525,11 @@ func (x *ImportAccount) GetIsOtherBank() bool {
 
 // Неполный месяц с фактами, из которых клиент собирает текст причины.
 type IncompleteMonth struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Month    string                 `protobuf:"bytes,1,opt,name=month,proto3" json:"month,omitempty"`
-	Range    *v1.TimeRange          `protobuf:"bytes,2,opt,name=range,proto3" json:"range,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Month string                 `protobuf:"bytes,1,opt,name=month,proto3" json:"month,omitempty"`
+	Range *v1.TimeRange          `protobuf:"bytes,2,opt,name=range,proto3" json:"range,omitempty"`
+	// Границы покрытых дней месяца, как DataBounds: 00:00 первого покрытого дня и время последней
+	// операции в последний покрытый день или 23:59:59 этого дня.
 	DataFrom *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=data_from,json=dataFrom,proto3" json:"data_from,omitempty"`
 	DataTo   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=data_to,json=dataTo,proto3" json:"data_to,omitempty"`
 	// Дни без данных ни в одном файле.
