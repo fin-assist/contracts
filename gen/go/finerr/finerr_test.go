@@ -53,9 +53,9 @@ func TestMetadataAndRetryInfo(t *testing.T) {
 }
 
 func TestViolations(t *testing.T) {
-	err := ValidationError(&errdetails.BadRequest_FieldViolation{Field: "phone", Description: "format"})
+	err := ValidationError(&errdetails.BadRequest_FieldViolation{Field: "phone", Reason: "INVALID_FORMAT", Description: "not E.164"})
 	rest, ok := ToREST(err)
-	if !ok || rest.Spec.HTTPStatus != 400 || len(rest.Violations) != 1 || rest.Violations[0].GetField() != "phone" {
+	if !ok || rest.Spec.HTTPStatus != 400 || len(rest.Violations) != 1 || rest.Violations[0].GetReason() != "INVALID_FORMAT" {
 		t.Fatalf("ValidationError: %+v, %v", rest, ok)
 	}
 }
@@ -71,6 +71,9 @@ func TestUnmapped(t *testing.T) {
 		"foreign domain": foreign.Err(),
 		"unknown reason": unknown.Err(),
 		"missing key":    noMetadata.Err(),
+		"empty key":      LimitExceeded(""),
+		"no violations":  ValidationError(),
+		"no retry delay": RequestInProgress(0),
 	}
 	for name, err := range cases {
 		if rest, ok := ToREST(err); ok {

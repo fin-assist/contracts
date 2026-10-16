@@ -422,15 +422,18 @@ type REST struct {
 	Code string
 	// Metadata is ErrorInfo.metadata restricted to Spec.MetadataKeys.
 	Metadata map[string]string
-	// Violations from google.rpc.BadRequest, when Spec.BadRequest.
+	// Violations from google.rpc.BadRequest, when Spec.BadRequest; at least one. REST details[]: field → field,
+	// reason → code (REQUIRED, INVALID_FORMAT, …), description → message (for logs, not shown in UI);
+	// localized_message is not used.
 	Violations []*errdetails.BadRequest_FieldViolation
-	// RetryAfter from google.rpc.RetryInfo, when Spec.RetryInfo; zero when absent.
+	// RetryAfter from google.rpc.RetryInfo, when Spec.RetryInfo; always positive then (REST Retry-After).
 	RetryAfter time.Duration
 }
 
 // ToREST reads a registry error from a gRPC error. ok is false when the error carries no finassist ErrorInfo, the
-// reason is not in the registry or a required metadata key is missing: bank-bff then answers 500 INTERNAL_ERROR and
-// counts finassist_unmapped_error_total. The status message never goes to the client.
+// reason is not in the registry, a required metadata key is missing or empty, or a required detail is missing
+// (RetryInfo with a positive delay, BadRequest with at least one violation): bank-bff then answers 500
+// INTERNAL_ERROR and counts finassist_unmapped_error_total. The status message never goes to the client.
 func ToREST(err error) (rest REST, ok bool) {
 	st, isStatus := status.FromError(err)
 	if !isStatus || st.Code() == codes.OK {
@@ -463,7 +466,7 @@ func ToREST(err error) (rest REST, ok bool) {
 		rest.Metadata = make(map[string]string, len(spec.MetadataKeys))
 		for _, k := range spec.MetadataKeys {
 			v, present := info.GetMetadata()[k]
-			if !present {
+			if !present || v == "" {
 				return REST{}, false
 			}
 			rest.Metadata[k] = v
@@ -471,9 +474,13 @@ func ToREST(err error) (rest REST, ok bool) {
 	}
 	if !spec.BadRequest {
 		rest.Violations = nil
+	} else if len(rest.Violations) == 0 {
+		return REST{}, false
 	}
 	if !spec.RetryInfo {
 		rest.RetryAfter = 0
+	} else if rest.RetryAfter <= 0 {
+		return REST{}, false
 	}
 	return rest, true
 }
