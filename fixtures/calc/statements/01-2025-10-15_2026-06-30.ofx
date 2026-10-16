@@ -3429,7 +3429,7 @@
             <DTPOSTED>20260427101032.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-4400</TRNAMT>
             <FITID>f28e4b0ebd91f9d1</FITID>
-            <NAME>Евроонко</NAME>
+            <NAME>Клиника 1</NAME>
             <MEMO>Медицина</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
@@ -3777,7 +3777,7 @@
             <DTPOSTED>20260422104821.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3000</TRNAMT>
             <FITID>94f717361c3cb6f4</FITID>
-            <NAME>Klinika Inteo..</NAME>
+            <NAME>Клиника 2</NAME>
             <MEMO>Медицина</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
@@ -7317,7 +7317,7 @@
             <DTPOSTED>20260219085108.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1800</TRNAMT>
             <FITID>7e3c7977fa5e0ca1</FITID>
-            <NAME>Kl. Pervoe Slovo</NAME>
+            <NAME>Клиника 3</NAME>
             <MEMO>Медицина</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
@@ -7461,7 +7461,7 @@
             <DTPOSTED>20260215105008.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-4235</TRNAMT>
             <FITID>994e5ca3f688a096</FITID>
-            <NAME>INVITRO</NAME>
+            <NAME>Лаборатория 1</NAME>
             <MEMO>Медицина</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
@@ -10173,7 +10173,7 @@
             <DTPOSTED>20251210114435.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-4380</TRNAMT>
             <FITID>5c4a52521af184c1</FITID>
-            <NAME>Kl. Pervoe Slovo</NAME>
+            <NAME>Клиника 3</NAME>
             <MEMO>Медицина</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
@@ -10185,7 +10185,7 @@
             <DTPOSTED>20251210114315.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3000</TRNAMT>
             <FITID>e3dac5b70f461b06</FITID>
-            <NAME>Kl. Pervoe Slovo</NAME>
+            <NAME>Клиника 3</NAME>
             <MEMO>Медицина</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
@@ -10653,7 +10653,7 @@
             <DTPOSTED>20251204084142.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3105</TRNAMT>
             <FITID>5c1746f3991ebe5a</FITID>
-            <NAME>INVITRO</NAME>
+            <NAME>Лаборатория 1</NAME>
             <MEMO>Медицина</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
@@ -11421,7 +11421,7 @@
             <DTPOSTED>20251112083541.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-5000</TRNAMT>
             <FITID>6ddf7d98f230a00b</FITID>
-            <NAME>Kl. Pervoe Slovo</NAME>
+            <NAME>Клиника 3</NAME>
             <MEMO>Медицина</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
