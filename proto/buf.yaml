@@ -3,3 +3,9 @@ lint:
   use: [STANDARD]
   ignore_only:
     ENUM_VALUE_PREFIX: [finassist/common/v1/errors.proto]
+breaking:
+  use: [FILE]
+  # FIN-116: go_package moved from the never-created fin-assist/backend to github.com/fin-assist/contracts/gen/go.
+  # There are no consumers yet. One-time exception, to be removed by the next PR after this one is merged.
+  ignore_only:
+    FILE_SAME_GO_PACKAGE: [finassist]

@@ -136,7 +136,7 @@ user ──(системный, outbox)──► usersettings.SetUserTimezone н
 | Механизм | Что не даёт сделать | Где |
 | --- | --- | --- |
 | Опция `error_spec` у каждого кода | завести код без кода gRPC, HTTP-статуса или с ключами `metadata` не в snake_case | `.proto` + проверка CI |
-| Генерация из опций: конструкторы ошибок для сервисов (`finerr.NotFound()`, `finerr.LimitExceeded(resetsAt)`) и таблица перевода для `bank-bff` | вручную собрать `ErrorInfo` с опечаткой в `reason`, забыть обязательный ключ `metadata` (это параметр конструктора), разойтись с маппингом `bank-bff` (его не пишут руками) | генератор в бэкенд-репозитории |
+| Генерация из опций: конструкторы ошибок для сервисов (`finerr.NotFound()`, `finerr.LimitExceeded(resetsAt)`) и таблица перевода для `bank-bff` (`finerr.ToREST`) | вручную собрать `ErrorInfo` с опечаткой в `reason`, забыть обязательный ключ `metadata` (это параметр конструктора), разойтись с маппингом `bank-bff` (его не пишут руками) | `tools/protoc-gen-finerr` в `fin-assist/contracts`, результат — пакет `finerr` модуля `gen/go` (раздел 10) |
 | Линтер (`golangci-lint`, правило `forbidigo`): `status.Error`, `status.New`, `errdetails.ErrorInfo` запрещены вне пакета `finerr` | обойти конструкторы | CI сервисов |
 | `scripts/check_error_registry.py` | разойтись с разделом 8 `api.md` (коды и HTTP-статусы), завести `error_spec` в другом enum (свой реестр сервиса), превысить лимит в 30 кодов | CI `proto/` |
 | `buf breaking` | переиспользовать удалённый номер или имя | CI `proto/` |
@@ -342,11 +342,13 @@ REST 7.x один к одному. Порядок в `AskQuestion`: `GetAssistan
 
 ## 10. Кодогенерация и CI
 
-- `.proto` — один каталог `proto/` в бэкенд-монорепозитории (репозитория пока нет; путь `go_package` — `github.com/fin-assist/backend/gen/go/...`, поменять при создании).
-- Сгенерированный Go-код — в git (`gen/go`), чтобы сборка сервиса не требовала `protoc`.
+- `.proto` — каталог `proto/` в `fin-assist/contracts`. Бэкенд — отдельный репозиторий на каждый сервис и отдельные репозитории библиотек (решение 16.10.2026, FIN-116), поэтому генерация одна — здесь, а не в каждом сервисе.
+- Сгенерированный Go-код — в git этого репозитория, Go-модуль `github.com/fin-assist/contracts/gen/go` (каталог `gen/go`, свой `go.mod`; `go_package` — `github.com/fin-assist/contracts/gen/go/finassist/<сервис>/v1`), чтобы сборка сервиса не требовала `protoc` и `buf`. Сервис подключает его как обычную зависимость: `go get github.com/fin-assist/contracts/gen/go@vX.Y.Z`. Версии — теги `gen/go/vX.Y.Z`, выпуск и правило версий — `README.md` («Go-модуль `gen/go`»).
+- Состав модуля: `finassist/<сервис>/v1` — сообщения (`protoc-gen-go`) и клиенты/серверы gRPC (`protoc-gen-go-grpc`); `finerr` — конструкторы ошибок реестра (по одному на код `ErrorReason`, обязательные ключи `metadata` — параметры, `BadRequest` и `RetryInfo` — параметры там, где их требует `error_spec`), `Lookup` (спецификация кода по `reason`) и `ToREST` — перевод статуса в REST для `bank-bff` (`ok = false` — нет `ErrorInfo` домена `finassist`, неизвестный `reason` или нет обязательного ключа: 500 и метрика `finassist_unmapped_error_total`).
+- Генерация — `scripts/generate.sh`: собирает закреплённые в `tools/go.mod` `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` и `tools/protoc-gen-finerr`, запускает `buf generate` (`proto/buf.gen.yaml`). CI перегенерирует и требует, чтобы `gen/go` не изменился, затем `go build`, `go vet`, `go test` модуля.
 - Проверки в CI (аналог `oasdiff` для REST): lint (STANDARD), несовместимые изменения против `main` (`FILE`), запрет повторного использования номеров полей (`reserved`), реестр ошибок — `scripts/check_error_registry.py <дескрипторы> <api.md>` (5.2).
 - Из опций `error_spec` генерируются пакет `finerr` (конструкторы ошибок) и таблица перевода ошибок для `bank-bff` (5.2).
-- **Инструмент — `buf`** (решено 14.10.2026): `buf build`, `buf lint` (STANDARD), `buf breaking` против `main`, `buf generate` с локальными плагинами `protoc-gen-go` и `protoc-gen-go-grpc`, `buf format`. Версия `buf` закреплена в одном месте (инструментальные зависимости Go-модуля). BSR не используем: нужные `.proto` googleapis (`google/rpc/error_details.proto` и др.) лежат в репозитории.
+- **Инструмент — `buf`** (решено 14.10.2026): `buf build`, `buf lint` (STANDARD), `buf breaking` против `main`, `buf generate` с локальными плагинами `protoc-gen-go`, `protoc-gen-go-grpc` и `protoc-gen-finerr`, `buf format`. Версии `buf` и плагинов закреплены в инструментальных зависимостях модуля `tools/go.mod`; `BUF_VERSION` в CI сверяется с ним. BSR не используем; если понадобятся `.proto` googleapis (`google/rpc/error_details.proto` и др.), они кладутся в репозиторий.
 
 Проверено 12.10: все файлы проходят `buf build` и `buf lint` STANDARD (единственное исключение — префикс значений `ErrorReason`); `check_error_registry.py` — 20 из 30 кодов, совпадает с `api.md`.
 

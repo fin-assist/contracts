@@ -23,7 +23,9 @@ same PR.
 - Mismatches between mockups, docs and the contract are expected. Resolve them in favour of `docs/api.md` + the
   latest decision, say so in the PR, propose (not impose) changes.
 - There is no backend yet: the Android `mock` flavor implements this contract in-process. The backend (Go,
-  PostgreSQL) will be written against it; `go_package` points to the future `fin-assist/backend`.
+  PostgreSQL; one repository per service and per library) will be written against it and imports the Go code
+  generated here: module `github.com/fin-assist/contracts/gen/go`, released by tags `gen/go/vX.Y.Z` (`README.md`,
+  «Go-модуль `gen/go`»).
 
 ## Repository map
 
@@ -38,13 +40,17 @@ same PR.
 | Services, call models (user / system), service identity, metadata, errors, idempotency, outbox | `docs/grpc-api.md` |
 | Service contracts | `proto/finassist/<service>/v1/*.proto`, shared types `proto/finassist/common/v1/` |
 | Registry check | `proto/scripts/check_error_registry.py` |
+| Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
+| Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
 | PR review by Claude | `.github/workflows/claude.yml` |
 
 ## Checks
 
 CI (`.github/workflows/ci.yml`, table in `README.md`): `redocly lint`, `oasdiff breaking` against the PR base,
-`buf lint`, `buf breaking`, `check_error_registry.py`. Run them locally before pushing (commands in `README.md`,
-«CI»).
+`buf lint`, `buf breaking`, `check_error_registry.py`, and the Go module job (`gen/go` equals a fresh
+`scripts/generate.sh`, `go build`, `go vet`, `go test`). Run them locally before pushing (commands in `README.md`,
+«CI»). A PR that changes `proto/` commits the regenerated `gen/go`. `buf` is pinned twice — `tools/go.mod` and
+`BUF_VERSION` in `ci.yml` — and CI fails when they differ.
 
 A breaking change fails `oasdiff` / `buf breaking`. In the alpha the owner may accept it with the PR label
 `breaking-accepted` (REST); never add that label yourself — ask in the PR.

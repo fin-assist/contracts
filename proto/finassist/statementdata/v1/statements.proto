@@ -5,7 +5,7 @@ package finassist.statementdata.v1;
 import "finassist/common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/statementdata/v1;statementdatav1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/statementdata/v1;statementdatav1";
 
 // Сервис `bank-statement-data`, часть «Выписки» (REST 3.x). Вызывающий: bank-bff, токен пользователя.
 

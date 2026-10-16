@@ -4,6 +4,7 @@
 
 - **Клиентский REST API** (мобильный клиент ↔ `bank-bff`): `docs/api.md` — спецификация и смысл полей, `openapi/openapi.yaml` — машиночитаемый контракт OpenAPI 3.0.3 (кодогенерация, валидация kin-openapi, oasdiff).
 - **Внутренний gRPC** между Go-сервисами: `proto/` — `.proto` (`buf`), `docs/grpc-api.md` — как сервисы делят работу, ошибки, идемпотентность, outbox.
+- **Go-модуль** `github.com/fin-assist/contracts/gen/go` — код, сгенерированный из `proto/`, и пакет ошибок `finerr`; его подключают все сервисы и библиотеки бэкенда (FIN-116).
 
 Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только выжимка и ссылка сюда. Правится здесь.
 
@@ -17,10 +18,14 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `proto/buf.yaml` | Модуль `buf`: lint STANDARD |
 | `proto/finassist/<сервис>/v1/*.proto` | Контракты сервисов и `common/v1` (типы, реестр ошибок `ErrorReason`) |
 | `proto/scripts/check_error_registry.py` | Сверка реестра ошибок с разделом 8 `docs/api.md` |
+| `proto/buf.gen.yaml` | Генерация Go-кода: `protoc-gen-go`, `protoc-gen-go-grpc`, `protoc-gen-finerr` |
+| `gen/go/` | Go-модуль `github.com/fin-assist/contracts/gen/go` (свой `go.mod`): `finassist/<сервис>/v1` — сообщения и gRPC, `finerr` — конструкторы ошибок и таблица перевода в REST. Сгенерирован, руками не правится (кроме `go.mod` и тестов) |
+| `tools/` | Модуль инструментов: версии `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` закреплены в `tools/go.mod` (`tool`); `tools/protoc-gen-finerr` — генератор `finerr` из опций `error_spec` |
+| `scripts/generate.sh` | Перегенерировать `gen/go` закреплёнными версиями |
 | `redocly.yaml` | Настройки линтера OpenAPI |
 | `AGENTS.md`, `CLAUDE.md` | Инструкции агентам: карта, правила контракта, процесс, `## Code Review Rules` |
 
-Ссылки внутри файлов перенесены без правок и написаны относительно прежнего расположения: `api.md` и `grpc-api.md` → `docs/`, `openapi.yaml` → `openapi/`, «`proto/finassist/**/v1` (рядом с этим файлом)» → `proto/` в корне, `scripts/check_error_registry.py` → `proto/scripts/`. Упоминания `architecture.md`, `storage.md`, `data-sources.md`, `mvp-scope.md`, `decision-ofx-only.md` и других — бывшие документы claude.ai-проекта, в этот репозиторий не входят; теперь это страницы Confluence PF: [«Архитектура»](https://finassist.atlassian.net/wiki/spaces/PF/pages/5210132), [«Хранение данных»](https://finassist.atlassian.net/wiki/spaces/PF/pages/11239425), [«Источники данных»](https://finassist.atlassian.net/wiki/spaces/PF/pages/11141138), [«Состав MVP»](https://finassist.atlassian.net/wiki/spaces/PF/pages/5242881), [«Решение: импорт только в OFX»](https://finassist.atlassian.net/wiki/spaces/PF/pages/11206657); остальные — в [разделе PF](https://finassist.atlassian.net/wiki/spaces/PF). Путь `go_package` (`github.com/fin-assist/backend/gen/go/...`) — будущий бэкенд-репозиторий.
+Ссылки внутри файлов перенесены без правок и написаны относительно прежнего расположения: `api.md` и `grpc-api.md` → `docs/`, `openapi.yaml` → `openapi/`, «`proto/finassist/**/v1` (рядом с этим файлом)» → `proto/` в корне, `scripts/check_error_registry.py` → `proto/scripts/`. Упоминания `architecture.md`, `storage.md`, `data-sources.md`, `mvp-scope.md`, `decision-ofx-only.md` и других — бывшие документы claude.ai-проекта, в этот репозиторий не входят; теперь это страницы Confluence PF: [«Архитектура»](https://finassist.atlassian.net/wiki/spaces/PF/pages/5210132), [«Хранение данных»](https://finassist.atlassian.net/wiki/spaces/PF/pages/11239425), [«Источники данных»](https://finassist.atlassian.net/wiki/spaces/PF/pages/11141138), [«Состав MVP»](https://finassist.atlassian.net/wiki/spaces/PF/pages/5242881), [«Решение: импорт только в OFX»](https://finassist.atlassian.net/wiki/spaces/PF/pages/11206657); остальные — в [разделе PF](https://finassist.atlassian.net/wiki/spaces/PF). Путь `go_package` — `github.com/fin-assist/contracts/gen/go/...` (модуль в этом репозитории, FIN-116).
 
 ## Правила
 
@@ -42,6 +47,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `buf lint` | всегда | нарушения STANDARD (исключение — префикс значений `ErrorReason`) |
 | `buf breaking` против базы PR | PR | несовместимые изменения `.proto`, повторное использование номеров и имён |
 | `check_error_registry.py` | всегда | расхождение `ErrorReason` с разделом 8 `docs/api.md`, неполный `error_spec`, `error_spec` вне реестра, больше 30 кодов |
+| Go-модуль `gen/go` | всегда | `gen/go` не совпадает с тем, что генерирует `scripts/generate.sh` из `proto/`; модуль не собирается, `go vet` или тесты `finerr` падают; версия `buf` в `tools/go.mod` расходится с `BUF_VERSION` в `ci.yml` |
 
 Локально:
 
@@ -54,7 +60,40 @@ cd proto && buf lint
 
 # Error registry check
 cd proto && buf build -o /tmp/fd.binpb && python3 scripts/check_error_registry.py /tmp/fd.binpb ../docs/api.md
+
+# Regenerate gen/go (pinned buf and plugins are built into .bin/), then build and test it
+scripts/generate.sh
+cd gen/go && go build ./... && go vet ./... && go test ./...
 ```
+
+`buf breaking` пока с разовым исключением `FILE_SAME_GO_PACKAGE` в `proto/buf.yaml` (смена `go_package` в FIN-116, потребителей ещё нет) — его убирает следующий PR после мержа FIN-116.
+
+## Go-модуль `gen/go`
+
+Сервисы подключают одну версию контрактов:
+
+```bash
+go get github.com/fin-assist/contracts/gen/go@v0.1.0
+```
+
+```go
+import (
+	statementdatav1 "github.com/fin-assist/contracts/gen/go/finassist/statementdata/v1"
+	"github.com/fin-assist/contracts/gen/go/finerr"
+)
+
+return nil, finerr.LimitExceeded(resetsAt.Format(time.RFC3339))
+```
+
+- **Изменение `.proto`** — в том же PR `scripts/generate.sh` и коммит `gen/go`; CI сверяет. Новый импорт в сгенерированном коде (ещё один well-known type) — `go get` в `gen/go`: `go.mod` модуля скрипт не трогает.
+- **Версии.** Модуль во вложенном каталоге, поэтому тег — `gen/go/vX.Y.Z` (так его находит `go get`). Пока альфа — `v0.Y.Z`: совместимое изменение — новая минорная (`Y`) или патч-версия (`Z`, только исправления описаний и генератора). Несовместимое изменение `.proto` (его не пропускает `buf breaking`) — только по решению владельца; после `v1` — новая major-версия с путём `gen/go/v2`.
+- **Выпуск** — после мержа в `main` владелец ставит тег на коммит мержа и пушит его:
+
+  ```bash
+  git tag gen/go/v0.1.0 <коммит мержа> && git push origin gen/go/v0.1.0
+  ```
+
+  Затем сервисы поднимают версию через `go get`. Тег не переставляется: опубликованную версию кэширует `proxy.golang.org`.
 
 ## Ревью
 
