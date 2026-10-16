@@ -42,12 +42,12 @@
 | `do` | Параметры | Что делает реализация | Ответ для сравнения |
 |---|---|---|---|
 | `upload` | `file` | 3.2 загружает файл, ждёт конца разбора | событие `complete` (3.3) |
-| `get` | `request` — метод и путь с query (`GET /v1/analytics?period=month&date=2026-09&transfer_mode=with`) **или** `filter_from: {step, path}` — `operations_filter` из ответа шага `step` по пути `path`, превращённый в запрос 4.1 (`selection_name` не передаётся). Элемент пути — ключ, индекс или `{"id": "…"}` (первый элемент массива с таким `id`, например блок 6.1) | выполняет запрос | ответ `200` |
+| `get` | `request` — метод и путь с query (`GET /v1/analytics?period=month&date=2026-09&transfer_mode=with`) **или** `filter_from: {step, path}` — `operations_filter` из ответа шага `step` по пути `path`, превращённый в запрос 4.1 (`selection_name` не передаётся). Элемент пути — ключ, индекс или `{"id": "…"}` (первый элемент массива с таким `id`, например блок 6.1) | выполняет запрос | ответ `200` или ошибка в формате ниже |
 | `change_category` | `operation: {account, fitid}`, `category_id` | 4.3 для записи операции с этим `ACCTID` и `FITID` (запись пары — по любой её стороне) | ответ 4.3 |
 | `dismiss_regular_payment` | `request`, `title` | выполняет `request` (6.1), находит в блоке `regular_payments` строку с этим `title` (одну из видимых строк `items`) и вызывает 6.3 `PUT` с её `payment_id` | — |
 | `delete_upload` | `file` | 3.5 удаляет загрузку этого файла | — |
 
-Ошибка API на шаге с `expect` записывается как `{"status": <HTTP>, "error": {"code": "<код>", "message": "<ignored>"}}`: сравниваются статус и код, `message` — текст. Ответы ниже — только `200`; ошибки в сценарий пока не входят.
+Ошибка API на шаге с `expect` записывается как `{"status": <HTTP>, "error": {"code": "<код>", "message": "<ignored>"}}`: сравниваются статус и код, `message` — текст. Такой шаг один: `feed-before-mid-month` — 400 `VALIDATION_ERROR` на `before` не в начале месяца (`docs/calc.md`, раздел 6); остальные ответы — `200`.
 
 ## Правила сравнения
 
