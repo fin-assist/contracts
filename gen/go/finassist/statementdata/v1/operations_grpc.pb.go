@@ -394,7 +394,8 @@ const (
 type RegularPaymentsServiceClient interface {
 	// Исключить платёж из регулярных (пользователь считает, что это не подписка): он исчезает из
 	// списка регулярных платежей, итог в месяц пересчитывается.
-	// Отметка привязана к платежу (продавец и периодичность), не к периоду.
+	// Отметка привязана к ключу платежа — описанию операции из выписки (точное совпадение), не к
+	// периоду.
 	// PUT /v1/analytics/regular-payments/{id}/dismissal. Идемпотентен.
 	DismissRegularPayment(ctx context.Context, in *DismissRegularPaymentRequest, opts ...grpc.CallOption) (*DismissRegularPaymentResponse, error)
 	// Вернуть платёж в регулярные, сняв отметку исключения (для поддержки и будущей отмены действия).
@@ -439,7 +440,8 @@ func (c *regularPaymentsServiceClient) RestoreRegularPayment(ctx context.Context
 type RegularPaymentsServiceServer interface {
 	// Исключить платёж из регулярных (пользователь считает, что это не подписка): он исчезает из
 	// списка регулярных платежей, итог в месяц пересчитывается.
-	// Отметка привязана к платежу (продавец и периодичность), не к периоду.
+	// Отметка привязана к ключу платежа — описанию операции из выписки (точное совпадение), не к
+	// периоду.
 	// PUT /v1/analytics/regular-payments/{id}/dismissal. Идемпотентен.
 	DismissRegularPayment(context.Context, *DismissRegularPaymentRequest) (*DismissRegularPaymentResponse, error)
 	// Вернуть платёж в регулярные, сняв отметку исключения (для поддержки и будущей отмены действия).

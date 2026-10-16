@@ -919,6 +919,7 @@ paths:
                       data_to: '2026-09-25T21:40:00+03:00'
                     state:
                       stale: false
+                      data_to: '2026-09-26T00:00:00+03:00'
                       last_operation_at: '2026-09-25T21:40:00+03:00'
                       last_uploaded_at: '2026-09-25T21:50:00+03:00'
                     range:
@@ -1068,7 +1069,9 @@ paths:
       - categories
       operationId: listCategories
       summary: Справочник категорий
-      description: Для выбора категории, иконок и подписей. Клиент кэширует; при добавлении банков список расширяется.
+      description: Для выбора категории, иконок и подписей. Клиент кэширует и перечитывает при запуске приложения, после
+        каждой успешной загрузки (`complete` в `streamStatementProgress`) и при ответе 422 `CATEGORY_NOT_ASSIGNABLE` — новая
+        категория банка появляется при первой встрече в выписке, а у известной может смениться `kinds`.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
       - $ref: '#/components/parameters/XClientVersion'
@@ -1098,6 +1101,15 @@ paths:
                   - income
                   assignable: true
                   note: уменьшает расходы на покупку
+                - id: cat_uncategorized
+                  name: Без категории
+                  icon: tag
+                  is_system: true
+                  kinds:
+                  - expense
+                  - income
+                  assignable: false
+                  note: в выписке нет категории
                 - id: cat_supermarkets
                   name: Супермаркеты
                   icon: cart
@@ -1199,7 +1211,7 @@ paths:
                     },
                     "is_current": true,
                     "coverage": "partial",
-                    "data_from": "2026-09-01T08:15:00+03:00",
+                    "data_from": "2026-09-01T00:00:00+03:00",
                     "data_to": "2026-09-25T21:40:00+03:00",
                     "gaps": []
                   },
@@ -1259,20 +1271,6 @@ paths:
                             }
                           }
                         ]
-                      }
-                    },
-                    {
-                      "id": "monthly_chart",
-                      "type": "chart",
-                      "v": 1,
-                      "status": "locked",
-                      "title": "Расходы по месяцам",
-                      "alt_text": "График по месяцам пока закрыт",
-                      "lock": {
-                        "reason": "need_months_with_data",
-                        "text": "Нужно 2 месяца с данными, есть 1",
-                        "required": 2,
-                        "available": 1
                       }
                     },
                     {
@@ -1355,8 +1353,8 @@ paths:
                   "state": {
                     "stale": false,
                     "last_operation_at": "2026-09-25T21:40:00+03:00",
-                    "data_from": "2026-09-01T08:15:00+03:00",
-                    "data_to": "2026-09-25T21:40:00+03:00",
+                    "data_from": "2026-09-01T00:00:00+03:00",
+                    "data_to": "2026-09-26T00:00:00+03:00",
                     "full_months": 0,
                     "unread_lines_count": 0,
                     "calculated_at": "2026-09-25T21:52:00+03:00",
@@ -1379,7 +1377,8 @@ paths:
       - analytics
       operationId: listAnalyticsPeriods
       summary: Периоды с данными
-      description: Для шторки выбора периода. Без пагинации — даже за 10 лет это 120 месяцев. Клиент запрашивает при открытии
+      description: Для шторки выбора периода. Периоды, где есть хоть один день, покрытый периодом выписки (`DTSTART..DTEND`)
+        хотя бы одной загрузки, — даже без операций. Без пагинации — даже за 10 лет это 120 месяцев. Клиент запрашивает при открытии
         шторки.
       parameters:
       - name: period
@@ -1429,17 +1428,20 @@ paths:
     - name: id
       in: path
       required: true
-      description: ID регулярного платежа (`RegularPayment.id`), стабилен между пересчётами.
+      description: ID регулярного платежа (`RegularPayment.id`), стабилен между пересчётами. ID по общему правилу (сейчас
+        UUIDv7, соответствие ключа платежа и ID хранит сервер), а не описание операции и не его кодирование — описание
+        является персональными данными и в URL и логи не попадает. Не UUID — 400 `VALIDATION_ERROR`.
       schema:
         type: string
+        pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
     put:
       tags:
       - analytics
       operationId: dismissRegularPayment
       summary: «Не подписка»
       description: |
-        Платёж исчезает из карточки, итог пересчитывается. Отметка привязана к платежу (продавцу и
-        периодичности), а не к периоду. Пока итог не пересчитан, `getAnalytics` отдаёт `state.recalculating: true`.
+        Платёж исчезает из карточки, итог пересчитывается. Отметка привязана к ключу платежа — описанию
+        операции из выписки (точное совпадение), а не к периоду. Пока итог не пересчитан, `getAnalytics` отдаёт `state.recalculating: true`.
         Идемпотентно.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
@@ -2605,17 +2607,22 @@ components:
             $ref: '#/components/schemas/ImportAccount'
         categorized_count:
           type: integer
+          description: Новые операции, не вошедшие в `uncategorized_count`, — `new_count` − `uncategorized_count`.
         own_transfer_count:
           type: integer
           description: Из `categorized_count` — операций (две на пару) в категории «Между своими счетами».
         uncategorized_count:
           type: integer
-          description: Без категории; входят в суммы.
+          description: Без категории; входят в суммы. Новые операции в категории `cat_uncategorized` (категория банка пустая
+            или буквально «Без категории») плюс возвраты, для которых не нашлась расходная категория, оба направления (FIN-126).
+            В аналитике тот же набор разделён по направлениям — строки «Без категории» в «Расходах по категориям»
+            (списания и возвраты) и в «Доходах по категориям» (зачисления).
         uncategorized_filters:
           nullable: true
           allOf:
           - $ref: '#/components/schemas/OperationsFilter'
-          description: Выборка для ссылки «разобрать».
+          description: Выборка для ссылки «разобрать» — `selection` «Без категории» за дни новых операций загрузки
+            (`from`/`to`); может включать операции «Без категории» прошлых загрузок за те же дни.
           type: object
         coverage:
           $ref: '#/components/schemas/ImportCoverage'
@@ -2724,9 +2731,11 @@ components:
         data_from:
           type: string
           format: date-time
+          description: 00:00 первого покрытого выпиской дня месяца (docs/api.md, «Формат»).
         data_to:
           type: string
           format: date-time
+          description: Время последней операции, если она в последний покрытый день месяца, иначе 23:59:59 этого дня.
         gaps:
           type: array
           description: Дни без данных ни в одном файле.
@@ -3068,7 +3077,8 @@ components:
           bank_category:
             type: string
             nullable: true
-            description: Категория банка как есть; у пары — нет.
+            maxLength: 64
+            description: Категория банка как в выписке, обрезанная до 64 символов; у пары — нет.
           mcc:
             type: string
             nullable: true
@@ -3137,7 +3147,9 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: Есть, если месяц неполный — данные по этот момент.
+          description: Есть, если месяц неполный — конец данных по покрытым дням (docs/api.md, «Формат») — время последней
+            операции, если она в последний покрытый день, иначе 23:59:59 этого дня. День берётся как есть («по 25
+            сентября»); не граница дня, в отличие от `FeedState.data_to`.
     FeedState:
       type: object
       description: Только в ленте.
@@ -3146,11 +3158,24 @@ components:
       properties:
         stale:
           type: boolean
-          description: Последняя операция больше двух недель назад. Порог — на сервере.
+          description: Выписка устарела — последний покрытый периодом выписки день (`DTEND`, по всем загрузкам) больше
+            двух недель назад; от последней операции не зависит (FIN-124). Переключается в начале 15-го календарного дня
+            после последнего покрытого в поясе профиля — одновременно с `AnalyticsState.stale`. Загрузка без операций тоже
+            покрывает дни. Нет покрытых дней — `true`, `data_to` нет. Плашка — при `data_to` и `last_operation_at`; без
+            `last_operation_at` — пустое состояние без плашки.
+            Порог — на сервере.
+        data_to:
+          type: string
+          format: date-time
+          nullable: true
+          description: Конец данных по всем загрузкам — начало дня, следующего за последним покрытым днём (полуинтервал).
+            Последний покрытый день — день перед `data_to` («Данные в приложении по 25 сентября»). Покрытые дни дают и
+            загрузки без операций. Нет — нет ни одной загрузки в статусе `done` с покрытыми днями.
         last_operation_at:
           type: string
           format: date-time
           nullable: true
+          description: Время последней операции; для устаревания не используется.
         last_uploaded_at:
           type: string
           format: date-time
@@ -3163,7 +3188,7 @@ components:
         category_id:
           type: string
           description: Категория с `assignable`, у которой `kinds` включает `kind` записи; для пары — любая с `assignable`.
-            Иначе 422 `CATEGORY_NOT_ASSIGNABLE`.
+            Иначе 422 `CATEGORY_NOT_ASSIGNABLE` — клиент перечитывает справочник (`listCategories`) и перестраивает выбор.
     ChangeCategoryResponse:
       type: object
       required:
@@ -3203,12 +3228,15 @@ components:
           description: Стабильный непрозрачный ключ (`cat_supermarkets`).
         name:
           type: string
+          maxLength: 64
+          description: Название; у категории банка — из выписки, обрезано до 64 символов.
         icon:
           type: string
           description: Ключ иконки из набора приложения; неизвестный — иконка по умолчанию.
         is_system:
           type: boolean
-          description: Системная категория — группа «Системные» сверху в выборе.
+          description: Системная категория («Между своими счетами», «Возврат», «Без категории» — `cat_uncategorized`)
+            — группа «Системные» сверху в выборе.
         kinds:
           type: array
           description: К каким записям применима. Неизвестные значения клиент пропускает.
@@ -3232,7 +3260,8 @@ components:
       properties:
         has_data:
           type: boolean
-          description: Есть ли у пользователя хоть одна операция. `false` — пустое состояние «Аналитики пока нет».
+          description: Есть ли у пользователя хоть одна операция и хоть один покрытый выпиской день. `false` — пустое состояние
+            «Аналитики пока нет».
         params:
           allOf:
           - $ref: '#/components/schemas/AnalyticsParams'
@@ -3272,11 +3301,15 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: Начало данных внутри периода; нет, если данных нет.
+          description: Начало данных внутри периода — 00:00 первого покрытого выпиской дня в периоде (docs/api.md,
+            «Формат»); нет — в периоде нет покрытых дней.
         data_to:
           type: string
           format: date-time
           nullable: true
+          description: Конец данных внутри периода — время последней операции, если она в последний покрытый день, иначе
+            23:59:59 этого дня. День берётся как есть («1–25 сентября»); не граница дня, в отличие от
+            `AnalyticsState.data_to`.
         gaps:
           type: array
           description: Дни внутри данных, которых нет ни в одной загрузке.
@@ -3287,12 +3320,12 @@ components:
       properties:
         previous:
           type: string
-          description: '`date` предыдущего периода с данными; `null` — стрелка недоступна.'
+          description: '`date` предыдущего периода с данными (сосед в `listAnalyticsPeriods`); `null` — стрелка недоступна.'
           pattern: ^\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$
           nullable: true
         next:
           type: string
-          description: '`date` следующего периода с данными; `null` — стрелка недоступна.'
+          description: '`date` следующего периода с данными (сосед в `listAnalyticsPeriods`); `null` — стрелка недоступна.'
           pattern: ^\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$
           nullable: true
     AnalyticsState:
@@ -3308,18 +3341,22 @@ components:
       properties:
         stale:
           type: boolean
-          description: Выписка устарела. Порог — на сервере.
+          description: Выписка устарела — последний покрытый периодом выписки день (`DTEND`, по всем загрузкам) больше
+            двух недель назад; от последней операции не зависит (FIN-124). Порог — на сервере.
         last_operation_at:
           type: string
           format: date-time
           nullable: true
+          description: Время последней загруженной операции; для устаревания не используется.
         data_from:
           type: string
           format: date-time
-          description: Границы данных по всем загрузкам — для текста блокировки при нуле полных месяцев.
+          description: Начало первого покрытого дня по всем загрузкам — для текста блокировки при нуле полных месяцев.
         data_to:
           type: string
           format: date-time
+          description: Начало дня, следующего за последним покрытым днём по всем загрузкам (полуинтервал); плашка
+            устаревания — «Данные в приложении по <день перед data_to>».
         full_months:
           type: integer
         unread_lines_count:
@@ -3338,7 +3375,7 @@ components:
       properties:
         periods:
           type: array
-          description: Периоды с данными, новые первыми. Пустой — данных нет.
+          description: Периоды с покрытыми выпиской днями, новые первыми. Пустой — данных нет.
           items:
             $ref: '#/components/schemas/AnalyticsPeriodItem'
     AnalyticsPeriodItem:
@@ -3650,6 +3687,8 @@ components:
         payment_id:
           type: string
           nullable: true
+          pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
+          description: ID регулярного платежа (UUID) для 6.3.
         label:
           type: string
           nullable: true
@@ -3884,6 +3923,8 @@ components:
         id:
           type: string
           nullable: true
+          description: Ключ элемента; у категорий — `category_id` (у «Без категории» — `cat_uncategorized`). Нет — у элемента
+            нет ключа.
         icon:
           type: string
         title:
