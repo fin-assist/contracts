@@ -1,0 +1,51 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-01T14:52:32+03:00",
+      "amount": 10000000,
+      "currency": "RUB",
+      "title": "Между своими счетами",
+      "category_id": "cat_transfers",
+      "category_name": "Переводы",
+      "category_icon": "users",
+      "is_category_manual": true,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111",
+        "spoken": "<ignored>"
+      },
+      "status": "posted",
+      "source_name": "<ignored>",
+      "description": "Между своими счетами",
+      "bank_category": "Переводы",
+      "note_details": null
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-01T14:52:33+03:00",
+      "amount": 10000000,
+      "currency": "RUB",
+      "title": "Между своими счетами",
+      "category_id": "cat_transfers",
+      "category_name": "Переводы",
+      "category_icon": "users",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··2222",
+        "spoken": "<ignored>"
+      },
+      "status": "posted",
+      "source_name": "<ignored>",
+      "description": "Между своими счетами",
+      "bank_category": "Переводы",
+      "note_details": null
+    }
+  ],
+  "replaced_id": "<ignored>"
+}

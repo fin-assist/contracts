@@ -110,8 +110,10 @@ class Backend:
             },
             "notices": notices,
         }
+        if not added:
+            del result["totals"]  # absent, not null: the schema field is allOf + nullable
         if not uncategorized:
-            del result["uncategorized_filters"]  # absent, not null: the schema field is allOf + nullable
+            del result["uncategorized_filters"]  # same
         else:
             days = [day_of(o.at, self.zone) for o in added]
             result["uncategorized_filters"] = {

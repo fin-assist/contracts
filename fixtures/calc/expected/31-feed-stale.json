@@ -3263,23 +3263,37 @@
     },
     {
       "id": "<ignored>",
-      "kind": "own_transfer",
+      "kind": "income",
+      "occurred_at": "2026-09-01T14:52:33+03:00",
+      "amount": 10000000,
+      "currency": "RUB",
+      "title": "Между своими счетами",
+      "category_id": "cat_transfers",
+      "category_name": "Переводы",
+      "category_icon": "users",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··2222"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
       "occurred_at": "2026-09-01T14:52:32+03:00",
       "amount": 10000000,
       "currency": "RUB",
-      "title": "Перевод между счетами",
-      "category_id": "cat_own_transfer",
-      "category_name": "Между своими счетами",
-      "category_icon": "transfer",
-      "is_category_manual": false,
-      "note": "не в тратах",
-      "from_account": {
+      "title": "Между своими счетами",
+      "category_id": "cat_transfers",
+      "category_name": "Переводы",
+      "category_icon": "users",
+      "is_category_manual": true,
+      "note": null,
+      "account": {
         "type_name": "<ignored>",
         "mask": "··1111"
-      },
-      "to_account": {
-        "type_name": "<ignored>",
-        "mask": "··2222"
       },
       "status": "posted"
     },
@@ -4703,460 +4717,6 @@
       "category_icon": "transfer",
       "is_category_manual": false,
       "note": "не в тратах",
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "income",
-      "occurred_at": "2026-08-10T22:41:26+03:00",
-      "amount": 1000000,
-      "currency": "RUB",
-      "title": "Контрагент 13",
-      "category_id": "cat_transfers",
-      "category_name": "Переводы",
-      "category_icon": "users",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-10T21:10:48+03:00",
-      "amount": 1110,
-      "currency": "RUB",
-      "title": "ВинЛаб",
-      "category_id": "cat_supermarkets",
-      "category_name": "Супермаркеты",
-      "category_icon": "cart",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-10T21:10:23+03:00",
-      "amount": 228990,
-      "currency": "RUB",
-      "title": "ВинЛаб",
-      "category_id": "cat_supermarkets",
-      "category_name": "Супермаркеты",
-      "category_icon": "cart",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-10T20:40:15+03:00",
-      "amount": 330000,
-      "currency": "RUB",
-      "title": "Sp_Suvenir Franciskan",
-      "category_id": "cat_gifts",
-      "category_name": "Подарки и творчество",
-      "category_icon": "gift",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-10T19:00:00+03:00",
-      "amount": 65000,
-      "currency": "RUB",
-      "title": "Фитнес Плюс",
-      "category_id": "cat_fitness",
-      "category_name": "Тренировки",
-      "category_icon": "dumbbell",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-10T17:11:16+03:00",
-      "amount": 422000,
-      "currency": "RUB",
-      "title": "Чемпион",
-      "category_id": "cat_restaurants",
-      "category_name": "Рестораны",
-      "category_icon": "utensils",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-10T15:04:25+03:00",
-      "amount": 90000,
-      "currency": "RUB",
-      "title": "Sp_Lisya Nora",
-      "category_id": "cat_supermarkets",
-      "category_name": "Супермаркеты",
-      "category_icon": "cart",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-10T14:06:45+03:00",
-      "amount": 1940500,
-      "currency": "RUB",
-      "title": "Контрагент 12",
-      "category_id": "cat_transfers",
-      "category_name": "Переводы",
-      "category_icon": "users",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "income",
-      "occurred_at": "2026-08-10T12:54:48+03:00",
-      "amount": 23100,
-      "currency": "RUB",
-      "title": "Кэшбэк по «Привет, Мир!»",
-      "category_id": "cat_bonuses",
-      "category_name": "Бонусы",
-      "category_icon": "gift",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-10T10:33:36+03:00",
-      "amount": 20000000,
-      "currency": "RUB",
-      "title": "Контрагент 1",
-      "category_id": "cat_transfers",
-      "category_name": "Переводы",
-      "category_icon": "users",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "income",
-      "occurred_at": "2026-08-10T10:33:36+03:00",
-      "amount": 20000000,
-      "currency": "RUB",
-      "title": "Себе из другого банка",
-      "category_id": "cat_own_transfer",
-      "category_name": "Между своими счетами",
-      "category_icon": "transfer",
-      "is_category_manual": false,
-      "note": "не в тратах",
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··2222"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "income",
-      "occurred_at": "2026-08-10T10:30:13+03:00",
-      "amount": 20007300,
-      "currency": "RUB",
-      "title": "Поступление",
-      "category_id": "cat_finance",
-      "category_name": "Финансы",
-      "category_icon": "landmark",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-10T10:22:41+03:00",
-      "amount": 20000000,
-      "currency": "RUB",
-      "title": "Перевод между счетами",
-      "category_id": "cat_transfers",
-      "category_name": "Переводы",
-      "category_icon": "users",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "own_transfer",
-      "occurred_at": "2026-08-10T10:21:40+03:00",
-      "amount": 20000000,
-      "currency": "RUB",
-      "title": "Перевод между счетами",
-      "category_id": "cat_own_transfer",
-      "category_name": "Между своими счетами",
-      "category_icon": "transfer",
-      "is_category_manual": false,
-      "note": "не в тратах",
-      "from_account": {
-        "type_name": "<ignored>",
-        "mask": "··2222"
-      },
-      "to_account": {
-        "type_name": "<ignored>"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-09T17:25:57+03:00",
-      "amount": 150000,
-      "currency": "RUB",
-      "title": "Контрагент 14",
-      "category_id": "cat_transfers",
-      "category_name": "Переводы",
-      "category_icon": "users",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "income",
-      "occurred_at": "2026-08-09T15:29:15+03:00",
-      "amount": 500000,
-      "currency": "RUB",
-      "title": "Контрагент 4",
-      "category_id": "cat_transfers",
-      "category_name": "Переводы",
-      "category_icon": "users",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "own_transfer",
-      "occurred_at": "2026-08-09T12:36:34+03:00",
-      "amount": 10000000,
-      "currency": "RUB",
-      "title": "Перевод между счетами",
-      "category_id": "cat_own_transfer",
-      "category_name": "Между своими счетами",
-      "category_icon": "transfer",
-      "is_category_manual": false,
-      "note": "не в тратах",
-      "from_account": {
-        "type_name": "<ignored>",
-        "mask": "··2222"
-      },
-      "to_account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-09T12:36:11+03:00",
-      "amount": 2000000,
-      "currency": "RUB",
-      "title": "Контрагент 3",
-      "category_id": "cat_transfers",
-      "category_name": "Переводы",
-      "category_icon": "users",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-09T12:15:41+03:00",
-      "amount": 50000,
-      "currency": "RUB",
-      "title": "Рука Помощи Бездомным Животным",
-      "category_id": "cat_nko",
-      "category_name": "НКО",
-      "category_icon": "heart",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-09T11:31:15+03:00",
-      "amount": 107100,
-      "currency": "RUB",
-      "title": "Самокат",
-      "category_id": "cat_supermarkets",
-      "category_name": "Супермаркеты",
-      "category_icon": "cart",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-08T20:04:03+03:00",
-      "amount": 500000,
-      "currency": "RUB",
-      "title": "Контрагент 4",
-      "category_id": "cat_transfers",
-      "category_name": "Переводы",
-      "category_icon": "users",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-08T17:21:24+03:00",
-      "amount": 18997,
-      "currency": "RUB",
-      "title": "Дикси",
-      "category_id": "cat_supermarkets",
-      "category_name": "Супермаркеты",
-      "category_icon": "cart",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-08T16:24:27+03:00",
-      "amount": 175000,
-      "currency": "RUB",
-      "title": "Limon",
-      "category_id": "cat_fastfood",
-      "category_name": "Фастфуд",
-      "category_icon": "coffee",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-08T13:07:59+03:00",
-      "amount": 13000,
-      "currency": "RUB",
-      "title": "Северо-Западная пригородная пассажирская компания",
-      "category_id": "cat_rail",
-      "category_name": "Ж/д билеты",
-      "category_icon": "train",
-      "is_category_manual": false,
-      "note": null,
-      "account": {
-        "type_name": "<ignored>",
-        "mask": "··1111"
-      },
-      "status": "posted"
-    },
-    {
-      "id": "<ignored>",
-      "kind": "expense",
-      "occurred_at": "2026-08-08T13:04:17+03:00",
-      "amount": 100000,
-      "currency": "RUB",
-      "title": "Мой телефон +7 900 000-00-00",
-      "category_id": "cat_mobile",
-      "category_name": "Мобильная связь",
-      "category_icon": "phone",
-      "is_category_manual": false,
-      "note": null,
       "account": {
         "type_name": "<ignored>",
         "mask": "··1111"
@@ -7041,6 +6601,24 @@
     {
       "id": "<ignored>",
       "kind": "expense",
+      "occurred_at": "2026-07-26T08:30:00+03:00",
+      "amount": 25000,
+      "currency": "RUB",
+      "title": "Кофейня у дома",
+      "category_id": "cat_fastfood",
+      "category_name": "Фастфуд",
+      "category_icon": "coffee",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
       "occurred_at": "2026-07-25T20:34:27+03:00",
       "amount": 500000,
       "currency": "RUB",
@@ -7663,6 +7241,24 @@
     },
     {
       "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-23T08:30:00+03:00",
+      "amount": 25000,
+      "currency": "RUB",
+      "title": "Кофейня у дома",
+      "category_id": "cat_fastfood",
+      "category_name": "Фастфуд",
+      "category_icon": "coffee",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
       "kind": "income",
       "occurred_at": "2026-07-23T06:44:04+03:00",
       "amount": 15025200,
@@ -8135,6 +7731,24 @@
     {
       "id": "<ignored>",
       "kind": "expense",
+      "occurred_at": "2026-07-20T08:30:00+03:00",
+      "amount": 25000,
+      "currency": "RUB",
+      "title": "Кофейня у дома",
+      "category_id": "cat_fastfood",
+      "category_name": "Фастфуд",
+      "category_icon": "coffee",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
       "occurred_at": "2026-07-19T23:05:19+03:00",
       "amount": 400000,
       "currency": "RUB",
@@ -8526,6 +8140,24 @@
       "category_icon": "transfer",
       "is_category_manual": false,
       "note": "не в тратах",
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-17T08:30:00+03:00",
+      "amount": 25000,
+      "currency": "RUB",
+      "title": "Кофейня у дома",
+      "category_id": "cat_fastfood",
+      "category_name": "Фастфуд",
+      "category_icon": "coffee",
+      "is_category_manual": false,
+      "note": null,
       "account": {
         "type_name": "<ignored>",
         "mask": "··1111"
@@ -9104,6 +8736,24 @@
     {
       "id": "<ignored>",
       "kind": "expense",
+      "occurred_at": "2026-07-14T08:30:00+03:00",
+      "amount": 25000,
+      "currency": "RUB",
+      "title": "Кофейня у дома",
+      "category_id": "cat_fastfood",
+      "category_name": "Фастфуд",
+      "category_icon": "coffee",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
       "occurred_at": "2026-07-13T19:58:48+03:00",
       "amount": 159380,
       "currency": "RUB",
@@ -9284,6 +8934,24 @@
     {
       "id": "<ignored>",
       "kind": "expense",
+      "occurred_at": "2026-07-11T08:30:00+03:00",
+      "amount": 25000,
+      "currency": "RUB",
+      "title": "Кофейня у дома",
+      "category_id": "cat_fastfood",
+      "category_name": "Фастфуд",
+      "category_icon": "coffee",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
       "occurred_at": "2026-07-10T19:00:00+03:00",
       "amount": 65000,
       "currency": "RUB",
@@ -9345,6 +9013,24 @@
       "category_id": "cat_mobile",
       "category_name": "Мобильная связь",
       "category_icon": "phone",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-08T08:30:00+03:00",
+      "amount": 25000,
+      "currency": "RUB",
+      "title": "Кофейня у дома",
+      "category_id": "cat_fastfood",
+      "category_name": "Фастфуд",
+      "category_icon": "coffee",
       "is_category_manual": false,
       "note": null,
       "account": {
@@ -9540,6 +9226,24 @@
     {
       "id": "<ignored>",
       "kind": "expense",
+      "occurred_at": "2026-07-05T08:30:00+03:00",
+      "amount": 25000,
+      "currency": "RUB",
+      "title": "Кофейня у дома",
+      "category_id": "cat_fastfood",
+      "category_name": "Фастфуд",
+      "category_icon": "coffee",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
       "occurred_at": "2026-07-04T11:47:54+03:00",
       "amount": 134400,
       "currency": "RUB",
@@ -9720,6 +9424,24 @@
     {
       "id": "<ignored>",
       "kind": "expense",
+      "occurred_at": "2026-07-02T08:30:00+03:00",
+      "amount": 25000,
+      "currency": "RUB",
+      "title": "Кофейня у дома",
+      "category_id": "cat_fastfood",
+      "category_name": "Фастфуд",
+      "category_icon": "coffee",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
       "occurred_at": "2026-07-01T20:40:39+03:00",
       "amount": 16498,
       "currency": "RUB",
@@ -9885,8 +9607,8 @@
         "from": "2026-09-01T00:00:00+03:00",
         "to": "2026-10-01T00:00:00+03:00"
       },
-      "expense": 383213763,
-      "income": 207530132,
+      "expense": 393213763,
+      "income": 217530132,
       "data_to": "2026-09-25T22:36:53+03:00"
     },
     {
@@ -9895,8 +9617,8 @@
         "from": "2026-08-01T00:00:00+03:00",
         "to": "2026-09-01T00:00:00+03:00"
       },
-      "expense": 130957088,
-      "income": 208218108,
+      "expense": 84765391,
+      "income": 186687708,
       "data_to": "2026-08-31T22:26:03+03:00"
     },
     {
@@ -9905,7 +9627,7 @@
         "from": "2026-07-01T00:00:00+03:00",
         "to": "2026-08-01T00:00:00+03:00"
       },
-      "expense": 257969452,
+      "expense": 258194452,
       "income": 205684325
     }
   ],
@@ -9913,7 +9635,7 @@
     "stale": true,
     "data_to": "2026-09-26T00:00:00+03:00",
     "last_operation_at": "2026-09-25T22:36:53+03:00",
-    "last_uploaded_at": "2026-09-26T11:00:00+03:00"
+    "last_uploaded_at": "2026-09-26T11:30:00+03:00"
   },
   "range": {
     "from": "2026-07-01T00:00:00+03:00",

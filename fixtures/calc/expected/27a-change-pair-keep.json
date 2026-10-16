@@ -1,0 +1,31 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "own_transfer",
+      "occurred_at": "2026-09-01T14:52:32+03:00",
+      "amount": 10000000,
+      "currency": "RUB",
+      "title": "Перевод между счетами",
+      "category_id": "cat_own_transfer",
+      "category_name": "Между своими счетами",
+      "category_icon": "transfer",
+      "is_category_manual": false,
+      "note": "не в тратах",
+      "from_account": {
+        "type_name": "<ignored>",
+        "mask": "··1111",
+        "spoken": "<ignored>"
+      },
+      "to_account": {
+        "type_name": "<ignored>",
+        "mask": "··2222",
+        "spoken": "<ignored>"
+      },
+      "status": "posted",
+      "source_name": "<ignored>",
+      "note_details": "<ignored>"
+    }
+  ],
+  "replaced_id": null
+}

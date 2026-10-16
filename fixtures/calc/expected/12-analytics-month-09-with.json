@@ -115,7 +115,7 @@
               "from": "2026-07-01T00:00:00+03:00",
               "to": "2026-08-01T00:00:00+03:00"
             },
-            "value": 257969452,
+            "value": 258194452,
             "coverage": "complete"
           },
           {
@@ -123,7 +123,7 @@
               "from": "2026-08-01T00:00:00+03:00",
               "to": "2026-09-01T00:00:00+03:00"
             },
-            "value": 130957088,
+            "value": 84765391,
             "coverage": "partial",
             "data_from": "2026-08-01T00:00:00+03:00",
             "data_to": "2026-08-31T22:26:03+03:00",
@@ -141,7 +141,12 @@
             "note": "<ignored>"
           }
         ],
-        "notes": "<ignored>",
+        "notes": [
+          {
+            "text": "<ignored>",
+            "tone": "muted"
+          }
+        ],
         "highlight_index": 5
       }
     },
@@ -949,11 +954,29 @@
       "data": {
         "icon": "coffee",
         "title": "<ignored>",
-        "value": 174300,
+        "value": 399300,
         "value_kind": "amount",
         "approx": true,
         "description": "<ignored>",
-        "items": []
+        "items": [
+          {
+            "title": "Московский метрополитен",
+            "sublabel": "<ignored>",
+            "value": 174300,
+            "value_kind": "amount",
+            "value_suffix": "<ignored>",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "selection": "<ignored>",
+                "selection_name": "<ignored>",
+                "transfer_mode": "with"
+              }
+            }
+          }
+        ]
       },
       "action": {
         "type": "open_operations",
@@ -1006,7 +1029,7 @@
               "from": "2026-07-01T00:00:00+03:00",
               "to": "2026-08-01T00:00:00+03:00"
             },
-            "value": -0.2542008342152471,
+            "value": -0.2552947435347832,
             "coverage": "complete"
           },
           {
@@ -1014,7 +1037,7 @@
               "from": "2026-08-01T00:00:00+03:00",
               "to": "2026-09-01T00:00:00+03:00"
             },
-            "value": 0.3710581214194877,
+            "value": 0.5459508721377628,
             "coverage": "partial",
             "data_from": "2026-08-01T00:00:00+03:00",
             "data_to": "2026-08-31T22:26:03+03:00",

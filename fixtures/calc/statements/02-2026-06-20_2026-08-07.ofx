@@ -7,7 +7,7 @@
         <CODE>0</CODE>
         <SEVERITY>INFO</SEVERITY>
       </STATUS>
-      <DTSERVER>20260810235959.000[+3:MSK]</DTSERVER>
+      <DTSERVER>20260807235959.000[+3:MSK]</DTSERVER>
       <LANGUAGE>RUS</LANGUAGE>
     </SONRS>
   </SIGNONMSGSRSV1>
@@ -27,247 +27,7 @@
         </BANKACCTFROM>
         <BANKTRANLIST>
           <DTSTART>20260620000000.000[+3:MSK]</DTSTART>
-          <DTEND>20260810235959.000[+3:MSK]</DTEND>
-          <STMTTRN>
-            <TRNTYPE>CREDIT</TRNTYPE>
-            <DTPOSTED>20260810224126.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>10000</TRNAMT>
-            <FITID>933a0c2ee9a19ee2</FITID>
-            <NAME>Контрагент 13</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260810211048.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-11.1</TRNAMT>
-            <FITID>1e3a419f4aeaf43a</FITID>
-            <NAME>ВинЛаб</NAME>
-            <MEMO>Супермаркеты</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260810211023.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-2289.9</TRNAMT>
-            <FITID>2a8c65619eb97c2e</FITID>
-            <NAME>ВинЛаб</NAME>
-            <MEMO>Супермаркеты</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260810204015.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-3300</TRNAMT>
-            <FITID>73bb84a2e979c733</FITID>
-            <NAME>Sp_Suvenir Franciskan</NAME>
-            <MEMO>Подарки и творчество</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260810190000.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-650.00</TRNAMT>
-            <FITID>syn-fit-202608-1</FITID>
-            <NAME>Фитнес Плюс</NAME>
-            <MEMO>Тренировки</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260810171116.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-4220</TRNAMT>
-            <FITID>667b4547cb91bcd7</FITID>
-            <NAME>Чемпион</NAME>
-            <MEMO>Рестораны</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260810150425.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-900</TRNAMT>
-            <FITID>83386e54cd621f56</FITID>
-            <NAME>Sp_Lisya Nora</NAME>
-            <MEMO>Супермаркеты</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260810140645.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-19405</TRNAMT>
-            <FITID>eb3f2d6776b1caa1</FITID>
-            <NAME>Контрагент 12</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>CREDIT</TRNTYPE>
-            <DTPOSTED>20260810125448.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>231</TRNAMT>
-            <FITID>426d43b788a80011</FITID>
-            <NAME>Кэшбэк по «Привет, Мир!»</NAME>
-            <MEMO>Бонусы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260809172557.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-1500</TRNAMT>
-            <FITID>6b8e75a2714763b6</FITID>
-            <NAME>Контрагент 14</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>CREDIT</TRNTYPE>
-            <DTPOSTED>20260809152915.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>5000</TRNAMT>
-            <FITID>85bfe76967a4ae23</FITID>
-            <NAME>Контрагент 4</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>CREDIT</TRNTYPE>
-            <DTPOSTED>20260809123635.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>100000</TRNAMT>
-            <FITID>8a999b7826046a1f</FITID>
-            <NAME>Между своими счетами</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260809123611.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-20000</TRNAMT>
-            <FITID>1126774300e8b1f6</FITID>
-            <NAME>Контрагент 3</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260809121541.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-500</TRNAMT>
-            <FITID>da96de12f85cd337</FITID>
-            <NAME>Рука Помощи Бездомным Животным</NAME>
-            <MEMO>НКО</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260809113115.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-1071</TRNAMT>
-            <FITID>6569f963f655bda1</FITID>
-            <NAME>Самокат</NAME>
-            <MEMO>Супермаркеты</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260808200403.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-5000</TRNAMT>
-            <FITID>d94a85ec96c659f3</FITID>
-            <NAME>Контрагент 4</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260808172124.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-189.97</TRNAMT>
-            <FITID>390d7098ca7a6c47</FITID>
-            <NAME>Дикси</NAME>
-            <MEMO>Супермаркеты</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260808162427.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-1750</TRNAMT>
-            <FITID>2f63b5ffc5d93294</FITID>
-            <NAME>Limon</NAME>
-            <MEMO>Фастфуд</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260808130759.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-130</TRNAMT>
-            <FITID>f1202e6d73a56014</FITID>
-            <NAME>Северо-Западная пригородная пассажирская компания</NAME>
-            <MEMO>Ж/д билеты</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260808130417.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-1000</TRNAMT>
-            <FITID>c902884af90c508c</FITID>
-            <NAME>Мой телефон +7 900 000-00-00</NAME>
-            <MEMO>Мобильная связь</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
+          <DTEND>20260807235959.000[+3:MSK]</DTEND>
           <STMTTRN>
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260807220211.000[+3:MSK]</DTPOSTED>
@@ -1362,6 +1122,18 @@
           </STMTTRN>
           <STMTTRN>
             <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260726083000.000[+3:MSK]</DTPOSTED>
+            <TRNAMT>-250.00</TRNAMT>
+            <FITID>syn-coffee-07-26</FITID>
+            <NAME>Кофейня у дома</NAME>
+            <MEMO>Фастфуд</MEMO>
+            <CURRENCY>
+              <CURSYM>RUB</CURSYM>
+              <CURRATE>1.0</CURRATE>
+            </CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260725203427.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-5000</TRNAMT>
             <FITID>e7310a1c91072cab</FITID>
@@ -1722,6 +1494,18 @@
           </STMTTRN>
           <STMTTRN>
             <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260723083000.000[+3:MSK]</DTPOSTED>
+            <TRNAMT>-250.00</TRNAMT>
+            <FITID>syn-coffee-07-23</FITID>
+            <NAME>Кофейня у дома</NAME>
+            <MEMO>Фастфуд</MEMO>
+            <CURRENCY>
+              <CURSYM>RUB</CURSYM>
+              <CURRATE>1.0</CURRATE>
+            </CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260722234353.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1500</TRNAMT>
             <FITID>a6b1ed467c62ee11</FITID>
@@ -1967,6 +1751,18 @@
             <FITID>bf2df4530d14d0d2</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
+            <CURRENCY>
+              <CURSYM>RUB</CURSYM>
+              <CURRATE>1.0</CURRATE>
+            </CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260720083000.000[+3:MSK]</DTPOSTED>
+            <TRNAMT>-250.00</TRNAMT>
+            <FITID>syn-coffee-07-20</FITID>
+            <NAME>Кофейня у дома</NAME>
+            <MEMO>Фастфуд</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
               <CURRATE>1.0</CURRATE>
@@ -2231,6 +2027,18 @@
             <FITID>d071ab7b5746d89e</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
+            <CURRENCY>
+              <CURSYM>RUB</CURSYM>
+              <CURRATE>1.0</CURRATE>
+            </CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260717083000.000[+3:MSK]</DTPOSTED>
+            <TRNAMT>-250.00</TRNAMT>
+            <FITID>syn-coffee-07-17</FITID>
+            <NAME>Кофейня у дома</NAME>
+            <MEMO>Фастфуд</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
               <CURRATE>1.0</CURRATE>
@@ -2550,6 +2358,18 @@
           </STMTTRN>
           <STMTTRN>
             <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260714083000.000[+3:MSK]</DTPOSTED>
+            <TRNAMT>-250.00</TRNAMT>
+            <FITID>syn-coffee-07-14</FITID>
+            <NAME>Кофейня у дома</NAME>
+            <MEMO>Фастфуд</MEMO>
+            <CURRENCY>
+              <CURSYM>RUB</CURSYM>
+              <CURRATE>1.0</CURRATE>
+            </CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260713195848.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1593.8</TRNAMT>
             <FITID>f9361aba8fd3c749</FITID>
@@ -2670,6 +2490,18 @@
           </STMTTRN>
           <STMTTRN>
             <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260711083000.000[+3:MSK]</DTPOSTED>
+            <TRNAMT>-250.00</TRNAMT>
+            <FITID>syn-coffee-07-11</FITID>
+            <NAME>Кофейня у дома</NAME>
+            <MEMO>Фастфуд</MEMO>
+            <CURRENCY>
+              <CURSYM>RUB</CURSYM>
+              <CURRATE>1.0</CURRATE>
+            </CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260710190000.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-650.00</TRNAMT>
             <FITID>syn-fit-202607-1</FITID>
@@ -2711,6 +2543,18 @@
             <FITID>a16fb2499eb9b645</FITID>
             <NAME>Мой телефон +7 900 000-00-00</NAME>
             <MEMO>Мобильная связь</MEMO>
+            <CURRENCY>
+              <CURSYM>RUB</CURSYM>
+              <CURRATE>1.0</CURRATE>
+            </CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260708083000.000[+3:MSK]</DTPOSTED>
+            <TRNAMT>-250.00</TRNAMT>
+            <FITID>syn-coffee-07-8</FITID>
+            <NAME>Кофейня у дома</NAME>
+            <MEMO>Фастфуд</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
               <CURRATE>1.0</CURRATE>
@@ -2838,6 +2682,18 @@
           </STMTTRN>
           <STMTTRN>
             <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260705083000.000[+3:MSK]</DTPOSTED>
+            <TRNAMT>-250.00</TRNAMT>
+            <FITID>syn-coffee-07-5</FITID>
+            <NAME>Кофейня у дома</NAME>
+            <MEMO>Фастфуд</MEMO>
+            <CURRENCY>
+              <CURSYM>RUB</CURSYM>
+              <CURRATE>1.0</CURRATE>
+            </CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260704114754.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1344</TRNAMT>
             <FITID>2bfe8d52fad319ac</FITID>
@@ -2951,6 +2807,18 @@
             <FITID>860dae78bcc41d47</FITID>
             <NAME>Роснефть</NAME>
             <MEMO>Заправки</MEMO>
+            <CURRENCY>
+              <CURSYM>RUB</CURSYM>
+              <CURRATE>1.0</CURRATE>
+            </CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260702083000.000[+3:MSK]</DTPOSTED>
+            <TRNAMT>-250.00</TRNAMT>
+            <FITID>syn-coffee-07-2</FITID>
+            <NAME>Кофейня у дома</NAME>
+            <MEMO>Фастфуд</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
               <CURRATE>1.0</CURRATE>
@@ -3574,43 +3442,7 @@
         </BANKACCTFROM>
         <BANKTRANLIST>
           <DTSTART>20260620000000.000[+3:MSK]</DTSTART>
-          <DTEND>20260810235959.000[+3:MSK]</DTEND>
-          <STMTTRN>
-            <TRNTYPE>CREDIT</TRNTYPE>
-            <DTPOSTED>20260810103336.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>200000</TRNAMT>
-            <FITID>300ef83665f31d7e</FITID>
-            <NAME>Себе из другого банка</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260810102140.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-200000</TRNAMT>
-            <FITID>c133dda104ffce7e</FITID>
-            <NAME>Себе в другой банк</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260809123634.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-100000</TRNAMT>
-            <FITID>7e7dcb1eb70e4ef9</FITID>
-            <NAME>Между своими счетами</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
+          <DTEND>20260807235959.000[+3:MSK]</DTEND>
           <STMTTRN>
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260804104947.000[+3:MSK]</DTPOSTED>
@@ -4049,55 +3881,7 @@
         </BANKACCTFROM>
         <BANKTRANLIST>
           <DTSTART>20260620000000.000[+3:MSK]</DTSTART>
-          <DTEND>20260810235959.000[+3:MSK]</DTEND>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260810103336.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-200000.00</TRNAMT>
-            <FITID>0e43fcbe947fa450</FITID>
-            <NAME>Контрагент 1</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>CREDIT</TRNTYPE>
-            <DTPOSTED>20260810103013.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>200073.00</TRNAMT>
-            <FITID>bfb7e9c66264b6b0</FITID>
-            <NAME>Поступление</NAME>
-            <MEMO>Финансы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>DEBIT</TRNTYPE>
-            <DTPOSTED>20260810102241.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>-200000.00</TRNAMT>
-            <FITID>a4fd4a523cdeb151</FITID>
-            <NAME>Перевод между счетами</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
-          <STMTTRN>
-            <TRNTYPE>CREDIT</TRNTYPE>
-            <DTPOSTED>20260810102142.000[+3:MSK]</DTPOSTED>
-            <TRNAMT>200000.00</TRNAMT>
-            <FITID>dfac67195c794b4e</FITID>
-            <NAME>Контрагент 1</NAME>
-            <MEMO>Переводы</MEMO>
-            <CURRENCY>
-              <CURSYM>RUB</CURSYM>
-              <CURRATE>1.0</CURRATE>
-            </CURRENCY>
-          </STMTTRN>
+          <DTEND>20260807235959.000[+3:MSK]</DTEND>
           <STMTTRN>
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260804104807.000[+3:MSK]</DTPOSTED>

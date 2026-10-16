@@ -54,7 +54,9 @@ unchanged against the PR base; the owner accepts a change with `breaking-accepte
 `scripts/generate.sh`, `go build`, `go vet`, `go test`). Run them locally before pushing (commands in `README.md`,
 «CI»). A PR that changes `proto/` commits the regenerated `gen/go`. `buf` is pinned twice — `tools/go.mod` and
 `BUF_VERSION` in `ci.yml` — and CI fails when they differ. The calculation fixtures job runs the reference
-calculation tests and requires `fixtures/calc/expected` to equal a fresh scenario run that passes `openapi.yaml`.
+calculation tests and requires `fixtures/calc/expected` to equal a fresh scenario run that passes `openapi.yaml`
+(block `data` against its primitive's schema) and covers every response field — an uncovered field needs a scenario
+step, or an entry with a reason in `fixtures/calc/coverage-exceptions.json` (FIN-157).
 A PR that changes calculation rules (spec FIN-106, the meaning of analytics/feed/import fields in `docs/api.md`)
 updates `tools/refcalc` and regenerates `fixtures/calc/expected` in the same PR, and says which responses changed.
 

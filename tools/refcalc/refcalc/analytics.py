@@ -243,6 +243,37 @@ class Ctx:
             p["note"] = "неполный"
         return p
 
+    def full_previous(self) -> list:
+        """Full previous periods of the same type, newest first, starting not before the first covered month."""
+        out, s = [], self.start
+        first = month_start(self.cov.first)
+        while True:
+            s = add_months(s, -MONTHS_IN[self.ptype])
+            if s < first:
+                return out
+            e = add_months(s, MONTHS_IN[self.ptype])
+            if self.cov.full(s, e):
+                out.append(s)
+
+    def chart_notes(self, points: list) -> list:
+        """Rows under «Расходы по месяцам» (spec FIN-106, section 5): month — the comparison «к тому же дню» (the
+        previous month is full) and «обычно» (2 full previous months); quarter — the peak month and «обычно» (2 full
+        previous quarters); year — the peak month and the total by months. Texts are placeholders."""
+        notes = []
+        has_peak = any(p["value"] is not None for p in points)
+        prev = add_months(self.start, -MONTHS_IN[self.ptype])
+        if self.ptype == "month":
+            if self.cov.full(prev, self.start):
+                notes.append({"text": "сравнение", "tone": "primary"})
+        elif has_peak:
+            notes.append({"text": "пиковый месяц", "tone": "primary"})
+        if self.ptype == "year":
+            if has_peak:
+                notes.append({"text": "итог по месяцам", "tone": "muted"})
+        elif len(self.full_previous()) >= 2:
+            notes.append({"text": "обычно", "tone": "muted"})
+        return notes
+
     def monthly_chart(self) -> Optional[dict]:
         with_data = self.cov.months_with_data()
         if len(with_data) == 1 and not self.cov.full_month(with_data[0]):
@@ -255,7 +286,7 @@ class Ctx:
             e = add_months(m, 1)
             has = self.cov.has_data_month(m)
             points.append(self.point(m, self.scope.expense(self.scope.in_days(self.V, m, e)) if has else None))
-        data = {"kind": "bar", "value_kind": "amount", "points": points, "notes": []}
+        data = {"kind": "bar", "value_kind": "amount", "points": points, "notes": self.chart_notes(points)}
         if self.highlight() is not None:
             data["highlight_index"] = self.highlight()
         return {**base, "status": "ready", "data": data}

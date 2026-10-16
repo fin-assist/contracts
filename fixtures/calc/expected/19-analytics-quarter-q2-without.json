@@ -119,7 +119,12 @@
             "coverage": "complete"
           }
         ],
-        "notes": "<ignored>",
+        "notes": [
+          {
+            "text": "<ignored>",
+            "tone": "primary"
+          }
+        ],
         "highlight_index": 2
       }
     },
