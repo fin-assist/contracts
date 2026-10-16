@@ -7,6 +7,7 @@
 package finerr
 
 import (
+	"strings"
 	"time"
 
 	commonv1 "github.com/fin-assist/contracts/gen/go/finassist/common/v1"
@@ -86,8 +87,8 @@ func ConsentRequired() error {
 }
 
 // LimitExceeded returns LIMIT_EXCEEDED: Лимит вопросов помощнику исчерпан; resets_at (RFC 3339) — когда обновится.
-func LimitExceeded(resetsAt string) error {
-	return build("LIMIT_EXCEEDED", codes.ResourceExhausted, map[string]string{"resets_at": resetsAt})
+func LimitExceeded(resetsAt time.Time) error {
+	return build("LIMIT_EXCEEDED", codes.ResourceExhausted, map[string]string{"resets_at": resetsAt.Format(time.RFC3339)})
 }
 
 // NotFound returns NOT_FOUND: Ресурса нет или он принадлежит другому пользователю.
@@ -151,8 +152,8 @@ func RetryNotAllowed() error {
 }
 
 // RateLimited returns RATE_LIMITED: Превышен лимит запросов; retry_at (RFC 3339) — когда можно повторить.
-func RateLimited(retryAt string, retryDelay time.Duration) error {
-	return build("RATE_LIMITED", codes.ResourceExhausted, map[string]string{"retry_at": retryAt}, &errdetails.RetryInfo{RetryDelay: durationpb.New(retryDelay)})
+func RateLimited(retryAt time.Time, retryDelay time.Duration) error {
+	return build("RATE_LIMITED", codes.ResourceExhausted, map[string]string{"retry_at": retryAt.Format(time.RFC3339)}, &errdetails.RetryInfo{RetryDelay: durationpb.New(retryDelay)})
 }
 
 // InternalError returns INTERNAL_ERROR: Внутренняя ошибка. Сервисы обычно возвращают её голым INTERNAL / UNAVAILABLE / DEADLINE_EXCEEDED без ErrorInfo — bank-bff отдаёт 500 и без явного кода.
@@ -200,7 +201,8 @@ type REST struct {
 }
 
 // ToREST reads a registry error from a gRPC error. ok is false when the error carries no finassist ErrorInfo, the
-// reason is not in the registry, a required metadata key is missing or empty, or a required detail is missing
+// reason is not in the registry, a required metadata key is missing or empty (or, for an *_at key, not an RFC 3339
+// moment), or a required detail is missing
 // (RetryInfo with a positive delay, BadRequest with at least one violation, each with a reason): bank-bff then
 // answers 500 INTERNAL_ERROR and counts finassist_unmapped_error_total. The status message never goes to the client.
 func ToREST(err error) (rest REST, ok bool) {
@@ -237,6 +239,11 @@ func ToREST(err error) (rest REST, ok bool) {
 			v, present := info.GetMetadata()[k]
 			if !present || v == "" {
 				return REST{}, false
+			}
+			if strings.HasSuffix(k, "_at") {
+				if t, err := time.Parse(time.RFC3339, v); err != nil || t.IsZero() {
+					return REST{}, false
+				}
 			}
 			rest.Metadata[k] = v
 		}

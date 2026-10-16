@@ -42,7 +42,8 @@ func TestConstructorRoundTrip(t *testing.T) {
 }
 
 func TestMetadataAndRetryInfo(t *testing.T) {
-	rest, ok := ToREST(LimitExceeded("2026-10-17T00:00:00+03:00"))
+	resetsAt := time.Date(2026, 10, 17, 0, 0, 0, 0, time.FixedZone("MSK", 3*60*60))
+	rest, ok := ToREST(LimitExceeded(resetsAt))
 	if !ok || rest.Spec.HTTPStatus != 403 || rest.Metadata["resets_at"] != "2026-10-17T00:00:00+03:00" {
 		t.Fatalf("LimitExceeded: %+v, %v", rest, ok)
 	}
@@ -64,6 +65,8 @@ func TestUnmapped(t *testing.T) {
 	foreign, _ := status.New(codes.NotFound, "x").WithDetails(&errdetails.ErrorInfo{Domain: "other", Reason: "NOT_FOUND"})
 	unknown, _ := status.New(codes.NotFound, "x").WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: "NO_SUCH_CODE"})
 	noMetadata, _ := status.New(codes.ResourceExhausted, "x").WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: "LIMIT_EXCEEDED"})
+	badTime, _ := status.New(codes.ResourceExhausted, "x").WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: "LIMIT_EXCEEDED", Metadata: map[string]string{"resets_at": "через минуту"}})
+	emptyKey, _ := status.New(codes.ResourceExhausted, "x").WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: "LIMIT_EXCEEDED", Metadata: map[string]string{"resets_at": ""}})
 	cases := map[string]error{
 		"nil":            nil,
 		"plain error":    errors.New("boom"),
@@ -71,7 +74,9 @@ func TestUnmapped(t *testing.T) {
 		"foreign domain": foreign.Err(),
 		"unknown reason": unknown.Err(),
 		"missing key":    noMetadata.Err(),
-		"empty key":      LimitExceeded(""),
+		"empty key":      emptyKey.Err(),
+		"zero time":      LimitExceeded(time.Time{}),
+		"not RFC 3339":   badTime.Err(),
 		"no violations":  ValidationError(),
 		"no reason":      ValidationError(&errdetails.BadRequest_FieldViolation{Field: "phone", Description: "bad"}),
 		"no retry delay": RequestInProgress(0),

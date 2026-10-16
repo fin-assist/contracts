@@ -275,6 +275,12 @@ var reserved = map[string]bool{
 	"err": true, "md": true, "st": true, "violations": true, "retryDelay": true, "codes": true, "status": true,
 }
 
+// isTimeKey: a metadata key with the _at suffix carries a moment in RFC 3339 (error_options.proto); the constructor
+// takes time.Time and ToREST rejects a value that does not parse.
+func isTimeKey(key string) bool {
+	return strings.HasSuffix(key, "_at")
+}
+
 func paramName(key string) string {
 	p := camel(key, false)
 	if reserved[p] {
@@ -302,6 +308,7 @@ func render(importPath string, registry protoreflect.FileDescriptor, codes []cod
 	p("package %s", pkg)
 	p("")
 	p("import (")
+	p("\t\"strings\"")
 	p("\t\"time\"")
 	p("")
 	p("\tcommonv1 %q", commonImport)
@@ -347,8 +354,13 @@ func render(importPath string, registry protoreflect.FileDescriptor, codes []cod
 		fn := camel(strings.ToLower(c.Name), true)
 		var params, md []string
 		for _, k := range c.MetadataKeys {
-			params = append(params, paramName(k)+" string")
-			md = append(md, fmt.Sprintf("%q: %s", k, paramName(k)))
+			if isTimeKey(k) {
+				params = append(params, paramName(k)+" time.Time")
+				md = append(md, fmt.Sprintf("%q: %s.Format(time.RFC3339)", k, paramName(k)))
+			} else {
+				params = append(params, paramName(k)+" string")
+				md = append(md, fmt.Sprintf("%q: %s", k, paramName(k)))
+			}
 		}
 		if c.RetryInfo {
 			params = append(params, "retryDelay time.Duration")
@@ -431,7 +443,8 @@ type REST struct {
 }
 
 // ToREST reads a registry error from a gRPC error. ok is false when the error carries no finassist ErrorInfo, the
-// reason is not in the registry, a required metadata key is missing or empty, or a required detail is missing
+// reason is not in the registry, a required metadata key is missing or empty (or, for an *_at key, not an RFC 3339
+// moment), or a required detail is missing
 // (RetryInfo with a positive delay, BadRequest with at least one violation, each with a reason): bank-bff then
 // answers 500 INTERNAL_ERROR and counts finassist_unmapped_error_total. The status message never goes to the client.
 func ToREST(err error) (rest REST, ok bool) {
@@ -468,6 +481,11 @@ func ToREST(err error) (rest REST, ok bool) {
 			v, present := info.GetMetadata()[k]
 			if !present || v == "" {
 				return REST{}, false
+			}
+			if strings.HasSuffix(k, "_at") {
+				if t, err := time.Parse(time.RFC3339, v); err != nil || t.IsZero() {
+					return REST{}, false
+				}
 			}
 			rest.Metadata[k] = v
 		}
