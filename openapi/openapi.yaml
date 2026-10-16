@@ -1262,20 +1262,6 @@ paths:
                       }
                     },
                     {
-                      "id": "monthly_chart",
-                      "type": "chart",
-                      "v": 1,
-                      "status": "locked",
-                      "title": "Расходы по месяцам",
-                      "alt_text": "График по месяцам пока закрыт",
-                      "lock": {
-                        "reason": "need_months_with_data",
-                        "text": "Нужно 2 месяца с данными, есть 1",
-                        "required": 2,
-                        "available": 1
-                      }
-                    },
-                    {
                       "id": "expense_categories",
                       "type": "ranked_list",
                       "v": 1,
@@ -1379,7 +1365,8 @@ paths:
       - analytics
       operationId: listAnalyticsPeriods
       summary: Периоды с данными
-      description: Для шторки выбора периода. Без пагинации — даже за 10 лет это 120 месяцев. Клиент запрашивает при открытии
+      description: Для шторки выбора периода. Периоды, где есть хоть один день, покрытый периодом выписки (`DTSTART..DTEND`)
+        хотя бы одной загрузки, — даже без операций. Без пагинации — даже за 10 лет это 120 месяцев. Клиент запрашивает при открытии
         шторки.
       parameters:
       - name: period
