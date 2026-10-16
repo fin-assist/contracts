@@ -14,7 +14,7 @@ IGNORED = "<ignored>"
 OPAQUE_KEYS = {"id", "replaced_id", "upload_id", "payment_id", "selection", "calculated_at"}
 # Texts the server writes for the client: shown, not compared (their numbers come in structured fields).
 TEXT_KEYS = {"selection_name", "type_name", "feature_name", "text", "alt_text", "empty_text", "title", "caption", "label",
-             "note", "description", "badge", "sublabel", "value_suffix", "more_label", "notes", "spoken",
+             "note", "description", "badge", "sublabel", "value_suffix", "more_label", "spoken",
              "note_details", "source_name", "message"}
 # Outside blocks these are data, not texts: an operation's description, a notice code's text is still a text.
 DATA_TITLE_OUTSIDE_BLOCKS = {"title", "note", "description"}

@@ -196,7 +196,16 @@
             "coverage": "no_data"
           }
         ],
-        "notes": "<ignored>"
+        "notes": [
+          {
+            "text": "<ignored>",
+            "tone": "primary"
+          },
+          {
+            "text": "<ignored>",
+            "tone": "muted"
+          }
+        ]
       }
     },
     {

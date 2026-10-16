@@ -149,7 +149,12 @@
             "note": "<ignored>"
           }
         ],
-        "notes": "<ignored>",
+        "notes": [
+          {
+            "text": "<ignored>",
+            "tone": "muted"
+          }
+        ],
         "highlight_index": 5
       }
     },

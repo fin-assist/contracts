@@ -143,7 +143,16 @@
             "coverage": "complete"
           }
         ],
-        "notes": "<ignored>",
+        "notes": [
+          {
+            "text": "<ignored>",
+            "tone": "primary"
+          },
+          {
+            "text": "<ignored>",
+            "tone": "muted"
+          }
+        ],
         "highlight_index": 5
       }
     },

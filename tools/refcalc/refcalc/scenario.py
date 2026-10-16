@@ -132,11 +132,10 @@ def main(argv=None) -> int:
         from .coverage import Coverage
         from .schema import SCHEMAS
         cov = Coverage(args.openapi)
-        roots = set()
+        roots = set(SCHEMAS.values())  # every response kind: one that leaves the scenario shows up as uncovered
         for kind, resp in runner.raw.values():
             if isinstance(resp, dict) and set(resp) == {"status", "error"}:
                 continue
-            roots.add(SCHEMAS[kind])
             cov.observe(SCHEMAS[kind], resp)
         with open(os.path.join(args.root, "coverage-exceptions.json"), encoding="utf-8") as f:
             exceptions = json.load(f)["fields"]

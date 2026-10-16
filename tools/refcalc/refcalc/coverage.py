@@ -24,6 +24,15 @@ class Coverage:
         self.observed = set()
         self.data_types = set()
 
+    @staticmethod
+    def _supported(schema, owner) -> None:
+        """The walk follows $ref, allOf, properties and items; anything else would hide fields silently."""
+        bad = [k for k in ("oneOf", "anyOf", "not") if k in schema]
+        if isinstance(schema.get("additionalProperties"), dict):
+            bad.append("additionalProperties")
+        if bad:
+            raise ValueError(f"{owner}: {', '.join(bad)} is not supported by the coverage check — extend coverage.py")
+
     def _deref(self, schema, owner):
         if "$ref" in schema:
             name = schema["$ref"].rsplit("/", 1)[-1]
@@ -37,6 +46,7 @@ class Coverage:
 
     def _collect(self, schema, owner, seen) -> None:
         schema, owner = self._deref(schema, owner)
+        self._supported(schema, owner)
         key = (owner, id(schema))
         if key in seen:
             return
