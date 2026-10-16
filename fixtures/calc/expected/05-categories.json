@@ -1,0 +1,574 @@
+{
+  "categories": [
+    {
+      "id": "cat_own_transfer",
+      "name": "Между своими счетами",
+      "icon": "transfer",
+      "is_system": true,
+      "kinds": [
+        "expense",
+        "income"
+      ],
+      "assignable": true,
+      "note": "не в тратах"
+    },
+    {
+      "id": "cat_refund",
+      "name": "Возврат",
+      "icon": "repeat",
+      "is_system": true,
+      "kinds": [
+        "income"
+      ],
+      "assignable": true,
+      "note": "уменьшает расходы на покупку"
+    },
+    {
+      "id": "cat_uncategorized",
+      "name": "Без категории",
+      "icon": "tag",
+      "is_system": true,
+      "kinds": [
+        "expense",
+        "income"
+      ],
+      "assignable": false,
+      "note": "в выписке нет категории"
+    },
+    {
+      "id": "cat_supermarkets",
+      "name": "Супермаркеты",
+      "icon": "cart",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_transfers",
+      "name": "Переводы",
+      "icon": "users",
+      "is_system": false,
+      "kinds": [
+        "expense",
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_fastfood",
+      "name": "Фастфуд",
+      "icon": "coffee",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_restaurants",
+      "name": "Рестораны",
+      "icon": "utensils",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_taxi",
+      "name": "Такси",
+      "icon": "car",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_digital",
+      "name": "Цифровые товары",
+      "icon": "smartphone",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_finance",
+      "name": "Финансы",
+      "icon": "landmark",
+      "is_system": false,
+      "kinds": [
+        "expense",
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_transport",
+      "name": "Местный транспорт",
+      "icon": "bus",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_mobile",
+      "name": "Мобильная связь",
+      "icon": "phone",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_pharmacy",
+      "name": "Аптеки",
+      "icon": "pill",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_fuel",
+      "name": "Заправки",
+      "icon": "car",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_charity",
+      "name": "Благотворительность",
+      "icon": "heart",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_dividends",
+      "name": "Дивиденды и купоны",
+      "icon": "trending-up",
+      "is_system": false,
+      "kinds": [
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_marketplaces",
+      "name": "Маркетплейсы",
+      "icon": "package",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_bonuses",
+      "name": "Бонусы",
+      "icon": "gift",
+      "is_system": false,
+      "kinds": [
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_cash",
+      "name": "Наличные",
+      "icon": "banknote",
+      "is_system": false,
+      "kinds": [
+        "expense",
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_salary",
+      "name": "Зарплата",
+      "icon": "briefcase",
+      "is_system": false,
+      "kinds": [
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_services",
+      "name": "Различные услуги",
+      "icon": "wrench",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_rail",
+      "name": "Ж/д билеты",
+      "icon": "train",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_service",
+      "name": "Сервис",
+      "icon": "wrench",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_telecom",
+      "name": "Связь",
+      "icon": "wifi",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_nko",
+      "name": "НКО",
+      "icon": "heart",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_bank_fees",
+      "name": "Услуги банка",
+      "icon": "landmark",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_utilities",
+      "name": "ЖКХ",
+      "icon": "home",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_interest",
+      "name": "Проценты",
+      "icon": "percent",
+      "is_system": false,
+      "kinds": [
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_pets",
+      "name": "Животные",
+      "icon": "paw",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_medicine",
+      "name": "Медицина",
+      "icon": "stethoscope",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_flights",
+      "name": "Авиабилеты",
+      "icon": "plane",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_streaming",
+      "name": "Онлайн-кинотеатры",
+      "icon": "film",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_toll_roads",
+      "name": "Платные дороги",
+      "icon": "road",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_art",
+      "name": "Искусство",
+      "icon": "palette",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_gifts",
+      "name": "Подарки и творчество",
+      "icon": "gift",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_top_ups",
+      "name": "Пополнения",
+      "icon": "plus-circle",
+      "is_system": false,
+      "kinds": [
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_beauty",
+      "name": "Красота",
+      "icon": "scissors",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_flowers",
+      "name": "Цветы",
+      "icon": "flower",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_gov",
+      "name": "Госуслуги",
+      "icon": "building",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_deposits",
+      "name": "Вклады",
+      "icon": "piggy-bank",
+      "is_system": false,
+      "kinds": [
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_travel",
+      "name": "Турагентства",
+      "icon": "map",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_repair",
+      "name": "Ремонт и мебель",
+      "icon": "hammer",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_other",
+      "name": "Другое",
+      "icon": "tag",
+      "is_system": false,
+      "kinds": [
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_goods",
+      "name": "Различные товары",
+      "icon": "package",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_auto_services",
+      "name": "Автоуслуги",
+      "icon": "car",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_yandex",
+      "name": "Экосистема Яндекс",
+      "icon": "layers",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_fines",
+      "name": "Штрафы",
+      "icon": "alert-triangle",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_clothes",
+      "name": "Одежда и обувь",
+      "icon": "shirt",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_entertainment",
+      "name": "Развлечения",
+      "icon": "ticket",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_photo",
+      "name": "Фото и копицентры",
+      "icon": "camera",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_car_dealers",
+      "name": "Автосалоны",
+      "icon": "car",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_hotels",
+      "name": "Отели",
+      "icon": "bed",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_fitness",
+      "name": "Тренировки",
+      "icon": "dumbbell",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_internet",
+      "name": "Интернет",
+      "icon": "wifi",
+      "is_system": false,
+      "kinds": [
+        "expense"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_kripto",
+      "name": "Крипто",
+      "icon": "tag",
+      "is_system": false,
+      "kinds": [
+        "expense",
+        "income"
+      ],
+      "assignable": true
+    },
+    {
+      "id": "cat_ochen_dlinnaya_kategoriya_banka_kotoroy_net_v_spiske_izvestnyh_ka",
+      "name": "Очень длинная категория банка, которой нет в списке известных ка",
+      "icon": "tag",
+      "is_system": false,
+      "kinds": [
+        "expense",
+        "income"
+      ],
+      "assignable": true
+    }
+  ]
+}

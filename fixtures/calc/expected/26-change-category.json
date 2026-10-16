@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-21T16:26:39+03:00",
+      "amount": 119700,
+      "currency": "RUB",
+      "title": "Самокат",
+      "category_id": "cat_restaurants",
+      "category_name": "Рестораны",
+      "category_icon": "utensils",
+      "is_category_manual": true,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111",
+        "spoken": "<ignored>"
+      },
+      "status": "posted",
+      "source_name": "<ignored>",
+      "description": "<ignored>",
+      "bank_category": "Супермаркеты",
+      "note_details": null
+    }
+  ],
+  "replaced_id": null
+}

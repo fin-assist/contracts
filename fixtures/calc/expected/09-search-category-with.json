@@ -1,0 +1,621 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-25T19:11:55+03:00",
+      "amount": 4799,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-23T20:44:57+03:00",
+      "amount": 101900,
+      "currency": "RUB",
+      "title": "Алкотека",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-23T20:41:59+03:00",
+      "amount": 116598,
+      "currency": "RUB",
+      "title": "Krabsbir",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-22T12:57:19+03:00",
+      "amount": 338000,
+      "currency": "RUB",
+      "title": "Магазин",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-21T16:26:39+03:00",
+      "amount": 119700,
+      "currency": "RUB",
+      "title": "Самокат",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-21T13:51:20+03:00",
+      "amount": 23197,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-20T09:56:40+03:00",
+      "amount": 49999,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-18T23:53:30+03:00",
+      "amount": 600,
+      "currency": "RUB",
+      "title": "Flagman Market",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-18T23:53:07+03:00",
+      "amount": 26100,
+      "currency": "RUB",
+      "title": "Flagman Market",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-18T19:25:07+03:00",
+      "amount": 171600,
+      "currency": "RUB",
+      "title": "Алкотека",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-18T18:27:00+03:00",
+      "amount": 140100,
+      "currency": "RUB",
+      "title": "Krabsbir",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-17T12:00:00+03:00",
+      "amount": 42000,
+      "currency": "RUB",
+      "title": "",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-17T08:41:21+03:00",
+      "amount": 67300,
+      "currency": "RUB",
+      "title": "Самокат",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-16T12:00:00+03:00",
+      "amount": 15000,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_refund",
+      "category_name": "Возврат",
+      "category_icon": "repeat",
+      "is_category_manual": false,
+      "note": "возврат · Супермаркеты",
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-16T11:53:02+03:00",
+      "amount": 34057,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-16T11:39:58+03:00",
+      "amount": 65234,
+      "currency": "RUB",
+      "title": "Ogorod",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T17:11:01+03:00",
+      "amount": 7798,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-14T22:02:10+03:00",
+      "amount": 91200,
+      "currency": "RUB",
+      "title": "Самокат",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-14T18:20:58+03:00",
+      "amount": 136800,
+      "currency": "RUB",
+      "title": "Алкотека",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-14T18:11:07+03:00",
+      "amount": 109900,
+      "currency": "RUB",
+      "title": "Алкотека",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-14T18:02:47+03:00",
+      "amount": 5500,
+      "currency": "RUB",
+      "title": "Magazin Lepeshki",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-13T17:29:36+03:00",
+      "amount": 84200,
+      "currency": "RUB",
+      "title": "Самокат",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-13T12:10:34+03:00",
+      "amount": 70090,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-13T11:59:21+03:00",
+      "amount": 125700,
+      "currency": "RUB",
+      "title": "Svezheemyasokubanskoe",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-12T19:12:44+03:00",
+      "amount": 25600,
+      "currency": "RUB",
+      "title": "Krabsbir",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-12T13:32:57+03:00",
+      "amount": 40817,
+      "currency": "RUB",
+      "title": "Ogorod",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-12T13:29:20+03:00",
+      "amount": 14999,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-11T19:37:14+03:00",
+      "amount": 22999,
+      "currency": "RUB",
+      "title": "Магнит",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-10T21:08:37+03:00",
+      "amount": 136000,
+      "currency": "RUB",
+      "title": "Krabsbir",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-09T12:18:36+03:00",
+      "amount": 93297,
+      "currency": "RUB",
+      "title": "Европа маркет",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-08T20:22:41+03:00",
+      "amount": 73371,
+      "currency": "RUB",
+      "title": "Красное и белое",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-07T15:02:41+03:00",
+      "amount": 89890,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-04T09:57:42+03:00",
+      "amount": 39493,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-02T18:33:33+03:00",
+      "amount": 190913,
+      "currency": "RUB",
+      "title": "Красное и белое",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    }
+  ],
+  "total_count": 34,
+  "range": {
+    "from": "2026-09-01T00:00:00+03:00",
+    "to": "2026-10-01T00:00:00+03:00"
+  }
+}

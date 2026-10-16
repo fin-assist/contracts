@@ -1,0 +1,1317 @@
+{
+  "has_data": true,
+  "params": {
+    "period": "month",
+    "date": "2026-07",
+    "transfer_mode": "with"
+  },
+  "currency": "RUB",
+  "period": {
+    "range": {
+      "from": "2026-07-01T00:00:00+03:00",
+      "to": "2026-08-01T00:00:00+03:00"
+    },
+    "is_current": false,
+    "coverage": "complete",
+    "data_from": "2026-07-01T00:00:00+03:00",
+    "data_to": "2026-07-31T18:51:40+03:00",
+    "gaps": []
+  },
+  "navigation": {
+    "previous": "2026-06",
+    "next": "2026-08"
+  },
+  "blocks": [
+    {
+      "id": "tiles",
+      "type": "tile_group",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "tiles": [
+          {
+            "id": "balance",
+            "title": "<ignored>",
+            "status": "ready",
+            "value": -52285127,
+            "value_kind": "amount",
+            "caption": "<ignored>"
+          },
+          {
+            "id": "expense",
+            "title": "<ignored>",
+            "status": "ready",
+            "value": 257969452,
+            "value_kind": "amount",
+            "caption": "<ignored>",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            }
+          },
+          {
+            "id": "daily_expense",
+            "title": "<ignored>",
+            "status": "ready",
+            "value": 8321595,
+            "value_kind": "amount",
+            "caption": "<ignored>"
+          },
+          {
+            "id": "income",
+            "title": "<ignored>",
+            "status": "ready",
+            "value": 205684325,
+            "value_kind": "amount",
+            "show_plus": true,
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "kind": "income",
+                "transfer_mode": "with"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "monthly_chart",
+      "type": "chart",
+      "v": 1,
+      "title": "<ignored>",
+      "alt_text": "<ignored>",
+      "status": "ready",
+      "data": {
+        "kind": "bar",
+        "value_kind": "amount",
+        "points": [
+          {
+            "range": {
+              "from": "2026-02-01T00:00:00+03:00",
+              "to": "2026-03-01T00:00:00+03:00"
+            },
+            "value": 397023788,
+            "coverage": "complete"
+          },
+          {
+            "range": {
+              "from": "2026-03-01T00:00:00+03:00",
+              "to": "2026-04-01T00:00:00+03:00"
+            },
+            "value": 479880069,
+            "coverage": "complete"
+          },
+          {
+            "range": {
+              "from": "2026-04-01T00:00:00+03:00",
+              "to": "2026-05-01T00:00:00+03:00"
+            },
+            "value": 248700997,
+            "coverage": "complete"
+          },
+          {
+            "range": {
+              "from": "2026-05-01T00:00:00+03:00",
+              "to": "2026-06-01T00:00:00+03:00"
+            },
+            "value": 142959126,
+            "coverage": "complete"
+          },
+          {
+            "range": {
+              "from": "2026-06-01T00:00:00+03:00",
+              "to": "2026-07-01T00:00:00+03:00"
+            },
+            "value": 151255356,
+            "coverage": "complete"
+          },
+          {
+            "range": {
+              "from": "2026-07-01T00:00:00+03:00",
+              "to": "2026-08-01T00:00:00+03:00"
+            },
+            "value": 257969452,
+            "coverage": "complete"
+          }
+        ],
+        "notes": "<ignored>",
+        "highlight_index": 5
+      }
+    },
+    {
+      "id": "expense_categories",
+      "type": "ranked_list",
+      "v": 1,
+      "title": "<ignored>",
+      "alt_text": "<ignored>",
+      "status": "ready",
+      "data": {
+        "total": {
+          "label": "<ignored>",
+          "value": 257969452,
+          "value_kind": "amount",
+          "action": {
+            "type": "open_operations",
+            "filter": {
+              "from": "2026-07-01T00:00:00+03:00",
+              "to": "2026-08-01T00:00:00+03:00",
+              "kind": "expense",
+              "transfer_mode": "with"
+            }
+          }
+        },
+        "items": [
+          {
+            "id": "cat_transfers",
+            "icon": "users",
+            "title": "Переводы",
+            "value": 231010700,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_transfers",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.8954963396208633,
+            "note": "<ignored>"
+          },
+          {
+            "id": "cat_cash",
+            "icon": "banknote",
+            "title": "Наличные",
+            "value": 9280000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_cash",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.03597325159259555
+          },
+          {
+            "id": "cat_supermarkets",
+            "icon": "cart",
+            "title": "Супермаркеты",
+            "value": 4456222,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_supermarkets",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.017274223616213287
+          },
+          {
+            "id": "cat_restaurants",
+            "icon": "utensils",
+            "title": "Рестораны",
+            "value": 4216800,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_restaurants",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.016346121477980268
+          },
+          {
+            "id": "cat_marketplaces",
+            "icon": "package",
+            "title": "Маркетплейсы",
+            "value": 2058000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_marketplaces",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.007977688769133797
+          },
+          {
+            "id": "cat_fastfood",
+            "icon": "coffee",
+            "title": "Фастфуд",
+            "value": 1474400,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_fastfood",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.005715405403892551
+          },
+          {
+            "id": "cat_fuel",
+            "icon": "car",
+            "title": "Заправки",
+            "value": 1245753,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_fuel",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.004829071777072271
+          },
+          {
+            "id": "cat_utilities",
+            "icon": "home",
+            "title": "ЖКХ",
+            "value": 746825,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_utilities",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.002895013321189673
+          },
+          {
+            "id": "cat_toll_roads",
+            "icon": "road",
+            "title": "Платные дороги",
+            "value": 735800,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_toll_roads",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.002852275702783599
+          },
+          {
+            "id": "cat_art",
+            "icon": "palette",
+            "title": "Искусство",
+            "value": 350000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_art",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.001356749790669013
+          },
+          {
+            "id": "cat_digital",
+            "icon": "smartphone",
+            "title": "Цифровые товары",
+            "value": 273000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_digital",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0010582648367218302
+          },
+          {
+            "id": "cat_fitness",
+            "icon": "dumbbell",
+            "title": "Тренировки",
+            "value": 260000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_fitness",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0010078712730684097
+          },
+          {
+            "id": "cat_transport",
+            "icon": "bus",
+            "title": "Местный транспорт",
+            "value": 253300,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_transport",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0009818992056470314
+          },
+          {
+            "id": "cat_pets",
+            "icon": "paw",
+            "title": "Животные",
+            "value": 241000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_pets",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0009342191415749489
+          },
+          {
+            "id": "cat_services",
+            "icon": "wrench",
+            "title": "Различные услуги",
+            "value": 238500,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_services",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0009245280716415989
+          },
+          {
+            "id": "cat_mobile",
+            "icon": "phone",
+            "title": "Мобильная связь",
+            "value": 220000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_mobile",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0008528141541348081
+          },
+          {
+            "id": "cat_auto_services",
+            "icon": "car",
+            "title": "Автоуслуги",
+            "value": 160603,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_auto_services",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.00062256596180233
+          },
+          {
+            "id": "cat_taxi",
+            "icon": "car",
+            "title": "Такси",
+            "value": 111900,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_taxi",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0004337722902167502
+          },
+          {
+            "id": "cat_telecom",
+            "icon": "wifi",
+            "title": "Связь",
+            "value": 108900,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_telecom",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.00042214300629673005
+          },
+          {
+            "id": "cat_pharmacy",
+            "icon": "pill",
+            "title": "Аптеки",
+            "value": 104040,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_pharmacy",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0004033035663462975
+          },
+          {
+            "id": "cat_charity",
+            "icon": "heart",
+            "title": "Благотворительность",
+            "value": 93009,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_charity",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0003605426893723835
+          },
+          {
+            "id": "cat_rail",
+            "icon": "train",
+            "title": "Ж/д билеты",
+            "value": 82400,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_rail",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.00031941766500321906
+          },
+          {
+            "id": "cat_beauty",
+            "icon": "scissors",
+            "title": "Красота",
+            "value": 55000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_beauty",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.00021320353853370203
+          },
+          {
+            "id": "cat_nko",
+            "icon": "heart",
+            "title": "НКО",
+            "value": 50000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_nko",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.00019382139866700186
+          },
+          {
+            "id": "cat_gifts",
+            "icon": "gift",
+            "title": "Подарки и творчество",
+            "value": 40000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_gifts",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0001550571189336015
+          },
+          {
+            "id": "cat_travel",
+            "icon": "map",
+            "title": "Турагентства",
+            "value": 40000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_travel",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0001550571189336015
+          },
+          {
+            "id": "cat_streaming",
+            "icon": "film",
+            "title": "Онлайн-кинотеатры",
+            "value": 39900,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_streaming",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.00015466947613626748
+          },
+          {
+            "id": "cat_bank_fees",
+            "icon": "landmark",
+            "title": "Услуги банка",
+            "value": 15000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_bank_fees",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 5.814641960010056e-05
+          },
+          {
+            "id": "cat_service",
+            "icon": "wrench",
+            "title": "Сервис",
+            "value": 6000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_service",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 2.3258567840040224e-05
+          },
+          {
+            "id": "cat_photo",
+            "icon": "camera",
+            "title": "Фото и копицентры",
+            "value": 2400,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_photo",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 9.303427136016088e-06
+          }
+        ],
+        "visible_count": 4,
+        "more_label": "<ignored>"
+      }
+    },
+    {
+      "id": "income_categories",
+      "type": "ranked_list",
+      "v": 1,
+      "title": "<ignored>",
+      "alt_text": "<ignored>",
+      "status": "ready",
+      "data": {
+        "items": [
+          {
+            "id": "cat_transfers",
+            "icon": "users",
+            "title": "Переводы",
+            "value": 138641585,
+            "value_kind": "amount",
+            "show_plus": true,
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_transfers",
+                "kind": "income",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.6740503195856077
+          },
+          {
+            "id": "cat_finance",
+            "icon": "landmark",
+            "title": "Финансы",
+            "value": 53241417,
+            "value_kind": "amount",
+            "show_plus": true,
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_finance",
+                "kind": "income",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.2588501432960436
+          },
+          {
+            "id": "cat_salary",
+            "icon": "briefcase",
+            "title": "Зарплата",
+            "value": 11754982,
+            "value_kind": "amount",
+            "show_plus": true,
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_salary",
+                "kind": "income",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.05715059715902026
+          },
+          {
+            "id": "cat_deposits",
+            "icon": "piggy-bank",
+            "title": "Вклады",
+            "value": 1675859,
+            "value_kind": "amount",
+            "show_plus": true,
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_deposits",
+                "kind": "income",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.00814772345923784
+          },
+          {
+            "id": "cat_interest",
+            "icon": "percent",
+            "title": "Проценты",
+            "value": 277473,
+            "value_kind": "amount",
+            "show_plus": true,
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_interest",
+                "kind": "income",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.00134902355830956
+          },
+          {
+            "id": "cat_bonuses",
+            "icon": "gift",
+            "title": "Бонусы",
+            "value": 93009,
+            "value_kind": "amount",
+            "show_plus": true,
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "category_id": "cat_bonuses",
+                "kind": "income",
+                "transfer_mode": "with"
+              }
+            },
+            "share": 0.0004521929417810521
+          }
+        ],
+        "style": "plain"
+      }
+    },
+    {
+      "type": "heading",
+      "v": 1,
+      "data": {
+        "text": "<ignored>"
+      }
+    },
+    {
+      "id": "regular_payments",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "repeat",
+        "title": "<ignored>",
+        "value": 533700,
+        "value_kind": "amount",
+        "description": "<ignored>",
+        "items": [
+          {
+            "title": "РБК",
+            "sublabel": "<ignored>",
+            "value": 150000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "selection": "<ignored>",
+                "selection_name": "<ignored>",
+                "transfer_mode": "with"
+              }
+            },
+            "button": {
+              "type": "dismiss_regular_payment",
+              "payment_id": "<ignored>",
+              "label": "<ignored>"
+            }
+          },
+          {
+            "title": "Ростелеком",
+            "sublabel": "<ignored>",
+            "value": 108900,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "selection": "<ignored>",
+                "selection_name": "<ignored>",
+                "transfer_mode": "with"
+              }
+            },
+            "button": {
+              "type": "dismiss_regular_payment",
+              "payment_id": "<ignored>",
+              "label": "<ignored>"
+            }
+          },
+          {
+            "title": "Мой телефон +7 900 000-00-00",
+            "sublabel": "<ignored>",
+            "value": 100000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-07-01T00:00:00+03:00",
+                "to": "2026-08-01T00:00:00+03:00",
+                "selection": "<ignored>",
+                "selection_name": "<ignored>",
+                "transfer_mode": "with"
+              }
+            },
+            "button": {
+              "type": "dismiss_regular_payment",
+              "payment_id": "<ignored>",
+              "label": "<ignored>"
+            }
+          }
+        ],
+        "items_more": {
+          "label": "<ignored>",
+          "value": 174800,
+          "value_kind": "amount"
+        }
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "selection": "<ignored>",
+          "selection_name": "<ignored>",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "banknote",
+        "title": "<ignored>",
+        "value": 9280000,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "category_id": "cat_cash",
+          "kind": "expense",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "utensils",
+        "title": "<ignored>",
+        "value": 4216800,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "category_id": "cat_restaurants",
+          "kind": "expense",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "package",
+        "title": "<ignored>",
+        "value": 2058000,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "category_id": "cat_marketplaces",
+          "kind": "expense",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "coffee",
+        "title": "<ignored>",
+        "value": 1474400,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "category_id": "cat_fastfood",
+          "kind": "expense",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "car",
+        "title": "<ignored>",
+        "value": 1245753,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "category_id": "cat_fuel",
+          "kind": "expense",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "road",
+        "title": "<ignored>",
+        "value": 735800,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "category_id": "cat_toll_roads",
+          "kind": "expense",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "palette",
+        "title": "<ignored>",
+        "value": 350000,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "category_id": "cat_art",
+          "kind": "expense",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "bus",
+        "title": "<ignored>",
+        "value": 253300,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "category_id": "cat_transport",
+          "kind": "expense",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "wrench",
+        "title": "<ignored>",
+        "value": 238500,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "category_id": "cat_services",
+          "kind": "expense",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "paw",
+        "title": "<ignored>",
+        "value": 241000,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "category_id": "cat_pets",
+          "kind": "expense",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "bank_fees",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "percent",
+        "title": "<ignored>",
+        "value": 15000,
+        "value_kind": "amount",
+        "description": "<ignored>"
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "selection": "<ignored>",
+          "selection_name": "<ignored>",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "small_frequent",
+      "type": "insight_card",
+      "v": 1,
+      "status": "ready",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "coffee",
+        "title": "<ignored>",
+        "value": 174300,
+        "value_kind": "amount",
+        "approx": true,
+        "description": "<ignored>",
+        "items": []
+      },
+      "action": {
+        "type": "open_operations",
+        "filter": {
+          "from": "2026-07-01T00:00:00+03:00",
+          "to": "2026-08-01T00:00:00+03:00",
+          "selection": "<ignored>",
+          "selection_name": "<ignored>",
+          "transfer_mode": "with"
+        }
+      }
+    },
+    {
+      "id": "balance",
+      "type": "chart",
+      "v": 1,
+      "status": "ready",
+      "title": "<ignored>",
+      "alt_text": "<ignored>",
+      "data": {
+        "kind": "bar",
+        "value_kind": "percent",
+        "points": [
+          {
+            "range": {
+              "from": "2026-02-01T00:00:00+03:00",
+              "to": "2026-03-01T00:00:00+03:00"
+            },
+            "value": 0.035044167514014825,
+            "coverage": "complete"
+          },
+          {
+            "range": {
+              "from": "2026-03-01T00:00:00+03:00",
+              "to": "2026-04-01T00:00:00+03:00"
+            },
+            "value": -0.0028849364121135744,
+            "coverage": "complete"
+          },
+          {
+            "range": {
+              "from": "2026-04-01T00:00:00+03:00",
+              "to": "2026-05-01T00:00:00+03:00"
+            },
+            "value": -0.06669181853271343,
+            "coverage": "complete"
+          },
+          {
+            "range": {
+              "from": "2026-05-01T00:00:00+03:00",
+              "to": "2026-06-01T00:00:00+03:00"
+            },
+            "value": -0.2832372208570589,
+            "coverage": "complete"
+          },
+          {
+            "range": {
+              "from": "2026-06-01T00:00:00+03:00",
+              "to": "2026-07-01T00:00:00+03:00"
+            },
+            "value": -0.45775277031887224,
+            "coverage": "complete"
+          },
+          {
+            "range": {
+              "from": "2026-07-01T00:00:00+03:00",
+              "to": "2026-08-01T00:00:00+03:00"
+            },
+            "value": -0.2542008342152471,
+            "coverage": "complete"
+          }
+        ],
+        "show_values": true,
+        "summary": {
+          "value": -52285127,
+          "value_kind": "amount"
+        },
+        "caption": "<ignored>",
+        "highlight_index": 5
+      }
+    }
+  ],
+  "state": {
+    "stale": false,
+    "last_operation_at": "2026-09-25T22:36:53+03:00",
+    "data_from": "2025-10-15T00:00:00+03:00",
+    "data_to": "2026-09-26T00:00:00+03:00",
+    "full_months": 9,
+    "unread_lines_count": 0,
+    "calculated_at": "<ignored>",
+    "recalculating": false
+  }
+}

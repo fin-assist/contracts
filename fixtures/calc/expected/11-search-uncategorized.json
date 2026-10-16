@@ -1,0 +1,63 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-15T12:00:00+03:00",
+      "amount": 81300,
+      "currency": "RUB",
+      "title": "Возврат за заказ",
+      "category_id": "cat_refund",
+      "category_name": "Возврат",
+      "category_icon": "repeat",
+      "is_category_manual": false,
+      "note": "возврат",
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-12T12:00:00+03:00",
+      "amount": 35000,
+      "currency": "RUB",
+      "title": "Киоск",
+      "category_id": "cat_uncategorized",
+      "category_name": "Без категории",
+      "category_icon": "tag",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-11T12:00:00+03:00",
+      "amount": 70000,
+      "currency": "RUB",
+      "title": "Ларёк у дома",
+      "category_id": "cat_uncategorized",
+      "category_name": "Без категории",
+      "category_icon": "tag",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    }
+  ],
+  "total_count": 3,
+  "range": {
+    "from": "2026-09-11T00:00:00+03:00",
+    "to": "2026-09-19T00:00:00+03:00"
+  }
+}

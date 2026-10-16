@@ -23,6 +23,8 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `gen/go/` | Go-модуль `github.com/fin-assist/contracts/gen/go` (свой `go.mod`): `finassist/<сервис>/v1` — сообщения и gRPC, `finerr` — конструкторы ошибок и таблица перевода в REST. Сгенерирован, руками не правится (кроме `go.mod` и тестов) |
 | `tools/` | Модуль инструментов: версии `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` закреплены в `tools/go.mod` (`tool`); `tools/protoc-gen-finerr` — генератор `finerr` из опций `error_spec` |
 | `scripts/generate.sh` | Перегенерировать `gen/go` закреплёнными версиями |
+| `fixtures/calc/` | Эталонные данные расчёта (FIN-107): выписки, сценарий, ожидаемые ответы 3.3, 4.1, 4.3, 5.1, 6.1, 6.2 и правила сравнения — `fixtures/calc/README.md`. По ним тестируются фейковый бэкенд и Go-бэкенд |
+| `tools/refcalc/` | Референсный расчёт на Python (спецификация расчёта FIN-106): считает ожидаемые ответы `fixtures/calc/expected`, тесты — примеры спецификации |
 | `redocly.yaml` | Настройки линтера OpenAPI |
 | `AGENTS.md`, `CLAUDE.md` | Инструкции агентам: карта, правила контракта, процесс, `## Code Review Rules` |
 
@@ -49,6 +51,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `buf breaking` против базы PR | PR | несовместимые изменения `.proto`, повторное использование номеров и имён |
 | `check_error_registry.py` | всегда | расхождение `ErrorReason` с разделом 8 `docs/api.md`, неполный `error_spec`, `error_spec` вне реестра, больше 30 кодов |
 | `check_error_spec_stable.py` против базы PR | PR | изменение `error_spec` (`grpc_code`, `http_status`, `metadata_keys`, `details`) у существующего кода. Владелец принимает его меткой `breaking-accepted` — изменения перечисляются, проверка не падает |
+| Эталонные данные `fixtures/calc` | всегда | тесты референсного расчёта (примеры спецификации) падают; `expected/` не совпадает с перегенерированным сценарием; ответ не проходит схему `openapi.yaml` |
 | Go-модуль `gen/go` | всегда | `gen/go` не совпадает с тем, что генерирует `scripts/generate.sh` из `proto/`; модуль не собирается, `go vet` или тесты `finerr` падают; версия `buf` в `tools/go.mod` расходится с `BUF_VERSION` в `ci.yml` |
 
 Локально:
@@ -62,6 +65,9 @@ cd proto && buf lint
 
 # Error registry check
 cd proto && buf build -o /tmp/fd.binpb && python3 scripts/check_error_registry.py /tmp/fd.binpb ../docs/api.md
+
+# Calculation fixtures: reference calculation tests, then regenerate fixtures/calc/expected and check the schema
+cd tools/refcalc && python3 -m unittest discover -s tests -t . && python3 -m refcalc.scenario ../../fixtures/calc --write --openapi ../../openapi/openapi.yaml
 
 # Regenerate gen/go (pinned buf and plugins are built into .bin/), then build and test it
 scripts/generate.sh
