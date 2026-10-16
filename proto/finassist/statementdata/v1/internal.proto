@@ -63,7 +63,9 @@ message MonthCoverage {
 message GetDataOverviewResponse {
   // Есть ли хоть одна операция.
   bool has_data = 1;
-  // Границы данных по всем загрузкам.
+  // Границы покрытых дней по всем загрузкам (по периоду выписки DTSTART..DTEND), полуинтервал, как
+  // UserDataState: начало первого покрытого дня и начало дня после последнего. Последний покрытый
+  // день — день перед data_to.
   optional google.protobuf.Timestamp data_from = 2;
   optional google.protobuf.Timestamp data_to = 3;
   // Полных месяцев.

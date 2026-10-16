@@ -506,7 +506,8 @@ type MonthSummary struct {
 	ExpenseMinor int64 `protobuf:"varint,3,opt,name=expense_minor,json=expenseMinor,proto3" json:"expense_minor,omitempty"`
 	// Доходы, со знаком.
 	IncomeMinor int64 `protobuf:"varint,4,opt,name=income_minor,json=incomeMinor,proto3" json:"income_minor,omitempty"`
-	// Есть, если месяц неполный: данные по этот момент.
+	// Есть, если месяц неполный: конец данных по покрытым дням, как DataBounds.data_to (время
+	// последней операции в последний покрытый день или 23:59:59 этого дня).
 	DataTo        *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=data_to,json=dataTo,proto3,oneof" json:"data_to,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -580,12 +581,20 @@ func (x *MonthSummary) GetDataTo() *timestamppb.Timestamp {
 // Состояние данных: актуальна ли выписка.
 type FeedState struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Последняя операция больше двух недель назад; порог — на сервере.
-	Stale           bool                   `protobuf:"varint,1,opt,name=stale,proto3" json:"stale,omitempty"`
+	// Выписка устарела: последний день, покрытый периодом выписки (DTEND по всем загрузкам), больше
+	// двух недель назад; от последней операции не зависит (FIN-124). true с того же момента, что
+	// analytics.v1.UserDataState.stale_after: начало 15-го календарного дня после последнего
+	// покрытого в поясе профиля. Загрузка без операций тоже покрывает дни. Нет покрытых дней — true,
+	// data_to тогда нет.
+	Stale bool `protobuf:"varint,1,opt,name=stale,proto3" json:"stale,omitempty"`
+	// Время последней операции; для устаревания не используется.
 	LastOperationAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=last_operation_at,json=lastOperationAt,proto3,oneof" json:"last_operation_at,omitempty"`
 	LastUploadedAt  *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=last_uploaded_at,json=lastUploadedAt,proto3,oneof" json:"last_uploaded_at,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Конец данных по всем загрузкам: начало дня, следующего за последним покрытым днём
+	// (полуинтервал). Нет — нет ни одной загрузки в статусе done с покрытыми днями.
+	DataTo        *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=data_to,json=dataTo,proto3,oneof" json:"data_to,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *FeedState) Reset() {
@@ -635,6 +644,13 @@ func (x *FeedState) GetLastOperationAt() *timestamppb.Timestamp {
 func (x *FeedState) GetLastUploadedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.LastUploadedAt
+	}
+	return nil
+}
+
+func (x *FeedState) GetDataTo() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DataTo
 	}
 	return nil
 }
@@ -1479,13 +1495,16 @@ const file_finassist_statementdata_v1_operations_proto_rawDesc = "" +
 	"\fincome_minor\x18\x04 \x01(\x03R\vincomeMinor\x128\n" +
 	"\adata_to\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x06dataTo\x88\x01\x01B\n" +
 	"\n" +
-	"\b_data_to\"\xe4\x01\n" +
+	"\b_data_to\"\xaa\x02\n" +
 	"\tFeedState\x12\x14\n" +
 	"\x05stale\x18\x01 \x01(\bR\x05stale\x12K\n" +
 	"\x11last_operation_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x0flastOperationAt\x88\x01\x01\x12I\n" +
-	"\x10last_uploaded_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampH\x01R\x0elastUploadedAt\x88\x01\x01B\x14\n" +
+	"\x10last_uploaded_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampH\x01R\x0elastUploadedAt\x88\x01\x01\x128\n" +
+	"\adata_to\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampH\x02R\x06dataTo\x88\x01\x01B\x14\n" +
 	"\x12_last_operation_atB\x13\n" +
-	"\x11_last_uploaded_at\"\xf5\x02\n" +
+	"\x11_last_uploaded_atB\n" +
+	"\n" +
+	"\b_data_to\"\xf5\x02\n" +
 	"\x10ListFeedResponse\x12;\n" +
 	"\x05items\x18\x01 \x03(\v2%.finassist.statementdata.v1.OperationR\x05items\x12B\n" +
 	"\asummary\x18\x02 \x03(\v2(.finassist.statementdata.v1.MonthSummaryR\asummary\x12;\n" +
@@ -1624,37 +1643,38 @@ var file_finassist_statementdata_v1_operations_proto_depIdxs = []int32{
 	22, // 10: finassist.statementdata.v1.MonthSummary.data_to:type_name -> google.protobuf.Timestamp
 	22, // 11: finassist.statementdata.v1.FeedState.last_operation_at:type_name -> google.protobuf.Timestamp
 	22, // 12: finassist.statementdata.v1.FeedState.last_uploaded_at:type_name -> google.protobuf.Timestamp
-	4,  // 13: finassist.statementdata.v1.ListFeedResponse.items:type_name -> finassist.statementdata.v1.Operation
-	6,  // 14: finassist.statementdata.v1.ListFeedResponse.summary:type_name -> finassist.statementdata.v1.MonthSummary
-	7,  // 15: finassist.statementdata.v1.ListFeedResponse.state:type_name -> finassist.statementdata.v1.FeedState
-	24, // 16: finassist.statementdata.v1.ListFeedResponse.range:type_name -> finassist.common.v1.TimeRange
-	22, // 17: finassist.statementdata.v1.ListFeedResponse.next_before:type_name -> google.protobuf.Timestamp
-	25, // 18: finassist.statementdata.v1.SearchOperationsRequest.filter:type_name -> finassist.common.v1.OperationsFilter
-	4,  // 19: finassist.statementdata.v1.SearchOperationsResponse.items:type_name -> finassist.statementdata.v1.Operation
-	24, // 20: finassist.statementdata.v1.SearchOperationsResponse.range:type_name -> finassist.common.v1.TimeRange
-	4,  // 21: finassist.statementdata.v1.GetOperationResponse.operation:type_name -> finassist.statementdata.v1.Operation
-	4,  // 22: finassist.statementdata.v1.ChangeCategoryResponse.items:type_name -> finassist.statementdata.v1.Operation
-	2,  // 23: finassist.statementdata.v1.Category.kinds:type_name -> finassist.statementdata.v1.CategoryKind
-	15, // 24: finassist.statementdata.v1.ListCategoriesResponse.categories:type_name -> finassist.statementdata.v1.Category
-	5,  // 25: finassist.statementdata.v1.OperationsService.ListFeed:input_type -> finassist.statementdata.v1.ListFeedRequest
-	9,  // 26: finassist.statementdata.v1.OperationsService.SearchOperations:input_type -> finassist.statementdata.v1.SearchOperationsRequest
-	11, // 27: finassist.statementdata.v1.OperationsService.GetOperation:input_type -> finassist.statementdata.v1.GetOperationRequest
-	13, // 28: finassist.statementdata.v1.OperationsService.ChangeCategory:input_type -> finassist.statementdata.v1.ChangeCategoryRequest
-	16, // 29: finassist.statementdata.v1.CategoriesService.ListCategories:input_type -> finassist.statementdata.v1.ListCategoriesRequest
-	18, // 30: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:input_type -> finassist.statementdata.v1.DismissRegularPaymentRequest
-	20, // 31: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:input_type -> finassist.statementdata.v1.RestoreRegularPaymentRequest
-	8,  // 32: finassist.statementdata.v1.OperationsService.ListFeed:output_type -> finassist.statementdata.v1.ListFeedResponse
-	10, // 33: finassist.statementdata.v1.OperationsService.SearchOperations:output_type -> finassist.statementdata.v1.SearchOperationsResponse
-	12, // 34: finassist.statementdata.v1.OperationsService.GetOperation:output_type -> finassist.statementdata.v1.GetOperationResponse
-	14, // 35: finassist.statementdata.v1.OperationsService.ChangeCategory:output_type -> finassist.statementdata.v1.ChangeCategoryResponse
-	17, // 36: finassist.statementdata.v1.CategoriesService.ListCategories:output_type -> finassist.statementdata.v1.ListCategoriesResponse
-	19, // 37: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:output_type -> finassist.statementdata.v1.DismissRegularPaymentResponse
-	21, // 38: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:output_type -> finassist.statementdata.v1.RestoreRegularPaymentResponse
-	32, // [32:39] is the sub-list for method output_type
-	25, // [25:32] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	22, // 13: finassist.statementdata.v1.FeedState.data_to:type_name -> google.protobuf.Timestamp
+	4,  // 14: finassist.statementdata.v1.ListFeedResponse.items:type_name -> finassist.statementdata.v1.Operation
+	6,  // 15: finassist.statementdata.v1.ListFeedResponse.summary:type_name -> finassist.statementdata.v1.MonthSummary
+	7,  // 16: finassist.statementdata.v1.ListFeedResponse.state:type_name -> finassist.statementdata.v1.FeedState
+	24, // 17: finassist.statementdata.v1.ListFeedResponse.range:type_name -> finassist.common.v1.TimeRange
+	22, // 18: finassist.statementdata.v1.ListFeedResponse.next_before:type_name -> google.protobuf.Timestamp
+	25, // 19: finassist.statementdata.v1.SearchOperationsRequest.filter:type_name -> finassist.common.v1.OperationsFilter
+	4,  // 20: finassist.statementdata.v1.SearchOperationsResponse.items:type_name -> finassist.statementdata.v1.Operation
+	24, // 21: finassist.statementdata.v1.SearchOperationsResponse.range:type_name -> finassist.common.v1.TimeRange
+	4,  // 22: finassist.statementdata.v1.GetOperationResponse.operation:type_name -> finassist.statementdata.v1.Operation
+	4,  // 23: finassist.statementdata.v1.ChangeCategoryResponse.items:type_name -> finassist.statementdata.v1.Operation
+	2,  // 24: finassist.statementdata.v1.Category.kinds:type_name -> finassist.statementdata.v1.CategoryKind
+	15, // 25: finassist.statementdata.v1.ListCategoriesResponse.categories:type_name -> finassist.statementdata.v1.Category
+	5,  // 26: finassist.statementdata.v1.OperationsService.ListFeed:input_type -> finassist.statementdata.v1.ListFeedRequest
+	9,  // 27: finassist.statementdata.v1.OperationsService.SearchOperations:input_type -> finassist.statementdata.v1.SearchOperationsRequest
+	11, // 28: finassist.statementdata.v1.OperationsService.GetOperation:input_type -> finassist.statementdata.v1.GetOperationRequest
+	13, // 29: finassist.statementdata.v1.OperationsService.ChangeCategory:input_type -> finassist.statementdata.v1.ChangeCategoryRequest
+	16, // 30: finassist.statementdata.v1.CategoriesService.ListCategories:input_type -> finassist.statementdata.v1.ListCategoriesRequest
+	18, // 31: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:input_type -> finassist.statementdata.v1.DismissRegularPaymentRequest
+	20, // 32: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:input_type -> finassist.statementdata.v1.RestoreRegularPaymentRequest
+	8,  // 33: finassist.statementdata.v1.OperationsService.ListFeed:output_type -> finassist.statementdata.v1.ListFeedResponse
+	10, // 34: finassist.statementdata.v1.OperationsService.SearchOperations:output_type -> finassist.statementdata.v1.SearchOperationsResponse
+	12, // 35: finassist.statementdata.v1.OperationsService.GetOperation:output_type -> finassist.statementdata.v1.GetOperationResponse
+	14, // 36: finassist.statementdata.v1.OperationsService.ChangeCategory:output_type -> finassist.statementdata.v1.ChangeCategoryResponse
+	17, // 37: finassist.statementdata.v1.CategoriesService.ListCategories:output_type -> finassist.statementdata.v1.ListCategoriesResponse
+	19, // 38: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:output_type -> finassist.statementdata.v1.DismissRegularPaymentResponse
+	21, // 39: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:output_type -> finassist.statementdata.v1.RestoreRegularPaymentResponse
+	33, // [33:40] is the sub-list for method output_type
+	26, // [26:33] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_finassist_statementdata_v1_operations_proto_init() }

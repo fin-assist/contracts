@@ -102,8 +102,9 @@ const (
 	LockReason_LOCK_REASON_NEED_MONTHS_WITH_DATA LockReason = 2
 	// Рано считать прогноз месяца: темп оценивается с 10-го числа; откроется в available_from.
 	LockReason_LOCK_REASON_TOO_EARLY_IN_MONTH LockReason = 3
-	// Выписка устарела (с последней операции прошло больше двух недель) — прогноз не считаем;
-	// вместо него есть только факт расходов.
+	// Выписка устарела (ScreenState.stale: последний покрытый день больше двух недель назад, FIN-124;
+	// та же граница UserDataState.stale_after) — прогноз не считаем, вместо него есть только факт
+	// расходов.
 	LockReason_LOCK_REASON_STALE_DATA LockReason = 4
 )
 
@@ -1758,14 +1759,14 @@ func (x *Insights) GetSmallFrequent() *Metric {
 // идёт ли пересчёт.
 type ScreenState struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Выписка устарела: с последней операции (last_operation_at) прошло больше двух недель.
-	// Порог — на сервере.
+	// Выписка устарела: последний день, покрытый периодом выписки (DTEND по всем загрузкам), больше
+	// двух недель назад; от последней операции не зависит (FIN-124). Порог — на сервере.
 	Stale bool `protobuf:"varint,1,opt,name=stale,proto3" json:"stale,omitempty"`
-	// Время последней загруженной операции по всем загрузкам.
+	// Время последней загруженной операции по всем загрузкам; для устаревания не используется.
 	LastOperationAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=last_operation_at,json=lastOperationAt,proto3,oneof" json:"last_operation_at,omitempty"`
-	// Начало данных по всем загрузкам — объясняет блокировки при нуле полных месяцев.
+	// Начало первого покрытого дня по всем загрузкам — объясняет блокировки при нуле полных месяцев.
 	DataFrom *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=data_from,json=dataFrom,proto3" json:"data_from,omitempty"`
-	// Конец данных по всем загрузкам.
+	// Начало дня, следующего за последним покрытым днём по всем загрузкам (полуинтервал).
 	DataTo *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=data_to,json=dataTo,proto3" json:"data_to,omitempty"`
 	// Полных календарных месяцев с данными по всем загрузкам.
 	FullMonths int32 `protobuf:"varint,5,opt,name=full_months,json=fullMonths,proto3" json:"full_months,omitempty"`
@@ -2455,13 +2456,17 @@ type UserDataState struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Есть ли хоть одна операция.
 	HasData bool `protobuf:"varint,1,opt,name=has_data,json=hasData,proto3" json:"has_data,omitempty"`
-	// Границы данных по всем загрузкам.
+	// Границы покрытых дней по всем загрузкам (по периоду выписки DTSTART..DTEND), полуинтервал:
+	// начало первого покрытого дня и начало дня после последнего.
 	DataFrom *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=data_from,json=dataFrom,proto3,oneof" json:"data_from,omitempty"`
 	DataTo   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=data_to,json=dataTo,proto3,oneof" json:"data_to,omitempty"`
 	// Время последней загруженной операции.
 	LastOperationAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_operation_at,json=lastOperationAt,proto3,oneof" json:"last_operation_at,omitempty"`
-	// Начало дня (пояс профиля), с которого данные считаются устаревшими; analytics сравнивает
-	// с текущим моментом. Выровнено с ежедневным пересчётом метрик, зависящих от «сегодня»
+	// Начало дня (пояс профиля), с которого данные считаются устаревшими: 15-й календарный день после
+	// последнего покрытого дня, а не после последней операции (FIN-124). Считается календарными
+	// датами в time_zone (дата data_to + 14 дней, затем начало этого дня), а не data_to + 14 × 24 ч —
+	// иначе при переходе на летнее время граница сдвинется на час. Нет покрытых дней — нет поля.
+	// analytics сравнивает с текущим моментом. Выровнено с ежедневным пересчётом метрик, зависящих от «сегодня»
 	// (блокировка прогноза).
 	StaleAfter *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=stale_after,json=staleAfter,proto3,oneof" json:"stale_after,omitempty"`
 	// Полных календарных месяцев с данными.
