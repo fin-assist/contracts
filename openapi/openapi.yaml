@@ -3219,6 +3219,7 @@ components:
           description: Стабильный непрозрачный ключ (`cat_supermarkets`).
         name:
           type: string
+          description: Название; у категории банка — из выписки, обрезано до 64 символов.
         icon:
           type: string
           description: Ключ иконки из набора приложения; неизвестный — иконка по умолчанию.
