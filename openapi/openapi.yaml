@@ -1098,6 +1098,15 @@ paths:
                   - income
                   assignable: true
                   note: уменьшает расходы на покупку
+                - id: cat_uncategorized
+                  name: Без категории
+                  icon: tag
+                  is_system: true
+                  kinds:
+                  - expense
+                  - income
+                  assignable: false
+                  note: в выписке нет категории
                 - id: cat_supermarkets
                   name: Супермаркеты
                   icon: cart
@@ -2610,7 +2619,9 @@ components:
           description: Из `categorized_count` — операций (две на пару) в категории «Между своими счетами».
         uncategorized_count:
           type: integer
-          description: Без категории; входят в суммы.
+          description: Без категории; входят в суммы. Новые операции в категории `cat_uncategorized` (пустая категория
+            банка) плюс возвраты, для которых не нашлась расходная категория — тот же набор, что строка «Без категории»
+            в «Расходах по категориям» (FIN-126).
         uncategorized_filters:
           nullable: true
           allOf:
@@ -3208,7 +3219,8 @@ components:
           description: Ключ иконки из набора приложения; неизвестный — иконка по умолчанию.
         is_system:
           type: boolean
-          description: Системная категория — группа «Системные» сверху в выборе.
+          description: Системная категория («Между своими счетами», «Возврат», «Без категории» — `cat_uncategorized`)
+            — группа «Системные» сверху в выборе.
         kinds:
           type: array
           description: К каким записям применима. Неизвестные значения клиент пропускает.
@@ -3884,6 +3896,8 @@ components:
         id:
           type: string
           nullable: true
+          description: Ключ элемента; у категорий — `category_id` (у «Без категории» — `cat_uncategorized`). Нет — у элемента
+            нет ключа.
         icon:
           type: string
         title:
