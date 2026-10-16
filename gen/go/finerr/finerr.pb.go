@@ -201,8 +201,8 @@ type REST struct {
 
 // ToREST reads a registry error from a gRPC error. ok is false when the error carries no finassist ErrorInfo, the
 // reason is not in the registry, a required metadata key is missing or empty, or a required detail is missing
-// (RetryInfo with a positive delay, BadRequest with at least one violation): bank-bff then answers 500
-// INTERNAL_ERROR and counts finassist_unmapped_error_total. The status message never goes to the client.
+// (RetryInfo with a positive delay, BadRequest with at least one violation, each with a reason): bank-bff then
+// answers 500 INTERNAL_ERROR and counts finassist_unmapped_error_total. The status message never goes to the client.
 func ToREST(err error) (rest REST, ok bool) {
 	st, isStatus := status.FromError(err)
 	if !isStatus || st.Code() == codes.OK {
@@ -245,6 +245,11 @@ func ToREST(err error) (rest REST, ok bool) {
 		rest.Violations = nil
 	} else if len(rest.Violations) == 0 {
 		return REST{}, false
+	}
+	for _, v := range rest.Violations {
+		if v.GetReason() == "" {
+			return REST{}, false
+		}
 	}
 	if !spec.RetryInfo {
 		rest.RetryAfter = 0

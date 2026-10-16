@@ -73,6 +73,7 @@ func TestUnmapped(t *testing.T) {
 		"missing key":    noMetadata.Err(),
 		"empty key":      LimitExceeded(""),
 		"no violations":  ValidationError(),
+		"no reason":      ValidationError(&errdetails.BadRequest_FieldViolation{Field: "phone", Description: "bad"}),
 		"no retry delay": RequestInProgress(0),
 	}
 	for name, err := range cases {
