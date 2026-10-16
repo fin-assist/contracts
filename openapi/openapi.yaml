@@ -1425,8 +1425,8 @@ paths:
       operationId: dismissRegularPayment
       summary: «Не подписка»
       description: |
-        Платёж исчезает из карточки, итог пересчитывается. Отметка привязана к платежу (продавцу и
-        периодичности), а не к периоду. Пока итог не пересчитан, `getAnalytics` отдаёт `state.recalculating: true`.
+        Платёж исчезает из карточки, итог пересчитывается. Отметка привязана к ключу платежа — описанию
+        операции из выписки (точное совпадение), а не к периоду. Пока итог не пересчитан, `getAnalytics` отдаёт `state.recalculating: true`.
         Идемпотентно.
       parameters:
       - $ref: '#/components/parameters/XRequestId'

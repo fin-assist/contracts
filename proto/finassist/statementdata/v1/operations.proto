@@ -49,7 +49,8 @@ service CategoriesService {
 service RegularPaymentsService {
   // Исключить платёж из регулярных (пользователь считает, что это не подписка): он исчезает из
   // списка регулярных платежей, итог в месяц пересчитывается.
-  // Отметка привязана к платежу (продавец и периодичность), не к периоду.
+  // Отметка привязана к ключу платежа — описанию операции из выписки (точное совпадение), не к
+  // периоду.
   // PUT /v1/analytics/regular-payments/{id}/dismissal. Идемпотентен.
   rpc DismissRegularPayment(DismissRegularPaymentRequest) returns (DismissRegularPaymentResponse);
   // Вернуть платёж в регулярные, сняв отметку исключения (для поддержки и будущей отмены действия).
