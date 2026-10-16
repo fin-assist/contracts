@@ -37,7 +37,7 @@ class Record:
 
     @property
     def sort_key(self):
-        """Newest first; equal moments — by (account, FITID) of the record, descending (README, «Порядок»)."""
+        """Newest first; equal moments — by (account, FITID) of the record, descending (docs/calc.md, section 10)."""
         return (self.at, (self.debit if self.is_pair else self.op).key)
 
 
