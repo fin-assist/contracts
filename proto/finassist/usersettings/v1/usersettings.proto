@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package finassist.usersettings.v1;
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/usersettings/v1;usersettingsv1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/usersettings/v1;usersettingsv1";
 
 // Настройки пользователя, которыми владеет `user` и которые нужны другим сервисам. Реализует
 // каждый сервис, которому они нужны: bank-statement-data (месяцы и «сегодня» в расчётах),

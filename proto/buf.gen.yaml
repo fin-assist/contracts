@@ -1,0 +1,16 @@
+# Go code of the contracts (FIN-116): module github.com/fin-assist/contracts/gen/go in ../gen/go.
+# Run through scripts/generate.sh — it builds the plugins at the versions pinned in tools/go.mod.
+# Paths are relative to this directory (buf generate runs from proto/).
+version: v2
+clean: false
+plugins:
+  - local: protoc-gen-go
+    out: ../gen/go
+    opt: module=github.com/fin-assist/contracts/gen/go
+  - local: protoc-gen-go-grpc
+    out: ../gen/go
+    opt: module=github.com/fin-assist/contracts/gen/go
+  - local: protoc-gen-finerr
+    out: ../gen/go
+    opt: go_import_path=github.com/fin-assist/contracts/gen/go/finerr
+    strategy: all

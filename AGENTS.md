@@ -23,7 +23,9 @@ same PR.
 - Mismatches between mockups, docs and the contract are expected. Resolve them in favour of `docs/api.md` + the
   latest decision, say so in the PR, propose (not impose) changes.
 - There is no backend yet: the Android `mock` flavor implements this contract in-process. The backend (Go,
-  PostgreSQL) will be written against it; `go_package` points to the future `fin-assist/backend`.
+  PostgreSQL; one repository per service and per library) will be written against it and imports the Go code
+  generated here: module `github.com/fin-assist/contracts/gen/go`, released by tags `gen/go/vX.Y.Z` (`README.md`,
+  «Go-модуль `gen/go`»).
 
 ## Repository map
 
@@ -38,16 +40,22 @@ same PR.
 | Services, call models (user / system), service identity, metadata, errors, idempotency, outbox | `docs/grpc-api.md` |
 | Service contracts | `proto/finassist/<service>/v1/*.proto`, shared types `proto/finassist/common/v1/` |
 | Registry check | `proto/scripts/check_error_registry.py` |
+| Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
+| Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
 | PR review by Claude | `.github/workflows/claude.yml` |
 
 ## Checks
 
 CI (`.github/workflows/ci.yml`, table in `README.md`): `redocly lint`, `oasdiff breaking` against the PR base,
-`buf lint`, `buf breaking`, `check_error_registry.py`. Run them locally before pushing (commands in `README.md`,
-«CI»).
+`buf lint`, `buf breaking`, `check_error_registry.py`, `check_error_spec_stable.py` (error_spec of existing codes
+unchanged against the PR base; the owner accepts a change with `breaking-accepted`), and the Go module job (`gen/go` equals a fresh
+`scripts/generate.sh`, `go build`, `go vet`, `go test`). Run them locally before pushing (commands in `README.md`,
+«CI»). A PR that changes `proto/` commits the regenerated `gen/go`. `buf` is pinned twice — `tools/go.mod` and
+`BUF_VERSION` in `ci.yml` — and CI fails when they differ.
 
 A breaking change fails `oasdiff` / `buf breaking`. In the alpha the owner may accept it with the PR label
-`breaking-accepted` (REST); never add that label yourself — ask in the PR.
+`breaking-accepted` — for REST (`oasdiff`) and for a changed `error_spec` of an existing code
+(`check_error_spec_stable.py`); `buf breaking` does not read labels. Never add that label yourself — ask in the PR.
 
 ## Writing the contract
 
@@ -65,8 +73,8 @@ The rules below are the ones the review checks (Code Review Rules); the full tex
   for a set that cannot grow; texts for codes the client renders; `value_kind` for values, `currency` for amounts;
   lists of entities instead of a field per entity; no field name reused with another shape across block types;
   `deprecated` only by «Удаление устаревшего». A breaking change needs a new API version (`/v2`) or, in the alpha
-  and for REST only, the owner's `breaking-accepted`; `buf breaking` does not read labels, so a breaking `.proto`
-  change goes through `reserved` and a new field or method instead.
+  and for REST or a changed `error_spec` of an existing code only, the owner's `breaking-accepted`; `buf breaking`
+  does not read labels, so any other breaking `.proto` change goes through `reserved` and a new field or method.
 - Errors: a new code goes into section 8 of `docs/api.md` and `ErrorReason` together, with HTTP status, `error_spec`
   and client behaviour; removed numbers and names go to `reserved`.
 - Idempotency: every new `POST` that creates a resource or has a side effect requires `Idempotency-Key`; say which
@@ -165,7 +173,8 @@ The decision of 13.10.2026 («Расширяемость» and «Нотация�
 
 - A new response field is optional, and an old client that ignores it still behaves correctly. A new required
   request field, a removed or renamed field, a changed type or meaning is breaking: it needs `/v2` or, in the alpha
-  and for REST only, the owner's `breaking-accepted`, and the PR says so. In `.proto` it is not accepted (CI).
+  and for REST or a changed `error_spec` of an existing code only, the owner's `breaking-accepted`, and the PR says
+  so. Any other breaking `.proto` change is not accepted (CI).
 - A set that can grow is a `code` (`x-extensible-enum` in OpenAPI, documented behaviour for an unknown value), not an
   `enum`. A closed `enum` in a response is a finding unless the set truly cannot grow.
 - A code the client turns into text comes with a server text (`*_name`, `text`) for unknown values; a value of

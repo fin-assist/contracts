@@ -6,7 +6,7 @@ import "finassist/common/v1/blocks.proto";
 import "finassist/common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/analytics/v1;analyticsv1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/analytics/v1;analyticsv1";
 
 // Сервис `analytics`: хранит готовые персональные метрики, которые присылает bank-statement-data,
 // и собирает из них аналитику за период (REST 6.1, 6.2). Метрики не считает и порогов не знает: статусы,

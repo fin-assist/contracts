@@ -5,7 +5,7 @@ package finassist.assistant.v1;
 import "finassist/common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/assistant/v1;assistantv1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/assistant/v1;assistantv1";
 
 // Сервис `assistant` (REST 7.x). Вызывающий: bank-bff, токен пользователя.
 // Исходящие вызовы: user.UserInternalService.GetAssistantConsentStatus (до списания попытки),

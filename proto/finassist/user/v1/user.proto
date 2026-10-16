@@ -4,7 +4,7 @@ package finassist.user.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/user/v1;userv1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/user/v1;userv1";
 
 // Сервис `user`: подтверждение телефона, регистрация, токены, профиль, согласия.
 //

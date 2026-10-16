@@ -4,7 +4,7 @@ package finassist.common.v1;
 
 import "finassist/common/v1/error_options.proto";
 
-option go_package = "github.com/fin-assist/backend/gen/go/finassist/common/v1;commonv1";
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/common/v1;commonv1";
 
 // Реестр кодов ошибок, которые доходят до клиента. Каждый не-OK статус сервиса finassist,
 // который bank-bff должен отдать клиенту осмысленно, несёт
