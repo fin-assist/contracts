@@ -160,7 +160,7 @@ message FeedState {
   optional google.protobuf.Timestamp last_operation_at = 2;
   optional google.protobuf.Timestamp last_uploaded_at = 3;
   // Конец данных по всем загрузкам: начало дня, следующего за последним покрытым днём
-  // (полуинтервал). Нет — нет ни одной завершённой загрузки с покрытыми днями.
+  // (полуинтервал). Нет — нет ни одной загрузки в статусе done с покрытыми днями.
   optional google.protobuf.Timestamp data_to = 4;
 }
 
