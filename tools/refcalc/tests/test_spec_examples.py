@@ -191,9 +191,11 @@ class SpecExamples(unittest.TestCase):
     def test_19_gap_crossing_the_period_is_whole(self):
         b = self.backend("2026-09-05T12:00:00+03:00")
         b.upload("a.ofx", stmt("20260701", "20260710", [("d1", "20260705120000", -100, "Кафе", "Рестораны")]))
-        b.upload("b.ofx", stmt("20260804", "20260831", [("d2", "20260825120000", -100, "Кафе", "Рестораны")]))
-        p = self.screen(b, "2026-08")["period"]
-        self.assertEqual(p["gaps"], [{"from": "2026-07-11T00:00:00+03:00", "to": "2026-08-04T00:00:00+03:00"}])
+        r = b.upload("b.ofx", stmt("20260804", "20260831", [("d2", "20260825120000", -100, "Кафе", "Рестораны")]))
+        gap = [{"from": "2026-07-11T00:00:00+03:00", "to": "2026-08-04T00:00:00+03:00"}]
+        self.assertEqual(self.screen(b, "2026-08")["period"]["gaps"], gap)
+        months = {m["month"]: m["gaps"] for m in r["coverage"]["incomplete_months"]}
+        self.assertEqual((months["2026-07"], months["2026-08"]), (gap, gap))
 
     def test_20_no_pair_across_currencies(self):
         b = self.backend("2026-09-26T12:00:00+03:00")
