@@ -54,7 +54,8 @@ unchanged against the PR base; the owner accepts a change with `breaking-accepte
 `BUF_VERSION` in `ci.yml` — and CI fails when they differ.
 
 A breaking change fails `oasdiff` / `buf breaking`. In the alpha the owner may accept it with the PR label
-`breaking-accepted` (REST); never add that label yourself — ask in the PR.
+`breaking-accepted` — for REST (`oasdiff`) and for a changed `error_spec` of an existing code
+(`check_error_spec_stable.py`); `buf breaking` does not read labels. Never add that label yourself — ask in the PR.
 
 ## Writing the contract
 
@@ -72,8 +73,8 @@ The rules below are the ones the review checks (Code Review Rules); the full tex
   for a set that cannot grow; texts for codes the client renders; `value_kind` for values, `currency` for amounts;
   lists of entities instead of a field per entity; no field name reused with another shape across block types;
   `deprecated` only by «Удаление устаревшего». A breaking change needs a new API version (`/v2`) or, in the alpha
-  and for REST only, the owner's `breaking-accepted`; `buf breaking` does not read labels, so a breaking `.proto`
-  change goes through `reserved` and a new field or method instead.
+  and for REST or a changed `error_spec` of an existing code only, the owner's `breaking-accepted`; `buf breaking`
+  does not read labels, so any other breaking `.proto` change goes through `reserved` and a new field or method.
 - Errors: a new code goes into section 8 of `docs/api.md` and `ErrorReason` together, with HTTP status, `error_spec`
   and client behaviour; removed numbers and names go to `reserved`.
 - Idempotency: every new `POST` that creates a resource or has a side effect requires `Idempotency-Key`; say which
@@ -172,7 +173,8 @@ The decision of 13.10.2026 («Расширяемость» and «Нотация�
 
 - A new response field is optional, and an old client that ignores it still behaves correctly. A new required
   request field, a removed or renamed field, a changed type or meaning is breaking: it needs `/v2` or, in the alpha
-  and for REST only, the owner's `breaking-accepted`, and the PR says so. In `.proto` it is not accepted (CI).
+  and for REST or a changed `error_spec` of an existing code only, the owner's `breaking-accepted`, and the PR says
+  so. Any other breaking `.proto` change is not accepted (CI).
 - A set that can grow is a `code` (`x-extensible-enum` in OpenAPI, documented behaviour for an unknown value), not an
   `enum`. A closed `enum` in a response is a finding unless the set truly cannot grow.
 - A code the client turns into text comes with a server text (`*_name`, `text`) for unknown values; a value of
