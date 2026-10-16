@@ -1,0 +1,135 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-22T23:38:49+03:00",
+      "amount": 150000,
+      "currency": "RUB",
+      "title": "РБК",
+      "category_id": "cat_digital",
+      "category_name": "Цифровые товары",
+      "category_icon": "smartphone",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-09T12:15:40+03:00",
+      "amount": 50000,
+      "currency": "RUB",
+      "title": "Рука Помощи Бездомным Животным",
+      "category_id": "cat_charity",
+      "category_name": "Благотворительность",
+      "category_icon": "heart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-08T13:26:13+03:00",
+      "amount": 100000,
+      "currency": "RUB",
+      "title": "Мой телефон +7 900 000-00-00",
+      "category_id": "cat_mobile",
+      "category_name": "Мобильная связь",
+      "category_icon": "phone",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-05T17:53:52+03:00",
+      "amount": 108900,
+      "currency": "RUB",
+      "title": "Ростелеком",
+      "category_id": "cat_telecom",
+      "category_name": "Связь",
+      "category_icon": "wifi",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-05T14:18:01+03:00",
+      "amount": 100000,
+      "currency": "RUB",
+      "title": "планшет +7 900 000-00-00",
+      "category_id": "cat_mobile",
+      "category_name": "Мобильная связь",
+      "category_icon": "phone",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-05T09:30:00+03:00",
+      "amount": 19900,
+      "currency": "RUB",
+      "title": "Облако Плюс",
+      "category_id": "cat_digital",
+      "category_name": "Цифровые товары",
+      "category_icon": "smartphone",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-02T23:17:27+03:00",
+      "amount": 9900,
+      "currency": "RUB",
+      "title": "Premier",
+      "category_id": "cat_digital",
+      "category_name": "Цифровые товары",
+      "category_icon": "smartphone",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    }
+  ],
+  "total_count": 7,
+  "range": {
+    "from": "2026-09-01T00:00:00+03:00",
+    "to": "2026-10-01T00:00:00+03:00"
+  }
+}

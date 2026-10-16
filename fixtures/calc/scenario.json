@@ -5,7 +5,7 @@
     {"name": "import-1", "now": "2026-07-01T10:00:00+03:00", "do": "upload", "file": "statements/01-2025-10-15_2026-06-30.ofx", "expect": "expected/01-import-first.json"},
     {"name": "import-2", "now": "2026-08-12T10:00:00+03:00", "do": "upload", "file": "statements/02-2026-06-20_2026-08-10.ofx", "expect": "expected/02-import-overlap.json"},
     {"name": "import-3", "now": "2026-09-26T10:00:00+03:00", "do": "upload", "file": "statements/03-2026-08-20_2026-09-25.ofx", "expect": "expected/03-import-after-gap.json"},
-    {"name": "import-4", "do": "upload", "file": "statements/04-edge-cases-2026-09.ofx", "expect": "expected/04-import-edge-cases.json"},
+    {"name": "import-4", "now": "2026-09-26T10:30:00+03:00", "do": "upload", "file": "statements/04-edge-cases-2026-09.ofx", "expect": "expected/04-import-edge-cases.json"},
 
     {"name": "categories", "do": "get", "request": "GET /v1/categories", "expect": "expected/05-categories.json"},
     {"name": "feed-1", "do": "get", "request": "GET /v1/operations", "expect": "expected/06-feed.json"},
@@ -16,6 +16,9 @@
     {"name": "search-uncategorized", "do": "get", "filter_from": {"step": "import-4", "path": ["uncategorized_filters"]}, "expect": "expected/11-search-uncategorized.json"},
 
     {"name": "month-09-with", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "expect": "expected/12-analytics-month-09-with.json"},
+    {"name": "search-regular-all", "do": "get", "filter_from": {"step": "month-09-with", "path": ["blocks", {"id": "regular_payments"}, "action", "filter"]}, "expect": "expected/12a-search-regular-all.json"},
+    {"name": "search-small-frequent", "do": "get", "filter_from": {"step": "month-09-with", "path": ["blocks", {"id": "small_frequent"}, "action", "filter"]}, "expect": "expected/12b-search-small-frequent.json"},
+    {"name": "search-bank-fees", "do": "get", "filter_from": {"step": "month-09-with", "path": ["blocks", {"id": "bank_fees"}, "action", "filter"]}, "expect": "expected/12c-search-bank-fees.json"},
     {"name": "month-09-without", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=without", "expect": "expected/13-analytics-month-09-without.json"},
     {"name": "month-08", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-08&transfer_mode=with", "expect": "expected/14-analytics-month-08-gap.json"},
     {"name": "month-07", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-07&transfer_mode=with", "expect": "expected/15-analytics-month-07.json"},
@@ -29,9 +32,9 @@
     {"name": "periods-quarter", "do": "get", "request": "GET /v1/analytics/periods?period=quarter", "expect": "expected/23-periods-quarter.json"},
     {"name": "periods-year", "do": "get", "request": "GET /v1/analytics/periods?period=year", "expect": "expected/24-periods-year.json"},
 
-    {"name": "dismiss", "do": "dismiss_regular_payment", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "title": "Облако Плюс"},
+    {"name": "dismiss", "do": "dismiss_regular_payment", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "title": "РБК"},
     {"name": "after-dismiss", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "expect": "expected/25-analytics-after-dismiss.json"},
-    {"name": "change-category", "do": "change_category", "operation": {"account": "40817810000000001111", "fitid": "930023020318"}, "category_id": "cat_restaurants", "expect": "expected/26-change-category.json"},
+    {"name": "change-category", "do": "change_category", "operation": {"account": "40817810000000001111", "fitid": "e72860a76074dfd0"}, "category_id": "cat_restaurants", "expect": "expected/26-change-category.json"},
     {"name": "after-change", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "expect": "expected/27-analytics-after-change.json"},
 
     {"name": "import-5", "now": "2026-09-26T11:00:00+03:00", "do": "upload", "file": "statements/05-edge-cases-fixed-2026-09.ofx", "expect": "expected/28-import-fixed.json"},

@@ -719,31 +719,10 @@
       "data": {
         "icon": "repeat",
         "title": "<ignored>",
-        "value": 513800,
+        "value": 383700,
         "value_kind": "amount",
         "description": "<ignored>",
         "items": [
-          {
-            "title": "РБК",
-            "sublabel": "<ignored>",
-            "value": 150000,
-            "value_kind": "amount",
-            "action": {
-              "type": "open_operations",
-              "filter": {
-                "from": "2026-09-01T00:00:00+03:00",
-                "to": "2026-10-01T00:00:00+03:00",
-                "selection": "<ignored>",
-                "selection_name": "<ignored>",
-                "transfer_mode": "with"
-              }
-            },
-            "button": {
-              "type": "dismiss_regular_payment",
-              "payment_id": "<ignored>",
-              "label": "<ignored>"
-            }
-          },
           {
             "title": "Ростелеком",
             "sublabel": "<ignored>",
@@ -785,11 +764,32 @@
               "payment_id": "<ignored>",
               "label": "<ignored>"
             }
+          },
+          {
+            "title": "планшет +7 900 000-00-00",
+            "sublabel": "<ignored>",
+            "value": 95000,
+            "value_kind": "amount",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-09-01T00:00:00+03:00",
+                "to": "2026-10-01T00:00:00+03:00",
+                "selection": "<ignored>",
+                "selection_name": "<ignored>",
+                "transfer_mode": "with"
+              }
+            },
+            "button": {
+              "type": "dismiss_regular_payment",
+              "payment_id": "<ignored>",
+              "label": "<ignored>"
+            }
           }
         ],
         "items_more": {
           "label": "<ignored>",
-          "value": 154900,
+          "value": 79800,
           "value_kind": "amount"
         }
       },

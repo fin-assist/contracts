@@ -1,0 +1,387 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-26T16:30:48+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-26T15:22:10+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-26T12:02:53+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-24T20:00:34+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-24T16:53:01+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-24T11:53:16+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-23T22:00:41+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-23T17:21:35+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-22T20:03:18+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-22T16:40:43+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-22T00:00:21+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-21T19:02:14+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-20T21:00:17+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-18T22:21:25+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-18T18:23:09+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-17T23:00:15+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-17T14:21:36+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-16T19:10:47+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-16T14:50:26+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-15T17:43:29+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-07-15T12:51:13+03:00",
+      "amount": 8300,
+      "currency": "RUB",
+      "title": "Московский метрополитен",
+      "category_id": "cat_transport",
+      "category_name": "Местный транспорт",
+      "category_icon": "bus",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    }
+  ],
+  "total_count": 21,
+  "range": {
+    "from": "2026-07-01T00:00:00+03:00",
+    "to": "2026-08-01T00:00:00+03:00"
+  }
+}

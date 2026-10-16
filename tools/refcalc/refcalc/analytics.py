@@ -362,6 +362,9 @@ class Ctx:
         if not payments:
             return self.card("regular_payments", "none", data, empty_text="Регулярных платежей не нашли")
         payments.sort(key=lambda p: (-p[1], p[0]))
+        names = {p[0] for p in payments}
+        all_sel = selection_id("regular_all", self.key, self.mode)
+        self.a.ledger.selections[all_sel] = lambda o, names=names: o.is_debit and o.name in names
         rows = [{"title": n, "sublabel": "число", **value(med),
                  "action": self.open(self.filt(selection=selection_id("regular", n), selection_name=n)),
                  "button": {"type": "dismiss_regular_payment", "payment_id": stable_id("payment", n),
@@ -372,8 +375,7 @@ class Ctx:
         if len(B) == 2:
             data["badge"] = "предварительно"
         return self.card("regular_payments", "tentative" if len(B) == 2 else "ready", data,
-                         action=self.open(self.filt(selection=selection_id("regular_all", self.key, self.mode),
-                                                    selection_name="Регулярные платежи")))
+                         action=self.open(self.filt(selection=all_sel, selection_name="Регулярные платежи")))
 
     def notable_spending(self) -> list:
         empty = {"icon": "bar-chart", "title": "Заметные траты"}
@@ -443,6 +445,7 @@ class Ctx:
                     used.update(o.key for o in lst)
 
         take(lambda o: ("merchant", o.name) if o.name else None, lambda k, l: k[1], debits)
+        merchant_used = set(used)
         take(lambda o: ("category", o.category.id) if o.category.id != UNCATEGORIZED else None,
              lambda k, l: l[0].category.name, [o for o in debits if o.key not in used])
         if not groups:
@@ -450,7 +453,16 @@ class Ctx:
         groups.sort(key=lambda g: (-g[2], g[0]))
 
         def group_filter(g):
-            return self.filt(ms, me, selection=selection_id("small", *g[3], month_key(M), self.mode), selection_name=g[0])
+            sel = selection_id("small", *g[3], month_key(M), self.mode)
+            kind, key = g[3]
+            observed = self.observed
+
+            def test(o, kind=kind, key=key):
+                if not o.is_debit or o.is_own or not observed(o):
+                    return False
+                return o.name == key if kind == "merchant" else (o.category.id == key and o.key not in merchant_used)
+            self.a.ledger.selections[sel] = test
+            return self.filt(ms, me, selection=sel, selection_name=g[0])
 
         data.update({**value(sum(g[2] for g in groups)), "approx": True, "description": "первая группа",
                      "items": [{"title": g[0], "sublabel": "раз в месяц", **value(g[2]), "value_suffix": "в месяц",

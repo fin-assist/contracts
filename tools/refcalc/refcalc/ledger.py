@@ -158,6 +158,8 @@ class Ledger:
         self.unpaired = set()  # keys of operations from a pair the user split
         self.uploads = []      # finished uploads, oldest first
         self.dismissed = set() # descriptions of payments marked «Не подписка»
+        # Selections handed out by analytics responses → which operations they mean (valid indefinitely, api.md 4.1).
+        self.selections = {}
 
     # ---- uploads ----
 

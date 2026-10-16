@@ -32,7 +32,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260925223653.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-7000</TRNAMT>
-            <FITID>958049641522</FITID>
+            <FITID>6a1c6e8f4d820977</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -44,7 +44,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260925191155.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-47.99</TRNAMT>
-            <FITID>199102947593</FITID>
+            <FITID>b24650c8695beb7e</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -56,7 +56,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260925180615.000[+3:MSK]</DTPOSTED>
             <TRNAMT>2198.5</TRNAMT>
-            <FITID>543992552902</FITID>
+            <FITID>e3414183b4c6744c</FITID>
             <NAME>Выплата купона по облигации ГЛОРАКС 001Р-05</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -68,7 +68,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260925175833.000[+3:MSK]</DTPOSTED>
             <TRNAMT>928.5</TRNAMT>
-            <FITID>519551840638</FITID>
+            <FITID>6766402feafc808f</FITID>
             <NAME>Выплата купона по облигации Группа ЛСР 002Р-01</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -80,7 +80,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260925173430.000[+3:MSK]</DTPOSTED>
             <TRNAMT>2225.5</TRNAMT>
-            <FITID>002430962731</FITID>
+            <FITID>cf9709630b987607</FITID>
             <NAME>Выплата купона по облигации АйДи Коллект 001P-07</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -92,7 +92,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260925153614.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-298</TRNAMT>
-            <FITID>741334857266</FITID>
+            <FITID>a3eee53ba41a9cfc</FITID>
             <NAME>СберЧаевые</NAME>
             <MEMO>Различные услуги</MEMO>
             <CURRENCY>
@@ -104,7 +104,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260925130539.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3000</TRNAMT>
-            <FITID>451122849055</FITID>
+            <FITID>a624408302838bae</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -116,7 +116,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260925114816.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2980</TRNAMT>
-            <FITID>476303010538</FITID>
+            <FITID>1c3b707c81b6ee81</FITID>
             <NAME>9__Kataleya</NAME>
             <MEMO>Рестораны</MEMO>
             <CURRENCY>
@@ -128,7 +128,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260925085252.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-7000</TRNAMT>
-            <FITID>703501448424</FITID>
+            <FITID>00f73049901ece98</FITID>
             <NAME>Контрагент 4</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -152,7 +152,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260924184026.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-333</TRNAMT>
-            <FITID>609475939381</FITID>
+            <FITID>58793f7ebd9b2065</FITID>
             <NAME>Boosty.to</NAME>
             <MEMO>Цифровые товары</MEMO>
             <CURRENCY>
@@ -164,7 +164,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260924131014.000[+3:MSK]</DTPOSTED>
             <TRNAMT>7178</TRNAMT>
-            <FITID>477985220023</FITID>
+            <FITID>d8faaf474a7e45aa</FITID>
             <NAME>Выплата дивидендов по акциям ЯНДЕКС ао01</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -176,7 +176,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260924122253.000[+3:MSK]</DTPOSTED>
             <TRNAMT>2237.5</TRNAMT>
-            <FITID>250001045802</FITID>
+            <FITID>fe52a67e95c60eb7</FITID>
             <NAME>Выплата купона по облигации РОЛЬФ 001Р-09</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -188,7 +188,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260924120454.000[+3:MSK]</DTPOSTED>
             <TRNAMT>3476</TRNAMT>
-            <FITID>414534647946</FITID>
+            <FITID>339d96f850ea965b</FITID>
             <NAME>Выплата купона по облигации ТАЛК 002P-04</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -200,7 +200,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260923204457.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1019</TRNAMT>
-            <FITID>175200664859</FITID>
+            <FITID>7b4e17b39e6fa726</FITID>
             <NAME>Алкотека</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -212,7 +212,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260923204159.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1165.98</TRNAMT>
-            <FITID>945223327483</FITID>
+            <FITID>3acc7fb1780d3413</FITID>
             <NAME>Krabsbir</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -224,7 +224,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260923195214.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-435</TRNAMT>
-            <FITID>572835403696</FITID>
+            <FITID>3d16b330738cde02</FITID>
             <NAME>Яндекс Чаевые</NAME>
             <MEMO>Сервис</MEMO>
             <CURRENCY>
@@ -236,8 +236,8 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260923195112.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1280</TRNAMT>
-            <FITID>300752132519</FITID>
-            <NAME>IP Grishhenko A.A</NAME>
+            <FITID>9a6597e5654849c3</FITID>
+            <NAME>ИП 1</NAME>
             <MEMO>Рестораны</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
@@ -248,7 +248,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260923195108.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1950</TRNAMT>
-            <FITID>204543149685</FITID>
+            <FITID>a109ec594a16adb1</FITID>
             <NAME>Pab Mira</NAME>
             <MEMO>Рестораны</MEMO>
             <CURRENCY>
@@ -260,7 +260,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260923163747.000[+3:MSK]</DTPOSTED>
             <TRNAMT>2861</TRNAMT>
-            <FITID>711578530280</FITID>
+            <FITID>690dbc8d5a024d7c</FITID>
             <NAME>Выплата купона по облигации Балтийский лизинг БО-П22</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -272,7 +272,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260923162143.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1502</TRNAMT>
-            <FITID>963841297825</FITID>
+            <FITID>aea38ea464014aff</FITID>
             <NAME>Выплата купона по облигации Симпл Солюшнз Кэпитл 001Р-02</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -284,7 +284,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260923161057.000[+3:MSK]</DTPOSTED>
             <TRNAMT>998.9</TRNAMT>
-            <FITID>692315058501</FITID>
+            <FITID>a323d630dc40a926</FITID>
             <NAME>Выплата купона по облигации Полипласт П02-БО-14</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -296,7 +296,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260922233849.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1500</TRNAMT>
-            <FITID>293489826315</FITID>
+            <FITID>e83ea17c8195e24b</FITID>
             <NAME>РБК</NAME>
             <MEMO>Цифровые товары</MEMO>
             <CURRENCY>
@@ -308,7 +308,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922172658.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1248</TRNAMT>
-            <FITID>364831027241</FITID>
+            <FITID>bfb5de2b97252d4e</FITID>
             <NAME>Выплата купона по облигации Полипласт П02-БО-16</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -320,7 +320,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922165407.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1861</TRNAMT>
-            <FITID>119305082552</FITID>
+            <FITID>a2fcd1f40d2c7554</FITID>
             <NAME>Выплата купона по облигации Балтийский лизинг БО-П16</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -332,7 +332,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922162439.000[+3:MSK]</DTPOSTED>
             <TRNAMT>4063.5</TRNAMT>
-            <FITID>270231657347</FITID>
+            <FITID>2584ce272ae78c48</FITID>
             <NAME>Выплата купона по облигации ВУШ БО 001P-07</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -344,7 +344,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922155816.000[+3:MSK]</DTPOSTED>
             <TRNAMT>3553</TRNAMT>
-            <FITID>495014198593</FITID>
+            <FITID>25d62f3e6cbbb7bf</FITID>
             <NAME>Выплата купона по облигации Аренза-Про 001P-07</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -356,7 +356,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260922125719.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3380</TRNAMT>
-            <FITID>522447856370</FITID>
+            <FITID>c0264886d37bf889</FITID>
             <NAME>Магазин</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -368,7 +368,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922124453.000[+3:MSK]</DTPOSTED>
             <TRNAMT>4321.5</TRNAMT>
-            <FITID>455221351515</FITID>
+            <FITID>a78d27a9a57b22be</FITID>
             <NAME>Выплата купона по облигации ЛК АдвансТрак 001Р-03</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -380,7 +380,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922124200.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1573</TRNAMT>
-            <FITID>945185563891</FITID>
+            <FITID>1fee71eb611a36f4</FITID>
             <NAME>Выплата купона по облигации Каршеринг Руссия 001P-09</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -392,7 +392,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922115120.000[+3:MSK]</DTPOSTED>
             <TRNAMT>2325</TRNAMT>
-            <FITID>904278055158</FITID>
+            <FITID>4760e09853dd5b1c</FITID>
             <NAME>Выплата купона по облигации ГТЛК БО 002P-12</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -404,7 +404,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922114829.000[+3:MSK]</DTPOSTED>
             <TRNAMT>3433</TRNAMT>
-            <FITID>741862533301</FITID>
+            <FITID>ce8743b375935de3</FITID>
             <NAME>Выплата купона по облигации ГК Самолет БО-П18</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -416,7 +416,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260922113557.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3000</TRNAMT>
-            <FITID>416233323949</FITID>
+            <FITID>062919cd511197a8</FITID>
             <NAME>Контрагент 5</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -428,7 +428,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260922112857.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-150200</TRNAMT>
-            <FITID>873043121304</FITID>
+            <FITID>020cc8ce48a7f985</FITID>
             <NAME>ВТБ Мои Инвестиции</NAME>
             <MEMO>Наличные</MEMO>
             <CURRENCY>
@@ -440,7 +440,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922112828.000[+3:MSK]</DTPOSTED>
             <TRNAMT>150000</TRNAMT>
-            <FITID>421252300053</FITID>
+            <FITID>5191556a7edd7dc6</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -452,7 +452,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922110007.000[+3:MSK]</DTPOSTED>
             <TRNAMT>2575</TRNAMT>
-            <FITID>350734947460</FITID>
+            <FITID>cce5f28d85fca5c4</FITID>
             <NAME>Выплата купона по облигации Фабрика ПО 001Р-01</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -464,7 +464,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260922105206.000[+3:MSK]</DTPOSTED>
             <TRNAMT>3216.5</TRNAMT>
-            <FITID>311905685103</FITID>
+            <FITID>0e5dcd428b7eb65e</FITID>
             <NAME>Выплата купона по облигации АЛИУМ 01Р2</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -476,7 +476,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260921162906.000[+3:MSK]</DTPOSTED>
             <TRNAMT>46148.2</TRNAMT>
-            <FITID>135002873020</FITID>
+            <FITID>d6d2600813877df1</FITID>
             <NAME>Вывод с брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -488,7 +488,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260921162639.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1197</TRNAMT>
-            <FITID>930023020318</FITID>
+            <FITID>e72860a76074dfd0</FITID>
             <NAME>Самокат</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -500,7 +500,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260921145442.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2500</TRNAMT>
-            <FITID>841284006846</FITID>
+            <FITID>20c7afa86a107b39</FITID>
             <NAME>Контрагент 5</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -512,7 +512,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260921135120.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-231.97</TRNAMT>
-            <FITID>483554041321</FITID>
+            <FITID>3dd2b415e547d5bc</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -524,7 +524,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260921111424.000[+3:MSK]</DTPOSTED>
             <TRNAMT>3889</TRNAMT>
-            <FITID>435459326430</FITID>
+            <FITID>503033728694bfbd</FITID>
             <NAME>Выплата купона по облигации Брусника 002Р-09</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -536,7 +536,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260920104410.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1500</TRNAMT>
-            <FITID>650359010336</FITID>
+            <FITID>82ce4a4bb67bef2e</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -548,7 +548,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260920095640.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-499.99</TRNAMT>
-            <FITID>345151020400</FITID>
+            <FITID>13fc63d1deabd57e</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -560,7 +560,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918235330.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-6</TRNAMT>
-            <FITID>462058761446</FITID>
+            <FITID>9794388e0a1a1e96</FITID>
             <NAME>Flagman Market</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -572,7 +572,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918235307.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-261</TRNAMT>
-            <FITID>652319333913</FITID>
+            <FITID>bcd9ef77049b22d7</FITID>
             <NAME>Flagman Market</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -584,7 +584,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918192507.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1716</TRNAMT>
-            <FITID>211753510060</FITID>
+            <FITID>58fc4cc9e4011545</FITID>
             <NAME>Алкотека</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -596,7 +596,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918182700.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1401</TRNAMT>
-            <FITID>369064458344</FITID>
+            <FITID>1002ec2386039a33</FITID>
             <NAME>Krabsbir</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -608,7 +608,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918140728.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1519</TRNAMT>
-            <FITID>459101102162</FITID>
+            <FITID>c7280b3315b84aef</FITID>
             <NAME>Pho Bo</NAME>
             <MEMO>Рестораны</MEMO>
             <CURRENCY>
@@ -620,7 +620,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918140314.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-207.5</TRNAMT>
-            <FITID>316452047643</FITID>
+            <FITID>b4e2da156fe65c01</FITID>
             <NAME>Fix Price</NAME>
             <MEMO>Различные товары</MEMO>
             <CURRENCY>
@@ -632,7 +632,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918135513.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-4060</TRNAMT>
-            <FITID>636190744464</FITID>
+            <FITID>16658e34e6d75eb8</FITID>
             <NAME>Familia</NAME>
             <MEMO>Одежда и обувь</MEMO>
             <CURRENCY>
@@ -644,7 +644,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918122852.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3000</TRNAMT>
-            <FITID>521034059404</FITID>
+            <FITID>9c06d6aee391368e</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -656,7 +656,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918092453.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1400</TRNAMT>
-            <FITID>130093589294</FITID>
+            <FITID>8d0af02804434ac8</FITID>
             <NAME>Контрагент 6</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -680,7 +680,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260917084121.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-673</TRNAMT>
-            <FITID>815503743430</FITID>
+            <FITID>81fa6d6c4a83e0ae</FITID>
             <NAME>Самокат</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -692,7 +692,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260916213525.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-5000</TRNAMT>
-            <FITID>518505471087</FITID>
+            <FITID>1b48d56040974c24</FITID>
             <NAME>Контрагент 4</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -704,7 +704,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260916183103.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-500</TRNAMT>
-            <FITID>040707686196</FITID>
+            <FITID>e7ca947a42eabcf1</FITID>
             <NAME>Билайн</NAME>
             <MEMO>Мобильная связь</MEMO>
             <CURRENCY>
@@ -716,7 +716,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260916182951.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-500</TRNAMT>
-            <FITID>450424032141</FITID>
+            <FITID>9f2b6a5b87c68235</FITID>
             <NAME>Билайн</NAME>
             <MEMO>Мобильная связь</MEMO>
             <CURRENCY>
@@ -728,7 +728,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260916171909.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1000</TRNAMT>
-            <FITID>082426183262</FITID>
+            <FITID>321cf04cc1a4ae6f</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -740,7 +740,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260916130453.000[+3:MSK]</DTPOSTED>
             <TRNAMT>3067</TRNAMT>
-            <FITID>533283518759</FITID>
+            <FITID>25481de99e5df170</FITID>
             <NAME>Выплата купона по облигации ДельтаЛизинг 001Р-03</NAME>
             <MEMO>Дивиденды и купоны</MEMO>
             <CURRENCY>
@@ -752,7 +752,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260916115302.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-340.57</TRNAMT>
-            <FITID>354163142544</FITID>
+            <FITID>6d2dd234b217b3ef</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -764,7 +764,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260916113958.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-652.34</TRNAMT>
-            <FITID>399334670181</FITID>
+            <FITID>0d4daf26a15d079f</FITID>
             <NAME>Ogorod</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -776,7 +776,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260916070821.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-6.91</TRNAMT>
-            <FITID>054140137030</FITID>
+            <FITID>a0beac823b1bebca</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -788,7 +788,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915233256.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-0.3</TRNAMT>
-            <FITID>310240554108</FITID>
+            <FITID>55af6f53a93bac82</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -800,7 +800,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915233240.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-7003</TRNAMT>
-            <FITID>020565212531</FITID>
+            <FITID>5aee6162d1721790</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -812,7 +812,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915203322.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-90</TRNAMT>
-            <FITID>821373930483</FITID>
+            <FITID>b73001be904ad152</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -824,7 +824,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260915172405.000[+3:MSK]</DTPOSTED>
             <TRNAMT>3000</TRNAMT>
-            <FITID>630120047648</FITID>
+            <FITID>79cd4d6c9db22f41</FITID>
             <NAME>Себе из другого банка</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -836,7 +836,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915171101.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-77.98</TRNAMT>
-            <FITID>255498091337</FITID>
+            <FITID>d1682632e308923f</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -848,7 +848,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915170359.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-563</TRNAMT>
-            <FITID>940748522901</FITID>
+            <FITID>84482258106391a2</FITID>
             <NAME>Апрель</NAME>
             <MEMO>Аптеки</MEMO>
             <CURRENCY>
@@ -860,7 +860,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915170325.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-239</TRNAMT>
-            <FITID>213631347131</FITID>
+            <FITID>b4ebbe87a5695280</FITID>
             <NAME>Апрель</NAME>
             <MEMO>Аптеки</MEMO>
             <CURRENCY>
@@ -872,7 +872,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915142233.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-201000</TRNAMT>
-            <FITID>736275310885</FITID>
+            <FITID>164b9c186739d68d</FITID>
             <NAME>ВТБ Мои Инвестиции</NAME>
             <MEMO>Наличные</MEMO>
             <CURRENCY>
@@ -884,7 +884,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260915142209.000[+3:MSK]</DTPOSTED>
             <TRNAMT>200000</TRNAMT>
-            <FITID>065262631043</FITID>
+            <FITID>dd172666fe805403</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -896,7 +896,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915094215.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-100</TRNAMT>
-            <FITID>565070046353</FITID>
+            <FITID>4cc80baf9ce13707</FITID>
             <NAME>T2 +7 900 000-00-00</NAME>
             <MEMO>Мобильная связь</MEMO>
             <CURRENCY>
@@ -908,7 +908,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260914220210.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-912</TRNAMT>
-            <FITID>312432332566</FITID>
+            <FITID>be4d5debe626c082</FITID>
             <NAME>Самокат</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -920,7 +920,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260914211949.000[+3:MSK]</DTPOSTED>
             <TRNAMT>5000</TRNAMT>
-            <FITID>158911202131</FITID>
+            <FITID>c6ba199ee54bd8bb</FITID>
             <NAME>Контрагент 4</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -932,7 +932,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260914182058.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1368</TRNAMT>
-            <FITID>029208542095</FITID>
+            <FITID>38c276b3bd42a6d8</FITID>
             <NAME>Алкотека</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -944,7 +944,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260914181107.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1099</TRNAMT>
-            <FITID>527236481901</FITID>
+            <FITID>f4f7be0d8534a895</FITID>
             <NAME>Алкотека</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -956,7 +956,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260914180247.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-55</TRNAMT>
-            <FITID>119725935033</FITID>
+            <FITID>504b9788ea49cbe1</FITID>
             <NAME>Magazin Lepeshki</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -968,7 +968,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260914172245.000[+3:MSK]</DTPOSTED>
             <TRNAMT>19896.44</TRNAMT>
-            <FITID>580351135382</FITID>
+            <FITID>8b068e39f9941e49</FITID>
             <NAME>Вывод с брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -980,7 +980,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260914124058.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-5000</TRNAMT>
-            <FITID>144471742084</FITID>
+            <FITID>d898b5e2d8ce038d</FITID>
             <NAME>Контрагент 7</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -992,7 +992,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260914111455.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-100000</TRNAMT>
-            <FITID>853134515601</FITID>
+            <FITID>4bc6fa6f2bff7f0b</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1004,7 +1004,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260914111415.000[+3:MSK]</DTPOSTED>
             <TRNAMT>7788.1</TRNAMT>
-            <FITID>440614591814</FITID>
+            <FITID>8532463010795b41</FITID>
             <NAME>Вывод с брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1016,7 +1016,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260914082413.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-400000</TRNAMT>
-            <FITID>545142140833</FITID>
+            <FITID>54a6ee757358c54f</FITID>
             <NAME>Контрагент 3</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1028,7 +1028,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260914082344.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-500000</TRNAMT>
-            <FITID>213366509850</FITID>
+            <FITID>c04cee1a2dda67fa</FITID>
             <NAME>Контрагент 3</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1040,7 +1040,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260914082303.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-500000</TRNAMT>
-            <FITID>577113090059</FITID>
+            <FITID>747ab9b80c1c612f</FITID>
             <NAME>Контрагент 3</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1052,7 +1052,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260914071947.000[+3:MSK]</DTPOSTED>
             <TRNAMT>502890.42</TRNAMT>
-            <FITID>616245843200</FITID>
+            <FITID>968a5f9875fd1354</FITID>
             <NAME>Пополнение через Национальный расчетный депозитарий</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1064,7 +1064,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260914071908.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1000000</TRNAMT>
-            <FITID>522908289603</FITID>
+            <FITID>3a35bd74b7568bb2</FITID>
             <NAME>Пополнение через Национальный расчетный депозитарий</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1076,7 +1076,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260913172936.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-842</TRNAMT>
-            <FITID>485020550595</FITID>
+            <FITID>477ddb87f563e584</FITID>
             <NAME>Самокат</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1088,7 +1088,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260913123911.000[+3:MSK]</DTPOSTED>
             <TRNAMT>9997</TRNAMT>
-            <FITID>877025947676</FITID>
+            <FITID>b6bffcca9ef98670</FITID>
             <NAME>Вывод с брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1100,7 +1100,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260913123737.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3000</TRNAMT>
-            <FITID>282753421813</FITID>
+            <FITID>85c713d2bb3182e0</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1112,7 +1112,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260913121034.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-700.9</TRNAMT>
-            <FITID>314079743663</FITID>
+            <FITID>691dab471bf38cc5</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1124,7 +1124,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260913115921.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1257</TRNAMT>
-            <FITID>294206958695</FITID>
+            <FITID>b0753f790b5b032d</FITID>
             <NAME>Svezheemyasokubanskoe</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1136,7 +1136,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260912193015.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3411</TRNAMT>
-            <FITID>267112381434</FITID>
+            <FITID>f9921ca2ae2d4ec4</FITID>
             <NAME>Сытый король</NAME>
             <MEMO>Рестораны</MEMO>
             <CURRENCY>
@@ -1148,7 +1148,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260912191244.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-256</TRNAMT>
-            <FITID>901189056659</FITID>
+            <FITID>75e840fd7c78f28c</FITID>
             <NAME>Krabsbir</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1160,7 +1160,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260912133257.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-408.17</TRNAMT>
-            <FITID>213317514158</FITID>
+            <FITID>7800d8f4f06fda17</FITID>
             <NAME>Ogorod</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1172,7 +1172,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260912132920.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-149.99</TRNAMT>
-            <FITID>214773731902</FITID>
+            <FITID>d470cc93e59c20c2</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1184,7 +1184,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260912132251.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-700</TRNAMT>
-            <FITID>575028342722</FITID>
+            <FITID>aba309bbd8e66261</FITID>
             <NAME>Контрагент 8</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1196,7 +1196,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260911193714.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-229.99</TRNAMT>
-            <FITID>820315319005</FITID>
+            <FITID>35fcebb54ad961f4</FITID>
             <NAME>Магнит</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1208,7 +1208,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260911145151.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2000</TRNAMT>
-            <FITID>601552144257</FITID>
+            <FITID>0b6f88cd11af4501</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1220,7 +1220,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260911144526.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1145</TRNAMT>
-            <FITID>422294002201</FITID>
+            <FITID>0b33ccb244151bde</FITID>
             <NAME>Госуслуги</NAME>
             <MEMO>Госуслуги</MEMO>
             <CURRENCY>
@@ -1232,7 +1232,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260911115847.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3730.47</TRNAMT>
-            <FITID>543670169545</FITID>
+            <FITID>dc3e00af7d45d552</FITID>
             <NAME>Квартплата онлайн</NAME>
             <MEMO>ЖКХ</MEMO>
             <CURRENCY>
@@ -1244,7 +1244,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260911115452.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2450</TRNAMT>
-            <FITID>098046284565</FITID>
+            <FITID>de41cbc64e8bb9d8</FITID>
             <NAME>FirstVDS</NAME>
             <MEMO>Сервис</MEMO>
             <CURRENCY>
@@ -1256,7 +1256,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260911111311.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-709</TRNAMT>
-            <FITID>220194553592</FITID>
+            <FITID>a62d53be9fb0ee8a</FITID>
             <NAME>Аптека Вита</NAME>
             <MEMO>Аптеки</MEMO>
             <CURRENCY>
@@ -1268,7 +1268,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260911092606.000[+3:MSK]</DTPOSTED>
             <TRNAMT>4886.65</TRNAMT>
-            <FITID>530534408030</FITID>
+            <FITID>19baee285479b66d</FITID>
             <NAME>Себе из другого банка</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1280,7 +1280,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260911091327.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2327</TRNAMT>
-            <FITID>738984669454</FITID>
+            <FITID>600634648824ec42</FITID>
             <NAME>Яндекс Еда</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1292,7 +1292,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260910210837.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1360</TRNAMT>
-            <FITID>218556412458</FITID>
+            <FITID>dbacca4229251345</FITID>
             <NAME>Krabsbir</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1304,7 +1304,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260910193432.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-155</TRNAMT>
-            <FITID>129266500114</FITID>
+            <FITID>351fcf49ca13e2a1</FITID>
             <NAME>Роснефть</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -1316,7 +1316,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260910193411.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-140</TRNAMT>
-            <FITID>444312253123</FITID>
+            <FITID>18063ae3bd369e4c</FITID>
             <NAME>Роснефть</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -1340,7 +1340,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260910134151.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-310</TRNAMT>
-            <FITID>905398562397</FITID>
+            <FITID>db8c1783bc56b24d</FITID>
             <NAME>Appetito_Yug</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1352,7 +1352,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260910073724.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2000</TRNAMT>
-            <FITID>620446918369</FITID>
+            <FITID>5edb9b2f5a41a5d9</FITID>
             <NAME>Автодор</NAME>
             <MEMO>Платные дороги</MEMO>
             <CURRENCY>
@@ -1364,7 +1364,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909142610.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-5000</TRNAMT>
-            <FITID>115923208544</FITID>
+            <FITID>b58dca9b6f3b3394</FITID>
             <NAME>Контрагент 4</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1376,8 +1376,8 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909122946.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-64</TRNAMT>
-            <FITID>038411729340</FITID>
-            <NAME>Aglf Alan G.Gubkin</NAME>
+            <FITID>0b4ad2aa8b5ee222</FITID>
+            <NAME>Магазин 2</NAME>
             <MEMO>Аптеки</MEMO>
             <CURRENCY>
               <CURSYM>RUB</CURSYM>
@@ -1388,7 +1388,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909122044.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-15</TRNAMT>
-            <FITID>045834326020</FITID>
+            <FITID>8fc26112c26f3512</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1400,7 +1400,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909122023.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-180</TRNAMT>
-            <FITID>420277323562</FITID>
+            <FITID>be42331766e083d5</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1412,7 +1412,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909121836.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-932.97</TRNAMT>
-            <FITID>319075400531</FITID>
+            <FITID>6b6458bdc85fea67</FITID>
             <NAME>Европа маркет</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1424,7 +1424,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909121540.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-500</TRNAMT>
-            <FITID>423296590228</FITID>
+            <FITID>eb859bd42fab6323</FITID>
             <NAME>Рука Помощи Бездомным Животным</NAME>
             <MEMO>Благотворительность</MEMO>
             <CURRENCY>
@@ -1436,7 +1436,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909114232.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-170</TRNAMT>
-            <FITID>750413542125</FITID>
+            <FITID>d6094e298b079634</FITID>
             <NAME>Пекарня</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1448,7 +1448,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909113735.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-651.78</TRNAMT>
-            <FITID>715165827823</FITID>
+            <FITID>d31a1c08f87022de</FITID>
             <NAME>АЗС</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -1460,7 +1460,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909112625.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2098.5</TRNAMT>
-            <FITID>701946439013</FITID>
+            <FITID>9f4dcd318e0fcd06</FITID>
             <NAME>Роснефть</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -1472,7 +1472,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260908202241.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-733.71</TRNAMT>
-            <FITID>022929132394</FITID>
+            <FITID>57a1de4ed4c855a8</FITID>
             <NAME>Красное и белое</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1484,7 +1484,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260908152810.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-195</TRNAMT>
-            <FITID>103806547440</FITID>
+            <FITID>e793219620692938</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1496,7 +1496,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260908132613.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1000</TRNAMT>
-            <FITID>848121953101</FITID>
+            <FITID>1ff6ed6998042ce4</FITID>
             <NAME>Мой телефон +7 900 000-00-00</NAME>
             <MEMO>Мобильная связь</MEMO>
             <CURRENCY>
@@ -1508,7 +1508,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260907150241.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-898.9</TRNAMT>
-            <FITID>053218033254</FITID>
+            <FITID>4bab65810a846f09</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1520,7 +1520,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260907145206.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-801</TRNAMT>
-            <FITID>238821490295</FITID>
+            <FITID>b148efa0c315d31f</FITID>
             <NAME>Таблеточка</NAME>
             <MEMO>Аптеки</MEMO>
             <CURRENCY>
@@ -1532,7 +1532,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260907145126.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-521</TRNAMT>
-            <FITID>645000026919</FITID>
+            <FITID>7b694a2be3148d33</FITID>
             <NAME>Таблеточка</NAME>
             <MEMO>Аптеки</MEMO>
             <CURRENCY>
@@ -1544,7 +1544,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260907143747.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-180</TRNAMT>
-            <FITID>265551052012</FITID>
+            <FITID>cad1585c5ca8b3c0</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1556,7 +1556,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260907143516.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1045</TRNAMT>
-            <FITID>005035836445</FITID>
+            <FITID>d1f56909ca77ca6d</FITID>
             <NAME>Zoomiks 2</NAME>
             <MEMO>Животные</MEMO>
             <CURRENCY>
@@ -1568,7 +1568,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260907143133.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-8000</TRNAMT>
-            <FITID>964454255515</FITID>
+            <FITID>ac85d047120f5dce</FITID>
             <NAME>Снятие в банкомате Т-Банк</NAME>
             <MEMO>Наличные</MEMO>
             <CURRENCY>
@@ -1580,7 +1580,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260907141955.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-941.9</TRNAMT>
-            <FITID>470079204332</FITID>
+            <FITID>77ed95def52076cb</FITID>
             <NAME>AZS Svyatomikh</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -1592,7 +1592,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260905175352.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1089</TRNAMT>
-            <FITID>730295529412</FITID>
+            <FITID>0a3f603a2df4e2cc</FITID>
             <NAME>Ростелеком</NAME>
             <MEMO>Связь</MEMO>
             <CURRENCY>
@@ -1604,7 +1604,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260905160629.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-500</TRNAMT>
-            <FITID>400200236531</FITID>
+            <FITID>2961634d8e285872</FITID>
             <NAME>Перевод на цифровой кошелек</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1616,7 +1616,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260905160137.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-799</TRNAMT>
-            <FITID>221357751422</FITID>
+            <FITID>1229d7b63682392d</FITID>
             <NAME>ХЭДХАНТЕР</NAME>
             <MEMO>Связь</MEMO>
             <CURRENCY>
@@ -1628,7 +1628,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260905141801.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1000</TRNAMT>
-            <FITID>489820909499</FITID>
+            <FITID>153dff3596185ceb</FITID>
             <NAME>планшет +7 900 000-00-00</NAME>
             <MEMO>Мобильная связь</MEMO>
             <CURRENCY>
@@ -1640,7 +1640,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260905102948.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-350</TRNAMT>
-            <FITID>451144964303</FITID>
+            <FITID>5ababac20950abda</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1664,7 +1664,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260904163515.000[+3:MSK]</DTPOSTED>
             <TRNAMT>224.89</TRNAMT>
-            <FITID>274963733675</FITID>
+            <FITID>6bb833dfd659a4bd</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1676,7 +1676,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260904163455.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1000</TRNAMT>
-            <FITID>159965751551</FITID>
+            <FITID>3880c86e00efd4dc</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1688,7 +1688,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260904112232.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-350</TRNAMT>
-            <FITID>461684443553</FITID>
+            <FITID>47567d895576c598</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1700,7 +1700,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260904100541.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-200000</TRNAMT>
-            <FITID>296385500213</FITID>
+            <FITID>997de01d223900a4</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1712,7 +1712,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260904100438.000[+3:MSK]</DTPOSTED>
             <TRNAMT>215000</TRNAMT>
-            <FITID>467309394306</FITID>
+            <FITID>4df21f9731f09508</FITID>
             <NAME>Себе из другого банка</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1724,7 +1724,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260904095742.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-394.93</TRNAMT>
-            <FITID>730517926382</FITID>
+            <FITID>ceb15ea407104963</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1748,7 +1748,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260903110034.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2000</TRNAMT>
-            <FITID>373292474357</FITID>
+            <FITID>83a9e9850b923aa4</FITID>
             <NAME>КрасноДог</NAME>
             <MEMO>Благотворительность</MEMO>
             <CURRENCY>
@@ -1760,7 +1760,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260902231727.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-99</TRNAMT>
-            <FITID>555825437642</FITID>
+            <FITID>e97d360fda262d90</FITID>
             <NAME>Premier</NAME>
             <MEMO>Цифровые товары</MEMO>
             <CURRENCY>
@@ -1772,7 +1772,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260902183333.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1909.13</TRNAMT>
-            <FITID>249128142343</FITID>
+            <FITID>af8a8f5fca03d370</FITID>
             <NAME>Красное и белое</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1784,7 +1784,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260902162519.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-165</TRNAMT>
-            <FITID>114020273169</FITID>
+            <FITID>2fda0e45cf1b8243</FITID>
             <NAME>Артпроф24</NAME>
             <MEMO>Аптеки</MEMO>
             <CURRENCY>
@@ -1796,7 +1796,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260902110407.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-350</TRNAMT>
-            <FITID>061429381913</FITID>
+            <FITID>796cf4a0e03ea60f</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1808,7 +1808,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260901145232.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-100000</TRNAMT>
-            <FITID>623632210309</FITID>
+            <FITID>1994c750b1ac4203</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1820,7 +1820,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260901145214.000[+3:MSK]</DTPOSTED>
             <TRNAMT>86600</TRNAMT>
-            <FITID>800864782134</FITID>
+            <FITID>ad55dbcd42ae6452</FITID>
             <NAME>Себе из другого банка</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1832,7 +1832,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260831170437.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-448.18</TRNAMT>
-            <FITID>515420083446</FITID>
+            <FITID>f697cc47bfd4f193</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1844,7 +1844,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260831153718.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2293.24</TRNAMT>
-            <FITID>605012293454</FITID>
+            <FITID>e3b14dcdd8848c0e</FITID>
             <NAME>Европа маркет</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1856,7 +1856,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260831110826.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-30</TRNAMT>
-            <FITID>704362685137</FITID>
+            <FITID>3eba0dd06c57eb36</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1868,7 +1868,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260831110752.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-350</TRNAMT>
-            <FITID>605331156553</FITID>
+            <FITID>7ecee910b148b800</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1880,7 +1880,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260830171846.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-199</TRNAMT>
-            <FITID>112904204701</FITID>
+            <FITID>837b64830c162397</FITID>
             <NAME>Т-Страхование</NAME>
             <MEMO>Финансы</MEMO>
             <CURRENCY>
@@ -1892,7 +1892,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260830171447.000[+3:MSK]</DTPOSTED>
             <TRNAMT>51979.59</TRNAMT>
-            <FITID>215085652135</FITID>
+            <FITID>950ffe68efce1bef</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1904,7 +1904,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260830123736.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2568.43</TRNAMT>
-            <FITID>128442781595</FITID>
+            <FITID>c86317a59b50b5d6</FITID>
             <NAME>Квартплата онлайн</NAME>
             <MEMO>ЖКХ</MEMO>
             <CURRENCY>
@@ -1916,7 +1916,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260830114852.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2000</TRNAMT>
-            <FITID>743549227436</FITID>
+            <FITID>57bcac5dbc261692</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1928,7 +1928,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260830114817.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-5000</TRNAMT>
-            <FITID>545565151585</FITID>
+            <FITID>3c2b5f294651a19b</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -1940,7 +1940,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260829180708.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1935.14</TRNAMT>
-            <FITID>059782201188</FITID>
+            <FITID>ec51d6d53e6ec589</FITID>
             <NAME>Разливной Рай</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -1952,7 +1952,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260829153659.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-4560</TRNAMT>
-            <FITID>301413314030</FITID>
+            <FITID>7d5348590bd75e62</FITID>
             <NAME>Яндекс Такси</NAME>
             <MEMO>Такси</MEMO>
             <CURRENCY>
@@ -1964,7 +1964,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260829110145.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-350</TRNAMT>
-            <FITID>262364113291</FITID>
+            <FITID>0f898e17f2401f4b</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -1976,7 +1976,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260828223444.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1381.41</TRNAMT>
-            <FITID>520359243778</FITID>
+            <FITID>6960696e5ab90f6b</FITID>
             <NAME>bfkotodetki</NAME>
             <MEMO>Благотворительность</MEMO>
             <CURRENCY>
@@ -1988,7 +1988,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260828223051.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1952.05</TRNAMT>
-            <FITID>2101713364679</FITID>
+            <FITID>9ea1f8c09f6df15e</FITID>
             <NAME>Зачисление кэшбэка</NAME>
             <MEMO>Бонусы</MEMO>
             <CURRENCY>
@@ -2000,7 +2000,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260828215346.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-400</TRNAMT>
-            <FITID>580301583616</FITID>
+            <FITID>e109a53e7cba0aac</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2012,7 +2012,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260828155229.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-30000</TRNAMT>
-            <FITID>443431345701</FITID>
+            <FITID>1ab1c5aa03b3a959</FITID>
             <NAME>Снятие в банкомате Т-Банк</NAME>
             <MEMO>Наличные</MEMO>
             <CURRENCY>
@@ -2024,7 +2024,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260828155040.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-551.94</TRNAMT>
-            <FITID>657913102175</FITID>
+            <FITID>55cd9646ddf06207</FITID>
             <NAME>Европа маркет</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2036,7 +2036,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260828152020.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-350</TRNAMT>
-            <FITID>075865147126</FITID>
+            <FITID>4f55a0b6feacfae1</FITID>
             <NAME>Aromatnaya Chashka.</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -2048,7 +2048,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260827222922.000[+3:MSK]</DTPOSTED>
             <TRNAMT>981.22</TRNAMT>
-            <FITID>241402145617</FITID>
+            <FITID>ec60e9a4703b4028</FITID>
             <NAME>Вывод с брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2060,7 +2060,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260827205825.000[+3:MSK]</DTPOSTED>
             <TRNAMT>47832.62</TRNAMT>
-            <FITID>285309571030</FITID>
+            <FITID>6c48eab5b99c134a</FITID>
             <NAME>Вывод с брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2072,7 +2072,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260827185053.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1985.76</TRNAMT>
-            <FITID>413209502282</FITID>
+            <FITID>83dac25e3e36a5b2</FITID>
             <NAME>ЛУКОЙЛ</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -2084,7 +2084,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260827141200.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1067.68</TRNAMT>
-            <FITID>245434496499</FITID>
+            <FITID>ff4722b9eb4d39a9</FITID>
             <NAME>Газпромнефть</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -2096,7 +2096,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260827094453.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1115.17</TRNAMT>
-            <FITID>332183657976</FITID>
+            <FITID>7a71a9d683637258</FITID>
             <NAME>Роснефть</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -2108,7 +2108,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260827080146.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-4057</TRNAMT>
-            <FITID>143246559357</FITID>
+            <FITID>e8ee418299b34556</FITID>
             <NAME>Яндекс Лавка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2120,7 +2120,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260826221105.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-83</TRNAMT>
-            <FITID>510274414473</FITID>
+            <FITID>b38ce7a47f34a768</FITID>
             <NAME>Московский метрополитен</NAME>
             <MEMO>Местный транспорт</MEMO>
             <CURRENCY>
@@ -2132,7 +2132,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260826155344.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3231.5</TRNAMT>
-            <FITID>409395430343</FITID>
+            <FITID>005b93360d14f8f4</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2144,7 +2144,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260825220413.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2000</TRNAMT>
-            <FITID>551148345586</FITID>
+            <FITID>3be3fdf777d1561e</FITID>
             <NAME>Автодор</NAME>
             <MEMO>Платные дороги</MEMO>
             <CURRENCY>
@@ -2156,7 +2156,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260825220209.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1400000</TRNAMT>
-            <FITID>305105125151</FITID>
+            <FITID>3a05956ac08f15a0</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2168,7 +2168,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260825214841.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2941</TRNAMT>
-            <FITID>442645134621</FITID>
+            <FITID>106a37d2aff17db1</FITID>
             <NAME>Самокат</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2180,7 +2180,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260825184027.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-333</TRNAMT>
-            <FITID>443902038301</FITID>
+            <FITID>8c2f9fe904cf998b</FITID>
             <NAME>Boosty.to</NAME>
             <MEMO>Цифровые товары</MEMO>
             <CURRENCY>
@@ -2192,7 +2192,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260825181425.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2164</TRNAMT>
-            <FITID>704015285303</FITID>
+            <FITID>445cac2a2d655e45</FITID>
             <NAME>ЛУКОЙЛ</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -2204,7 +2204,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260825143427.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1219</TRNAMT>
-            <FITID>832850060520</FITID>
+            <FITID>0974dd9570c0145a</FITID>
             <NAME>ЛУКОЙЛ</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -2216,7 +2216,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260825135940.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-5000</TRNAMT>
-            <FITID>389054742561</FITID>
+            <FITID>7e9f9057c92ed9c7</FITID>
             <NAME>Автодор</NAME>
             <MEMO>Платные дороги</MEMO>
             <CURRENCY>
@@ -2228,7 +2228,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260825112439.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-198.28</TRNAMT>
-            <FITID>921228840839</FITID>
+            <FITID>0f2ca3ca475b614f</FITID>
             <NAME>Пятёрочка</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2240,7 +2240,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260825111948.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-978.68</TRNAMT>
-            <FITID>954053512114</FITID>
+            <FITID>49bea766ca5d07d0</FITID>
             <NAME>Киришиавтосервис</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -2252,7 +2252,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260825090314.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1400385.83</TRNAMT>
-            <FITID>037362753267</FITID>
+            <FITID>fdd689526e62a621</FITID>
             <NAME>Закрытие вклада</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2264,7 +2264,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260825011936.000[+3:MSK]</DTPOSTED>
             <TRNAMT>17317.21</TRNAMT>
-            <FITID>026636189980</FITID>
+            <FITID>c083104deecd0309</FITID>
             <NAME>Проценты по вкладу</NAME>
             <MEMO>Вклады</MEMO>
             <CURRENCY>
@@ -2276,7 +2276,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260824212706.000[+3:MSK]</DTPOSTED>
             <TRNAMT>3000</TRNAMT>
-            <FITID>302224089532</FITID>
+            <FITID>74e4b1cb05ca4c51</FITID>
             <NAME>Контрагент 4</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2288,7 +2288,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260824192004.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-150</TRNAMT>
-            <FITID>655150182098</FITID>
+            <FITID>fa251d888ef1322a</FITID>
             <NAME>Апельсин-Сити</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2312,7 +2312,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260824164520.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-650</TRNAMT>
-            <FITID>760680518030</FITID>
+            <FITID>70579a156f2c9afe</FITID>
             <NAME>Сувенирная лавка</NAME>
             <MEMO>Подарки и творчество</MEMO>
             <CURRENCY>
@@ -2324,7 +2324,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260824163304.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-900</TRNAMT>
-            <FITID>443640103253</FITID>
+            <FITID>c9b7dc3689d373c8</FITID>
             <NAME>Сувенирная лавка</NAME>
             <MEMO>Подарки и творчество</MEMO>
             <CURRENCY>
@@ -2336,7 +2336,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260824152448.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3150</TRNAMT>
-            <FITID>615238071694</FITID>
+            <FITID>db06ee3d74307647</FITID>
             <NAME>Nordenbeef</NAME>
             <MEMO>Рестораны</MEMO>
             <CURRENCY>
@@ -2348,7 +2348,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260824130854.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1500</TRNAMT>
-            <FITID>531860835085</FITID>
+            <FITID>e322b97a1c8bd70e</FITID>
             <NAME>Горный парк Рускеала</NAME>
             <MEMO>Развлечения</MEMO>
             <CURRENCY>
@@ -2360,7 +2360,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260824125116.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-65</TRNAMT>
-            <FITID>302909223551</FITID>
+            <FITID>00422d8fda04aea0</FITID>
             <NAME>Апельсин-Сити</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2372,7 +2372,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260824104436.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2071.5</TRNAMT>
-            <FITID>401880096105</FITID>
+            <FITID>d42a76c1f0a0b1c8</FITID>
             <NAME>Роснефть</NAME>
             <MEMO>Заправки</MEMO>
             <CURRENCY>
@@ -2384,7 +2384,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260823181749.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1208.7</TRNAMT>
-            <FITID>588625542609</FITID>
+            <FITID>88ef48726f022224</FITID>
             <NAME>Magazin Apelsin.</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2396,7 +2396,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260823181739.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-649</TRNAMT>
-            <FITID>963022619461</FITID>
+            <FITID>f3efc8595df4197b</FITID>
             <NAME>Apelsin.</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2408,7 +2408,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260822234227.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1500</TRNAMT>
-            <FITID>152651099056</FITID>
+            <FITID>12dfa1acda5da01b</FITID>
             <NAME>РБК</NAME>
             <MEMO>Цифровые товары</MEMO>
             <CURRENCY>
@@ -2420,7 +2420,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260822154610.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-120</TRNAMT>
-            <FITID>594356227272</FITID>
+            <FITID>41b23f0654d3f6f4</FITID>
             <NAME>Valaamskijmonastyr</NAME>
             <MEMO>НКО</MEMO>
             <CURRENCY>
@@ -2432,7 +2432,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260822130329.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-400</TRNAMT>
-            <FITID>233638184275</FITID>
+            <FITID>1b57510da877c344</FITID>
             <NAME>Sp_Valaamskij-Palomnik</NAME>
             <MEMO>НКО</MEMO>
             <CURRENCY>
@@ -2444,7 +2444,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260821225713.000[+3:MSK]</DTPOSTED>
             <TRNAMT>3000</TRNAMT>
-            <FITID>542641318247</FITID>
+            <FITID>9570a8fb629e9709</FITID>
             <NAME>Контрагент 9</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2456,7 +2456,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260821163714.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-245</TRNAMT>
-            <FITID>510627506418</FITID>
+            <FITID>98411ded171d28cc</FITID>
             <NAME>Апельсин-Сити</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2468,7 +2468,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260821163650.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3259.8</TRNAMT>
-            <FITID>525454570935</FITID>
+            <FITID>65849c8145ea07d5</FITID>
             <NAME>Апельсин-Сити</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2480,7 +2480,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260821093826.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-3000</TRNAMT>
-            <FITID>702326126215</FITID>
+            <FITID>ad35d7a3ed4dd57c</FITID>
             <NAME>Контрагент 4</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2492,7 +2492,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260821091848.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-520</TRNAMT>
-            <FITID>528711643234</FITID>
+            <FITID>2c84b63678beb8d5</FITID>
             <NAME>Кафе</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -2504,7 +2504,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260821091434.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-59</TRNAMT>
-            <FITID>135110752671</FITID>
+            <FITID>9f820bd585bd6ef7</FITID>
             <NAME>Яндекс 360</NAME>
             <MEMO>Связь</MEMO>
             <CURRENCY>
@@ -2516,7 +2516,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260820193607.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1108</TRNAMT>
-            <FITID>732695598653</FITID>
+            <FITID>513884b40ca93679</FITID>
             <NAME>Яндекс Еда</NAME>
             <MEMO>Фастфуд</MEMO>
             <CURRENCY>
@@ -2528,7 +2528,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260820190924.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-291.97</TRNAMT>
-            <FITID>442766095502</FITID>
+            <FITID>3764e4def40a606c</FITID>
             <NAME>Магнит</NAME>
             <MEMO>Супермаркеты</MEMO>
             <CURRENCY>
@@ -2540,7 +2540,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260820190450.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-529</TRNAMT>
-            <FITID>953615095540</FITID>
+            <FITID>9c6308ac6acfb3fb</FITID>
             <NAME>Магнит Аптека</NAME>
             <MEMO>Аптеки</MEMO>
             <CURRENCY>
@@ -2552,7 +2552,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260820182749.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-5640</TRNAMT>
-            <FITID>046108242525</FITID>
+            <FITID>ea217d57d5ff2925</FITID>
             <NAME>Контрагент 9</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2564,7 +2564,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260820174853.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1779</TRNAMT>
-            <FITID>433953063351</FITID>
+            <FITID>f3cd9b1cf9b3ea99</FITID>
             <NAME>Яндекс Такси</NAME>
             <MEMO>Такси</MEMO>
             <CURRENCY>
@@ -2576,7 +2576,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260820133020.000[+3:MSK]</DTPOSTED>
             <TRNAMT>2000</TRNAMT>
-            <FITID>540426112557</FITID>
+            <FITID>85fa9589c2bfed86</FITID>
             <NAME>Контрагент 10</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2588,7 +2588,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260820110445.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-500</TRNAMT>
-            <FITID>116019041551</FITID>
+            <FITID>edd0a0215df936e4</FITID>
             <NAME>МТС +7 900 000-00-00</NAME>
             <MEMO>Мобильная связь</MEMO>
             <CURRENCY>
@@ -2600,7 +2600,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260820100230.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-1218</TRNAMT>
-            <FITID>142245081636</FITID>
+            <FITID>a95bbf9459a753ed</FITID>
             <NAME>Яндекс Такси</NAME>
             <MEMO>Такси</MEMO>
             <CURRENCY>
@@ -2612,7 +2612,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260820091355.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-59</TRNAMT>
-            <FITID>257024185518</FITID>
+            <FITID>1d7c63c6b6c03df6</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2643,7 +2643,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260924122738.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-150000</TRNAMT>
-            <FITID>215236815790624445</FITID>
+            <FITID>d2d6f438bd6d88ae</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2655,7 +2655,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260922112827.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-150000</TRNAMT>
-            <FITID>400619614957</FITID>
+            <FITID>54b6f35c290f87d0</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2667,7 +2667,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918173045.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-45000</TRNAMT>
-            <FITID>363254142280</FITID>
+            <FITID>a820f67981ff25db</FITID>
             <NAME>Контрагент 2</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2679,7 +2679,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260918173003.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-50000</TRNAMT>
-            <FITID>115288516241</FITID>
+            <FITID>f97188e24a209d52</FITID>
             <NAME>Контрагент 2</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2691,7 +2691,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260917232155.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-5000</TRNAMT>
-            <FITID>913290225953</FITID>
+            <FITID>c4f9e516c799eae4</FITID>
             <NAME>Контрагент 2</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2703,7 +2703,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260916120632.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-300000</TRNAMT>
-            <FITID>255004127611</FITID>
+            <FITID>3f484058f71b3b3b</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2715,7 +2715,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915182039.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-400000</TRNAMT>
-            <FITID>451454167515</FITID>
+            <FITID>24ed48a071e905ed</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2727,7 +2727,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260915143839.000[+3:MSK]</DTPOSTED>
             <TRNAMT>200000</TRNAMT>
-            <FITID>520633534342</FITID>
+            <FITID>1b1067af74b27a95</FITID>
             <NAME>Себе из другого банка</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2739,7 +2739,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915142208.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-200000</TRNAMT>
-            <FITID>392754232125</FITID>
+            <FITID>9918213c8d3456d0</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2751,7 +2751,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915100833.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-200000</TRNAMT>
-            <FITID>212780602440</FITID>
+            <FITID>4a1025ffd5d43f3e</FITID>
             <NAME>Себе в другой банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2763,7 +2763,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260914111456.000[+3:MSK]</DTPOSTED>
             <TRNAMT>100000</TRNAMT>
-            <FITID>586740012744</FITID>
+            <FITID>54a3ffd4e2dbe3be</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2775,7 +2775,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909192123.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-75000</TRNAMT>
-            <FITID>740903165421</FITID>
+            <FITID>f43681e9cce4f88e</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2787,7 +2787,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260909164642.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-125000</TRNAMT>
-            <FITID>231807341013</FITID>
+            <FITID>a093e12b7b3c1a66</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2799,7 +2799,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260904163514.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-224.89</TRNAMT>
-            <FITID>021070520830</FITID>
+            <FITID>ac4692695c19559b</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2811,7 +2811,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260904163456.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1000</TRNAMT>
-            <FITID>396424885162</FITID>
+            <FITID>bf10b200b24e9cd1</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2823,7 +2823,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260904142413.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-2</TRNAMT>
-            <FITID>091083351313</FITID>
+            <FITID>ac2b9587d8c82c05</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2835,7 +2835,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260904142253.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-773.11</TRNAMT>
-            <FITID>801323575991</FITID>
+            <FITID>ccb85ccce1d56d86</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2847,7 +2847,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260904141938.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-100000</TRNAMT>
-            <FITID>764054911021</FITID>
+            <FITID>e8a65c9a7d53c272</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2859,7 +2859,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260904100542.000[+3:MSK]</DTPOSTED>
             <TRNAMT>200000</TRNAMT>
-            <FITID>555123424009</FITID>
+            <FITID>db8a8f533b3e69e8</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2871,7 +2871,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260901145233.000[+3:MSK]</DTPOSTED>
             <TRNAMT>100000</TRNAMT>
-            <FITID>018501796387</FITID>
+            <FITID>111809d5574a4de0</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2883,7 +2883,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260831183725.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-100000</TRNAMT>
-            <FITID>009333420552</FITID>
+            <FITID>ccabb7e351f1b4b4</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2895,7 +2895,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260830171446.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-51979.59</TRNAMT>
-            <FITID>370255333523</FITID>
+            <FITID>c288018819aa3cff</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2907,7 +2907,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260828164849.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-150000</TRNAMT>
-            <FITID>402526817877</FITID>
+            <FITID>3395b933d2956fbf</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2919,7 +2919,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260827225754.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1979.59</TRNAMT>
-            <FITID>414403111129</FITID>
+            <FITID>6055e9db1d850f17</FITID>
             <NAME>Проценты на остаток</NAME>
             <MEMO>Проценты</MEMO>
             <CURRENCY>
@@ -2931,7 +2931,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260825220209.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1400000</TRNAMT>
-            <FITID>430394259195</FITID>
+            <FITID>f7963407f2f1e638</FITID>
             <NAME>Между своими счетами</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2943,7 +2943,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260824222445.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-105000</TRNAMT>
-            <FITID>347592652523</FITID>
+            <FITID>4e9b401782bc12c3</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2955,7 +2955,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260824184839.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-30000</TRNAMT>
-            <FITID>266355404654</FITID>
+            <FITID>6dd7cbd3e0e0fb7b</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2967,7 +2967,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260823173155.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-50000</TRNAMT>
-            <FITID>000173322710</FITID>
+            <FITID>8d48ab5a954d1bdb</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2979,7 +2979,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260823154931.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-5000</TRNAMT>
-            <FITID>542165533884</FITID>
+            <FITID>c725134e0c5ce4e5</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -2991,7 +2991,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260821171515.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-10000</TRNAMT>
-            <FITID>205955003368</FITID>
+            <FITID>e509f0472199fc11</FITID>
             <NAME>Пополнение брокерского счета</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -3022,7 +3022,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260916171911.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1000.00</TRNAMT>
-            <FITID>8d69a606-ee5f-94d6-33f0-41b3f78c2559</FITID>
+            <FITID>65a5c3f3433f3a95</FITID>
             <NAME>Контрагент 1</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -3034,7 +3034,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260916100412.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-150.00</TRNAMT>
-            <FITID>6ecf5cca-f030-95e7-b803-5ad4675b3b2e</FITID>
+            <FITID>0fd06e72a89eb79a</FITID>
             <NAME>3801 Regular Charge: Sep</NAME>
             <MEMO>Услуги банка</MEMO>
             <CURRENCY>
@@ -3046,7 +3046,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915143829.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-200000.00</TRNAMT>
-            <FITID>34640241800303582814379</FITID>
+            <FITID>b1bcef507ac4833e</FITID>
             <NAME>Т-Банк</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -3058,7 +3058,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260915143107.000[+3:MSK]</DTPOSTED>
             <TRNAMT>200000.00</TRNAMT>
-            <FITID>41042d39-67ee-62d2-fe97-4ce3576a3222</FITID>
+            <FITID>237ed17aed7c4db8</FITID>
             <NAME>Поступление</NAME>
             <MEMO>Финансы</MEMO>
             <CURRENCY>
@@ -3070,7 +3070,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260915101100.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-200000.00</TRNAMT>
-            <FITID>14109874191822413947043</FITID>
+            <FITID>02ad8c7625fc9f57</FITID>
             <NAME>Контрагент 1</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -3082,7 +3082,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260915100835.000[+3:MSK]</DTPOSTED>
             <TRNAMT>200000.00</TRNAMT>
-            <FITID>ea14a5b6-4898-72ca-4988-bec0f4e1a742</FITID>
+            <FITID>fe5f33ec9d608a0b</FITID>
             <NAME>Контрагент 1</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -3094,7 +3094,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260911092606.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-4886.65</TRNAMT>
-            <FITID>56799488-9915-3706-c7bd-09307bd77e00</FITID>
+            <FITID>d323975cc1bd1858</FITID>
             <NAME>Контрагент 1</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -3106,7 +3106,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260907122009.000[+3:MSK]</DTPOSTED>
             <TRNAMT>4110.00</TRNAMT>
-            <FITID>341c3d6c-e417-551c-b6ab-1312953e0aa0</FITID>
+            <FITID>57f5dc28f2ee8313</FITID>
             <NAME>Поступление</NAME>
             <MEMO>Финансы</MEMO>
             <CURRENCY>
@@ -3118,7 +3118,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260904100438.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-215000.00</TRNAMT>
-            <FITID>289b9a79-74a6-9562-94bc-e63ce797ef78</FITID>
+            <FITID>2701d88c45378bf0</FITID>
             <NAME>Контрагент 1</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -3130,7 +3130,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260904095203.000[+3:MSK]</DTPOSTED>
             <TRNAMT>213396.76</TRNAMT>
-            <FITID>e3dd57c4-257e-00ad-5dab-8413ed82c8e4</FITID>
+            <FITID>54ed2972e7509b0c</FITID>
             <NAME>Поступление</NAME>
             <MEMO>Финансы</MEMO>
             <CURRENCY>
@@ -3142,7 +3142,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260902130417.000[+3:MSK]</DTPOSTED>
             <TRNAMT>2343.00</TRNAMT>
-            <FITID>2051d4d1-ed4e-284c-efa1-332d870722d0</FITID>
+            <FITID>943871e47b953c44</FITID>
             <NAME>Поступление</NAME>
             <MEMO>Финансы</MEMO>
             <CURRENCY>
@@ -3154,7 +3154,7 @@
             <TRNTYPE>DEBIT</TRNTYPE>
             <DTPOSTED>20260901145213.000[+3:MSK]</DTPOSTED>
             <TRNAMT>-86600.00</TRNAMT>
-            <FITID>fed968de-d7b2-34c8-4f98-21afd1a0d077</FITID>
+            <FITID>2adfd0e326f5659c</FITID>
             <NAME>Контрагент 1</NAME>
             <MEMO>Переводы</MEMO>
             <CURRENCY>
@@ -3166,7 +3166,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260831222603.000[+3:MSK]</DTPOSTED>
             <TRNAMT>82873.89</TRNAMT>
-            <FITID>6443d82f-5b71-01d7-a9f9-0e5c2a0e2a0e</FITID>
+            <FITID>74bc353cbd07e15e</FITID>
             <NAME>Поступление</NAME>
             <MEMO>Финансы</MEMO>
             <CURRENCY>
@@ -3178,7 +3178,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260831125414.000[+3:MSK]</DTPOSTED>
             <TRNAMT>1770.00</TRNAMT>
-            <FITID>dc1e2ed9-ac4f-0570-628a-398bf0f6c3ec</FITID>
+            <FITID>7ef4a10d31633567</FITID>
             <NAME>Поступление</NAME>
             <MEMO>Финансы</MEMO>
             <CURRENCY>
@@ -3190,7 +3190,7 @@
             <TRNTYPE>CREDIT</TRNTYPE>
             <DTPOSTED>20260831122018.000[+3:MSK]</DTPOSTED>
             <TRNAMT>2070.00</TRNAMT>
-            <FITID>b63a92ac-ef9b-a491-7f65-3843c8875b04</FITID>
+            <FITID>0a930b84b483efc0</FITID>
             <NAME>Поступление</NAME>
             <MEMO>Финансы</MEMO>
             <CURRENCY>

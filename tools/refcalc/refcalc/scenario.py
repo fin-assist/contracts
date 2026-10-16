@@ -56,10 +56,11 @@ class Runner:
         raise ValueError(f"unknown request {request}")
 
     def resolve(self, ref: dict):
-        """{"step": "<name>", "path": ["a", 0, "b"]} → a value from an earlier response."""
+        """{"step": "<name>", "path": ["a", 0, {"id": "x"}, "b"]} → a value from an earlier response; {"id": …} picks
+        the first element of an array with that `id` (a block of 6.1)."""
         v = self.responses[ref["step"]]
         for p in ref["path"]:
-            v = v[p]
+            v = next(x for x in v if x.get("id") == p["id"]) if isinstance(p, dict) else v[p]
         return v
 
     def run(self):
@@ -83,7 +84,11 @@ class Runner:
                     resp = self.backend.change_category(step["operation"]["account"], step["operation"]["fitid"],
                                                         step["category_id"])
                 elif do == "dismiss_regular_payment":
-                    self.backend.dismiss(step["title"])
+                    # As an implementation does it: the payment_id of the row with this title in the card.
+                    screen = self.get(step["request"].split(" ", 1)[1])
+                    card = next(b for b in screen["blocks"] if b.get("id") == "regular_payments")
+                    row = next(r for r in card["data"]["items"] if r["title"] == step["title"])
+                    self.backend.dismiss(row["button"]["payment_id"])
                     resp = None
                 elif do == "delete_upload":
                     self.backend.delete_upload(os.path.basename(step["file"]))

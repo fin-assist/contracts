@@ -1,0 +1,44 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-18T12:00:00+03:00",
+      "amount": 9000,
+      "currency": "RUB",
+      "title": "Комиссия за перевод",
+      "category_id": "cat_finance",
+      "category_name": "Финансы",
+      "category_icon": "landmark",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-16T10:04:12+03:00",
+      "amount": 15000,
+      "currency": "RUB",
+      "title": "3801 Regular Charge: Sep",
+      "category_id": "cat_bank_fees",
+      "category_name": "Услуги банка",
+      "category_icon": "landmark",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>"
+      },
+      "status": "posted"
+    }
+  ],
+  "total_count": 2,
+  "range": {
+    "from": "2026-09-01T00:00:00+03:00",
+    "to": "2026-10-01T00:00:00+03:00"
+  }
+}

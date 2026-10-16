@@ -6,7 +6,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Optional
 
 from .analytics import Analytics, period_bounds
-from .ledger import Ledger
+from .ledger import Ledger, stable_id
 from .registry import OWN_TRANSFER, REFUND, TRANSFERS_NAME, UNCATEGORIZED, Registry
 from .util import add_months, day_of, end_of_day, iso, month_key, month_start, parse_iso, start_of_day
 from .views import Scope, account, details, item, records, selection_id
@@ -180,7 +180,9 @@ class Backend:
         out = []
         for r in within:
             if mode is not None:
-                if r.is_pair or (mode == "without" and r.op.category.name == TRANSFERS_NAME):
+                # Analytics rules: no «Между своими счетами» (pairs and single transfers to self), no «Переводы»
+                # with `without` (api.md 4.1).
+                if r.is_pair or r.op.is_own or (mode == "without" and r.op.category.name == TRANSFERS_NAME):
                     continue
             if "kind" in f:
                 if r.is_pair or r.op.is_own:
@@ -242,8 +244,10 @@ class Backend:
                 or (last4 is not None and any(o.account.id.endswith(last4) for o in ops)))
 
     def selection(self, sel: str):
-        """Opaque selections the fixtures use: only those the reference responses hand out."""
-        a = Analytics(self.ledger, self.now)
+        """Opaque selections the reference responses hand out: «Без категории», commissions, a regular payment, all
+        regular payments of a card, a group of small frequent spendings."""
+        if sel in self.ledger.selections:
+            return self.ledger.selections[sel]
         if sel == selection_id("uncategorized"):
             return lambda o: o.category.id == UNCATEGORIZED or (o.is_refund and o.target.id == UNCATEGORIZED)
         if sel == selection_id("bank_fees"):
@@ -272,8 +276,12 @@ class Backend:
             items.append(details(by_id[rid]))
         return {"items": items, "replaced_id": replaced}
 
-    def dismiss(self, description: str) -> None:
-        self.ledger.dismissed.add(description)
+    def dismiss(self, payment_id: str) -> None:
+        """6.3 PUT: the payment is bound to its key, the description."""
+        name = next((o.name for o in self.ledger.ops.values() if stable_id("payment", o.name) == payment_id), None)
+        if name is None:
+            raise ApiError(404, "NOT_FOUND")
+        self.ledger.dismissed.add(name)
 
     # ---- 5.1, 6.1, 6.2 ----
 
