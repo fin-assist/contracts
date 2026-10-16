@@ -1246,13 +1246,9 @@ paths:
                           {
                             "id": "daily_expense",
                             "title": "Расходы в день",
-                            "status": "locked",
-                            "lock": {
-                              "reason": "need_full_months",
-                              "text": "Нужно 1 полный месяц — пока есть только 1–25 сентября",
-                              "required": 1,
-                              "available": 0
-                            }
+                            "value": 337280,
+                            "value_kind": "amount",
+                            "caption": "в среднем за 1–25 сентября"
                           },
                           {
                             "id": "income",

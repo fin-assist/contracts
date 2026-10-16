@@ -42,6 +42,8 @@ same PR.
 | Registry check | `proto/scripts/check_error_registry.py` |
 | Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
+| Calculation fixtures: statements, scenario, expected responses, comparison rules (FIN-107) | `fixtures/calc/` (format and rules — `fixtures/calc/README.md`) |
+| Reference calculation that produces the expected responses (spec FIN-106) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
 | PR review by Claude | `.github/workflows/claude.yml` |
 
 ## Checks
@@ -51,7 +53,10 @@ CI (`.github/workflows/ci.yml`, table in `README.md`): `redocly lint`, `oasdiff 
 unchanged against the PR base; the owner accepts a change with `breaking-accepted`), and the Go module job (`gen/go` equals a fresh
 `scripts/generate.sh`, `go build`, `go vet`, `go test`). Run them locally before pushing (commands in `README.md`,
 «CI»). A PR that changes `proto/` commits the regenerated `gen/go`. `buf` is pinned twice — `tools/go.mod` and
-`BUF_VERSION` in `ci.yml` — and CI fails when they differ.
+`BUF_VERSION` in `ci.yml` — and CI fails when they differ. The calculation fixtures job runs the reference
+calculation tests and requires `fixtures/calc/expected` to equal a fresh scenario run that passes `openapi.yaml`.
+A PR that changes calculation rules (spec FIN-106, the meaning of analytics/feed/import fields in `docs/api.md`)
+updates `tools/refcalc` and regenerates `fixtures/calc/expected` in the same PR, and says which responses changed.
 
 A breaking change fails `oasdiff` / `buf breaking`. In the alpha the owner may accept it with the PR label
 `breaking-accepted` — for REST (`oasdiff`) and for a changed `error_spec` of an existing code

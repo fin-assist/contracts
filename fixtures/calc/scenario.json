@@ -1,0 +1,49 @@
+{
+  "_comment": "Сценарий эталонных данных (FIN-107): шаги выполняются по порядку на пустом пользователе. Формат и правила сравнения — README.md.",
+  "time_zone": "Europe/Moscow",
+  "steps": [
+    {"name": "import-1", "now": "2026-07-01T10:00:00+03:00", "do": "upload", "file": "statements/01-2025-10-15_2026-06-30.ofx", "expect": "expected/01-import-first.json"},
+    {"name": "import-2", "now": "2026-08-12T10:00:00+03:00", "do": "upload", "file": "statements/02-2026-06-20_2026-08-10.ofx", "expect": "expected/02-import-overlap.json"},
+    {"name": "import-3", "now": "2026-09-26T10:00:00+03:00", "do": "upload", "file": "statements/03-2026-08-20_2026-09-25.ofx", "expect": "expected/03-import-after-gap.json"},
+    {"name": "import-4", "now": "2026-09-26T10:30:00+03:00", "do": "upload", "file": "statements/04-edge-cases-2026-09.ofx", "expect": "expected/04-import-edge-cases.json"},
+
+    {"name": "categories", "do": "get", "request": "GET /v1/categories", "expect": "expected/05-categories.json"},
+    {"name": "feed-1", "do": "get", "request": "GET /v1/operations", "expect": "expected/06-feed.json"},
+    {"name": "feed-2", "do": "get", "request": "GET /v1/operations?before=2026-07-01T00:00:00%2B03:00", "expect": "expected/07-feed-before.json"},
+    {"name": "search-q", "do": "get", "request": "GET /v1/operations?q=%D0%BF%D1%8F%D1%82%D0%B5%D1%80%D0%BE%D1%87%D0%BA%D0%B0", "expect": "expected/08-search-q.json"},
+    {"name": "search-category", "do": "get", "request": "GET /v1/operations?from=2026-09-01T00:00:00%2B03:00&to=2026-10-01T00:00:00%2B03:00&category_id=cat_supermarkets&kind=expense&transfer_mode=with", "expect": "expected/09-search-category-with.json"},
+    {"name": "search-without", "do": "get", "request": "GET /v1/operations?from=2026-09-01T00:00:00%2B03:00&to=2026-10-01T00:00:00%2B03:00&kind=income&transfer_mode=without", "expect": "expected/10-search-income-without.json"},
+    {"name": "search-uncategorized", "do": "get", "filter_from": {"step": "import-4", "path": ["uncategorized_filters"]}, "expect": "expected/11-search-uncategorized.json"},
+
+    {"name": "month-09-with", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "expect": "expected/12-analytics-month-09-with.json"},
+    {"name": "search-regular-all", "do": "get", "filter_from": {"step": "month-09-with", "path": ["blocks", {"id": "regular_payments"}, "action", "filter"]}, "expect": "expected/12a-search-regular-all.json"},
+    {"name": "search-small-frequent", "do": "get", "filter_from": {"step": "month-09-with", "path": ["blocks", {"id": "small_frequent"}, "action", "filter"]}, "expect": "expected/12b-search-small-frequent.json"},
+    {"name": "search-bank-fees", "do": "get", "filter_from": {"step": "month-09-with", "path": ["blocks", {"id": "bank_fees"}, "action", "filter"]}, "expect": "expected/12c-search-bank-fees.json"},
+    {"name": "month-09-without", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=without", "expect": "expected/13-analytics-month-09-without.json"},
+    {"name": "month-08", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-08&transfer_mode=with", "expect": "expected/14-analytics-month-08-gap.json"},
+    {"name": "month-07", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-07&transfer_mode=with", "expect": "expected/15-analytics-month-07.json"},
+    {"name": "month-2025-10", "do": "get", "request": "GET /v1/analytics?period=month&date=2025-10&transfer_mode=with", "expect": "expected/16-analytics-month-2025-10-first.json"},
+    {"name": "month-default", "do": "get", "request": "GET /v1/analytics", "expect": "expected/17-analytics-default.json"},
+    {"name": "quarter-q3", "do": "get", "request": "GET /v1/analytics?period=quarter&date=2026-09&transfer_mode=with", "expect": "expected/18-analytics-quarter-q3.json"},
+    {"name": "quarter-q2", "do": "get", "request": "GET /v1/analytics?period=quarter&date=2026-Q2&transfer_mode=without", "expect": "expected/19-analytics-quarter-q2-without.json"},
+    {"name": "year-with", "do": "get", "request": "GET /v1/analytics?period=year&date=2026&transfer_mode=with", "expect": "expected/20-analytics-year-with.json"},
+    {"name": "year-without", "do": "get", "request": "GET /v1/analytics?period=year&date=2026&transfer_mode=without", "expect": "expected/21-analytics-year-without.json"},
+    {"name": "periods-month", "do": "get", "request": "GET /v1/analytics/periods?period=month", "expect": "expected/22-periods-month.json"},
+    {"name": "periods-quarter", "do": "get", "request": "GET /v1/analytics/periods?period=quarter", "expect": "expected/23-periods-quarter.json"},
+    {"name": "periods-year", "do": "get", "request": "GET /v1/analytics/periods?period=year", "expect": "expected/24-periods-year.json"},
+
+    {"name": "dismiss", "do": "dismiss_regular_payment", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "title": "РБК"},
+    {"name": "after-dismiss", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "expect": "expected/25-analytics-after-dismiss.json"},
+    {"name": "change-category", "do": "change_category", "operation": {"account": "40817810000000001111", "fitid": "e72860a76074dfd0"}, "category_id": "cat_restaurants", "expect": "expected/26-change-category.json"},
+    {"name": "after-change", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "expect": "expected/27-analytics-after-change.json"},
+
+    {"name": "import-5", "now": "2026-09-26T11:00:00+03:00", "do": "upload", "file": "statements/05-edge-cases-fixed-2026-09.ofx", "expect": "expected/28-import-fixed.json"},
+    {"name": "after-fix", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "expect": "expected/29-analytics-unread-closed.json"},
+    {"name": "delete-4", "do": "delete_upload", "file": "statements/04-edge-cases-2026-09.ofx"},
+    {"name": "after-delete", "do": "get", "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with", "expect": "expected/30-analytics-after-delete.json"},
+
+    {"name": "stale-feed", "now": "2026-10-20T10:00:00+03:00", "do": "get", "request": "GET /v1/operations", "expect": "expected/31-feed-stale.json"},
+    {"name": "stale-analytics", "do": "get", "request": "GET /v1/analytics?period=month&transfer_mode=with", "expect": "expected/32-analytics-stale.json"},
+    {"name": "stale-year", "do": "get", "request": "GET /v1/analytics?period=year&transfer_mode=with", "expect": "expected/33-analytics-year-stale-current.json"}
+  ]
+}

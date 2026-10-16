@@ -1,0 +1,473 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-25T18:06:15+03:00",
+      "amount": 219850,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации ГЛОРАКС 001Р-05",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-25T17:58:33+03:00",
+      "amount": 92850,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации Группа ЛСР 002Р-01",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-25T17:34:30+03:00",
+      "amount": 222550,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации АйДи Коллект 001P-07",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-24T13:10:14+03:00",
+      "amount": 717800,
+      "currency": "RUB",
+      "title": "Выплата дивидендов по акциям ЯНДЕКС ао01",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-24T12:22:53+03:00",
+      "amount": 223750,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации РОЛЬФ 001Р-09",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-24T12:04:54+03:00",
+      "amount": 347600,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации ТАЛК 002P-04",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-23T16:37:47+03:00",
+      "amount": 286100,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации Балтийский лизинг БО-П22",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-23T16:21:43+03:00",
+      "amount": 150200,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации Симпл Солюшнз Кэпитл 001Р-02",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-23T16:10:57+03:00",
+      "amount": 99890,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации Полипласт П02-БО-14",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-22T17:26:58+03:00",
+      "amount": 124800,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации Полипласт П02-БО-16",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-22T16:54:07+03:00",
+      "amount": 186100,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации Балтийский лизинг БО-П16",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-22T16:24:39+03:00",
+      "amount": 406350,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации ВУШ БО 001P-07",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-22T15:58:16+03:00",
+      "amount": 355300,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации Аренза-Про 001P-07",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-22T12:44:53+03:00",
+      "amount": 432150,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации ЛК АдвансТрак 001Р-03",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-22T12:42:00+03:00",
+      "amount": 157300,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации Каршеринг Руссия 001P-09",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-22T11:51:20+03:00",
+      "amount": 232500,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации ГТЛК БО 002P-12",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-22T11:48:29+03:00",
+      "amount": 343300,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации ГК Самолет БО-П18",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-22T11:00:07+03:00",
+      "amount": 257500,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации Фабрика ПО 001Р-01",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-22T10:52:06+03:00",
+      "amount": 321650,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации АЛИУМ 01Р2",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-21T11:14:24+03:00",
+      "amount": 388900,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации Брусника 002Р-09",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-16T13:04:53+03:00",
+      "amount": 306700,
+      "currency": "RUB",
+      "title": "Выплата купона по облигации ДельтаЛизинг 001Р-03",
+      "category_id": "cat_dividends",
+      "category_name": "Дивиденды и купоны",
+      "category_icon": "trending-up",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-15T14:31:07+03:00",
+      "amount": 20000000,
+      "currency": "RUB",
+      "title": "Поступление",
+      "category_id": "cat_finance",
+      "category_name": "Финансы",
+      "category_icon": "landmark",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-13T12:00:00+03:00",
+      "amount": 500000,
+      "currency": "RUB",
+      "title": "Биржа",
+      "category_id": "<ignored>",
+      "category_name": "Крипто",
+      "category_icon": "tag",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-07T12:20:09+03:00",
+      "amount": 411000,
+      "currency": "RUB",
+      "title": "Поступление",
+      "category_id": "cat_finance",
+      "category_name": "Финансы",
+      "category_icon": "landmark",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-04T09:52:03+03:00",
+      "amount": 21339676,
+      "currency": "RUB",
+      "title": "Поступление",
+      "category_id": "cat_finance",
+      "category_name": "Финансы",
+      "category_icon": "landmark",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-02T13:04:17+03:00",
+      "amount": 234300,
+      "currency": "RUB",
+      "title": "Поступление",
+      "category_id": "cat_finance",
+      "category_name": "Финансы",
+      "category_icon": "landmark",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>"
+      },
+      "status": "posted"
+    }
+  ],
+  "total_count": 26,
+  "range": {
+    "from": "2026-09-01T00:00:00+03:00",
+    "to": "2026-10-01T00:00:00+03:00"
+  }
+}

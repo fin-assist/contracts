@@ -128,3 +128,22 @@ jobs:
           go build ./...
           go vet ./...
           go test ./...
+
+  calc-fixtures:
+    name: Calculation fixtures (reference calculation, schema)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'pyyaml>=6,<7' 'openapi-schema-validator>=0.6,<0.7' 'rfc3339-validator>=0.1,<0.2'
+      # The reference calculation against the examples of the calculation spec (FIN-106, section 9).
+      - name: Reference calculation tests
+        working-directory: tools/refcalc
+        run: python3 -m unittest discover -s tests -t .
+      # fixtures/calc/expected must equal a fresh run of the scenario, and every response must pass openapi.yaml.
+      - name: Expected responses are up to date and valid
+        working-directory: tools/refcalc
+        run: python3 -m refcalc.scenario ../../fixtures/calc --check --openapi ../../openapi/openapi.yaml
