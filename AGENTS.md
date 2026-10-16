@@ -47,7 +47,8 @@ same PR.
 ## Checks
 
 CI (`.github/workflows/ci.yml`, table in `README.md`): `redocly lint`, `oasdiff breaking` against the PR base,
-`buf lint`, `buf breaking`, `check_error_registry.py`, and the Go module job (`gen/go` equals a fresh
+`buf lint`, `buf breaking`, `check_error_registry.py`, `check_error_spec_stable.py` (error_spec of existing codes
+unchanged against the PR base; the owner accepts a change with `breaking-accepted`), and the Go module job (`gen/go` equals a fresh
 `scripts/generate.sh`, `go build`, `go vet`, `go test`). Run them locally before pushing (commands in `README.md`,
 «CI»). A PR that changes `proto/` commits the regenerated `gen/go`. `buf` is pinned twice — `tools/go.mod` and
 `BUF_VERSION` in `ci.yml` — and CI fails when they differ.

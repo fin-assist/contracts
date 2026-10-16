@@ -18,6 +18,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `proto/buf.yaml` | Модуль `buf`: lint STANDARD |
 | `proto/finassist/<сервис>/v1/*.proto` | Контракты сервисов и `common/v1` (типы, реестр ошибок `ErrorReason`) |
 | `proto/scripts/check_error_registry.py` | Сверка реестра ошибок с разделом 8 `docs/api.md` |
+| `proto/scripts/check_error_spec_stable.py` | `error_spec` существующих кодов не меняется относительно базы PR |
 | `proto/buf.gen.yaml` | Генерация Go-кода: `protoc-gen-go`, `protoc-gen-go-grpc`, `protoc-gen-finerr` |
 | `gen/go/` | Go-модуль `github.com/fin-assist/contracts/gen/go` (свой `go.mod`): `finassist/<сервис>/v1` — сообщения и gRPC, `finerr` — конструкторы ошибок и таблица перевода в REST. Сгенерирован, руками не правится (кроме `go.mod` и тестов) |
 | `tools/` | Модуль инструментов: версии `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` закреплены в `tools/go.mod` (`tool`); `tools/protoc-gen-finerr` — генератор `finerr` из опций `error_spec` |
@@ -47,6 +48,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `buf lint` | всегда | нарушения STANDARD (исключение — префикс значений `ErrorReason`) |
 | `buf breaking` против базы PR | PR | несовместимые изменения `.proto`, повторное использование номеров и имён |
 | `check_error_registry.py` | всегда | расхождение `ErrorReason` с разделом 8 `docs/api.md`, неполный `error_spec`, `error_spec` вне реестра, больше 30 кодов |
+| `check_error_spec_stable.py` против базы PR | PR | изменение `error_spec` (`grpc_code`, `http_status`, `metadata_keys`, `details`) у существующего кода. Владелец принимает его меткой `breaking-accepted` — изменения перечисляются, проверка не падает |
 | Go-модуль `gen/go` | всегда | `gen/go` не совпадает с тем, что генерирует `scripts/generate.sh` из `proto/`; модуль не собирается, `go vet` или тесты `finerr` падают; версия `buf` в `tools/go.mod` расходится с `BUF_VERSION` в `ci.yml` |
 
 Локально:
@@ -94,7 +96,7 @@ return nil, finerr.LimitExceeded(resetsAt.In(moscow)) // *_at keys are RFC 3339 
   ```
 
   Затем сервисы поднимают версию через `go get`. Тег не переставляется: опубликованную версию кэширует `proxy.golang.org`.
-- **`error_spec` существующего кода не меняется** (ключи `metadata_keys`, `details`, `grpc_code`, `http_status`): `buf breaking` опций не сравнивает, а изменение ломает сигнатуру конструктора `finerr` и при разных версиях модуля у сервиса и `bank-bff` превращает ошибку в 500. Нужен другой ответ клиенту — новый код по правилам `docs/grpc-api.md` 5.1. Если без изменения не обойтись (решение владельца), последней выкатывается сторона, которая начинает требовать больше: при добавлении ключа или детали — сначала все сервисы, потом `bank-bff` (старый `bank-bff` лишнее отбрасывает, а новый без ключа отдаст 500); при удалении — сначала `bank-bff`, потом сервисы. Смена `http_status`/`grpc_code` порядка не требует.
+- **`error_spec` существующего кода не меняется** (ключи `metadata_keys`, `details`, `grpc_code`, `http_status`): `buf breaking` опций не сравнивает, а изменение ломает сигнатуру конструктора `finerr` и при разных версиях модуля у сервиса и `bank-bff` превращает ошибку в 500. Нужен другой ответ клиенту — новый код по правилам `docs/grpc-api.md` 5.1. CI сверяет `error_spec` с базой PR (`check_error_spec_stable.py`); изменение принимает только владелец меткой `breaking-accepted`. Если без изменения не обойтись (решение владельца), последней выкатывается сторона, которая начинает требовать больше: при добавлении ключа или детали — сначала все сервисы, потом `bank-bff` (старый `bank-bff` лишнее отбрасывает, а новый без ключа отдаст 500); при удалении — сначала `bank-bff`, потом сервисы. Смена `http_status`/`grpc_code` порядка не требует.
 
 ## Ревью
 

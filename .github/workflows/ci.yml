@@ -79,6 +79,18 @@ jobs:
       - name: Check registry
         working-directory: proto
         run: python3 scripts/check_error_registry.py "$RUNNER_TEMP/fd.binpb" ../docs/api.md
+      # error_spec of existing codes must not change (grpc-api.md 5.1, rule 5): buf breaking does not compare
+      # custom options. The owner accepts a change with the `breaking-accepted` label.
+      - name: Build base descriptors
+        if: github.event_name == 'pull_request'
+        working-directory: proto
+        run: buf build '${{ github.event.repository.clone_url }}#format=git,commit=${{ github.event.pull_request.base.sha }},subdir=proto' -o "$RUNNER_TEMP/base.binpb"
+      - name: error_spec of existing codes is unchanged
+        if: github.event_name == 'pull_request'
+        working-directory: proto
+        run: >-
+          python3 scripts/check_error_spec_stable.py "$RUNNER_TEMP/base.binpb" "$RUNNER_TEMP/fd.binpb"
+          ${{ contains(github.event.pull_request.labels.*.name, 'breaking-accepted') && '--accepted' || '' }}
 
   go-module:
     name: Go module gen/go (generation, build, tests)
