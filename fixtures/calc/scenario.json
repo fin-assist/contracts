@@ -92,6 +92,12 @@
       "expect": "expected/10-search-income-without.json"
     },
     {
+      "name": "search-day-with",
+      "do": "get",
+      "request": "GET /v1/operations?from=2026-09-15T00:00:00%2B03:00&to=2026-09-16T00:00:00%2B03:00&transfer_mode=with",
+      "expect": "expected/10a-search-day-with.json"
+    },
+    {
       "name": "search-uncategorized",
       "do": "get",
       "filter_from": {

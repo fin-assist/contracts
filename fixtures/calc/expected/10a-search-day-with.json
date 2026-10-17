@@ -1,0 +1,222 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T23:32:56+03:00",
+      "amount": 30,
+      "currency": "RUB",
+      "title": "Пополнение брокерского счета",
+      "category_id": "cat_transfers",
+      "category_name": "Переводы",
+      "category_icon": "users",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T23:32:40+03:00",
+      "amount": 700300,
+      "currency": "RUB",
+      "title": "Пополнение брокерского счета",
+      "category_id": "cat_transfers",
+      "category_name": "Переводы",
+      "category_icon": "users",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T18:20:39+03:00",
+      "amount": 40000000,
+      "currency": "RUB",
+      "title": "Пополнение брокерского счета",
+      "category_id": "cat_transfers",
+      "category_name": "Переводы",
+      "category_icon": "users",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··2222"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T17:11:01+03:00",
+      "amount": 7798,
+      "currency": "RUB",
+      "title": "Пятёрочка",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T17:03:59+03:00",
+      "amount": 56300,
+      "currency": "RUB",
+      "title": "Апрель",
+      "category_id": "cat_pharmacy",
+      "category_name": "Аптеки",
+      "category_icon": "pill",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T17:03:25+03:00",
+      "amount": 23900,
+      "currency": "RUB",
+      "title": "Апрель",
+      "category_id": "cat_pharmacy",
+      "category_name": "Аптеки",
+      "category_icon": "pill",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T14:38:29+03:00",
+      "amount": 20000000,
+      "currency": "RUB",
+      "title": "Т-Банк",
+      "category_id": "cat_transfers",
+      "category_name": "Переводы",
+      "category_icon": "users",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-15T14:31:07+03:00",
+      "amount": 20000000,
+      "currency": "RUB",
+      "title": "Поступление",
+      "category_id": "cat_finance",
+      "category_name": "Финансы",
+      "category_icon": "landmark",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T14:22:33+03:00",
+      "amount": 20100000,
+      "currency": "RUB",
+      "title": "ВТБ Мои Инвестиции",
+      "category_id": "cat_cash",
+      "category_name": "Наличные",
+      "category_icon": "banknote",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "income",
+      "occurred_at": "2026-09-15T12:00:00+03:00",
+      "amount": 81300,
+      "currency": "RUB",
+      "title": "Возврат за заказ",
+      "category_id": "cat_refund",
+      "category_name": "Возврат",
+      "category_icon": "repeat",
+      "is_category_manual": false,
+      "note": "возврат",
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T10:11:00+03:00",
+      "amount": 20000000,
+      "currency": "RUB",
+      "title": "Контрагент 1",
+      "category_id": "cat_transfers",
+      "category_name": "Переводы",
+      "category_icon": "users",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-15T09:42:15+03:00",
+      "amount": 10000,
+      "currency": "RUB",
+      "title": "T2 +7 900 000-00-00",
+      "category_id": "cat_mobile",
+      "category_name": "Мобильная связь",
+      "category_icon": "phone",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    }
+  ],
+  "total_count": 12,
+  "range": {
+    "from": "2026-09-15T00:00:00+03:00",
+    "to": "2026-09-16T00:00:00+03:00"
+  }
+}
