@@ -334,7 +334,8 @@ func (AnswerStatus) EnumDescriptor() ([]byte, []int) {
 	return file_finassist_assistant_v1_assistant_proto_rawDescGZIP(), []int{5}
 }
 
-// Почему ответ не получился.
+// Почему ответ не получился. Набор растёт; текст и возможность повтора задают AnswerError.text и
+// AnswerError.retryable (Message.error_text, Message.retryable), а не код (FIN-159).
 type AnswerErrorCode int32
 
 const (
@@ -343,6 +344,9 @@ const (
 	AnswerErrorCode_ANSWER_ERROR_CODE_MODEL_ERROR AnswerErrorCode = 1
 	// Вопрос непонятен или на него нельзя ответить по данным; повтор не имеет смысла и недоступен.
 	AnswerErrorCode_ANSWER_ERROR_CODE_CANNOT_ANSWER AnswerErrorCode = 2
+	// Вопрос не о данных пользователя и не о личных финансах: модель вызвала инструмент off_topic,
+	// генерация остановлена. Повтор недоступен (FIN-159).
+	AnswerErrorCode_ANSWER_ERROR_CODE_OFF_TOPIC AnswerErrorCode = 3
 )
 
 // Enum value maps for AnswerErrorCode.
@@ -351,11 +355,13 @@ var (
 		0: "ANSWER_ERROR_CODE_UNSPECIFIED",
 		1: "ANSWER_ERROR_CODE_MODEL_ERROR",
 		2: "ANSWER_ERROR_CODE_CANNOT_ANSWER",
+		3: "ANSWER_ERROR_CODE_OFF_TOPIC",
 	}
 	AnswerErrorCode_value = map[string]int32{
 		"ANSWER_ERROR_CODE_UNSPECIFIED":   0,
 		"ANSWER_ERROR_CODE_MODEL_ERROR":   1,
 		"ANSWER_ERROR_CODE_CANNOT_ANSWER": 2,
+		"ANSWER_ERROR_CODE_OFF_TOPIC":     3,
 	}
 )
 
@@ -1032,7 +1038,12 @@ type Message struct {
 	Source *AnswerSource `protobuf:"bytes,10,opt,name=source,proto3,oneof" json:"source,omitempty"`
 	// Валюта сумм в blocks (ISO 4217), у каждого сообщения; сейчас RUB (FIN-82). У вопроса и у сообщений,
 	// сохранённых до поля, — RUB (валюты в профиле пока нет); пустая строка — ошибка сервиса (grpc-api.md 5.3).
-	Currency      string `protobuf:"bytes,11,opt,name=currency,proto3" json:"currency,omitempty"`
+	Currency string `protobuf:"bytes,11,opt,name=currency,proto3" json:"currency,omitempty"`
+	// Только у FAILED, заполнено всегда: готовый текст для пользователя, как AnswerError.text. У ответов,
+	// сохранённых до поля, assistant заполняет его по error_code при чтении.
+	ErrorText *string `protobuf:"bytes,12,opt,name=error_text,json=errorText,proto3,oneof" json:"error_text,omitempty"`
+	// Только у FAILED, заполнено всегда: доступен ли повтор (RetryAnswer), как AnswerError.retryable.
+	Retryable     *bool `protobuf:"varint,13,opt,name=retryable,proto3,oneof" json:"retryable,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1142,6 +1153,20 @@ func (x *Message) GetCurrency() string {
 		return x.Currency
 	}
 	return ""
+}
+
+func (x *Message) GetErrorText() string {
+	if x != nil && x.ErrorText != nil {
+		return *x.ErrorText
+	}
+	return ""
+}
+
+func (x *Message) GetRetryable() bool {
+	if x != nil && x.Retryable != nil {
+		return *x.Retryable
+	}
+	return false
 }
 
 // Новый вопрос помощнику.
@@ -1557,8 +1582,12 @@ type AnswerError struct {
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	// Остаток после возврата попытки.
 	RemainingLimit int32 `protobuf:"varint,3,opt,name=remaining_limit,json=remainingLimit,proto3" json:"remaining_limit,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Готовый текст для пользователя; заполнен всегда, пустая строка — ошибка сервиса (grpc-api.md 5.3).
+	Text string `protobuf:"bytes,4,opt,name=text,proto3" json:"text,omitempty"`
+	// Доступен ли повтор (RetryAnswer); сейчас true только у MODEL_ERROR.
+	Retryable     bool `protobuf:"varint,5,opt,name=retryable,proto3" json:"retryable,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AnswerError) Reset() {
@@ -1610,6 +1639,20 @@ func (x *AnswerError) GetRemainingLimit() int32 {
 		return x.RemainingLimit
 	}
 	return 0
+}
+
+func (x *AnswerError) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *AnswerError) GetRetryable() bool {
+	if x != nil {
+		return x.Retryable
+	}
+	return false
 }
 
 // Событие потока ответа.
@@ -1903,7 +1946,7 @@ func (x *ListMessagesResponse) GetTimeZone() string {
 // Повтор неудавшегося ответа.
 type RetryAnswerRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Ответ в статусе FAILED с MODEL_ERROR; иначе RETRY_NOT_ALLOWED.
+	// Ответ в статусе FAILED с retryable = true; иначе RETRY_NOT_ALLOWED.
 	AnswerId      string `protobuf:"bytes,1,opt,name=answer_id,json=answerId,proto3" json:"answer_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2165,7 +2208,7 @@ const file_finassist_assistant_v1_assistant_proto_rawDesc = "" +
 	"data_range\x18\x02 \x01(\v2\x1e.finassist.common.v1.TimeRangeH\x00R\tdataRange\x88\x01\x01\x12F\n" +
 	"\rtransfer_mode\x18\x03 \x01(\x0e2!.finassist.common.v1.TransferModeR\ftransferMode\x12I\n" +
 	"\rchanged_since\x18\x04 \x03(\x0e2$.finassist.assistant.v1.ChangedSinceR\fchangedSinceB\r\n" +
-	"\v_data_range\"\xae\x04\n" +
+	"\v_data_range\"\x92\x05\n" +
 	"\aMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x120\n" +
 	"\x04role\x18\x02 \x01(\x0e2\x1c.finassist.assistant.v1.RoleR\x04role\x129\n" +
@@ -2180,11 +2223,17 @@ const file_finassist_assistant_v1_assistant_proto_rawDesc = "" +
 	"\x05chips\x18\t \x03(\v2\x1c.finassist.assistant.v1.ChipR\x05chips\x12A\n" +
 	"\x06source\x18\n" +
 	" \x01(\v2$.finassist.assistant.v1.AnswerSourceH\x02R\x06source\x88\x01\x01\x12\x1a\n" +
-	"\bcurrency\x18\v \x01(\tR\bcurrencyB\a\n" +
+	"\bcurrency\x18\v \x01(\tR\bcurrency\x12\"\n" +
+	"\n" +
+	"error_text\x18\f \x01(\tH\x03R\terrorText\x88\x01\x01\x12!\n" +
+	"\tretryable\x18\r \x01(\bH\x04R\tretryable\x88\x01\x01B\a\n" +
 	"\x05_textB\n" +
 	"\n" +
 	"\b_chargedB\t\n" +
-	"\a_source\"p\n" +
+	"\a_sourceB\r\n" +
+	"\v_error_textB\f\n" +
+	"\n" +
+	"_retryable\"p\n" +
 	"\x12AskQuestionRequest\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12F\n" +
 	"\rtransfer_mode\x18\x02 \x01(\x0e2!.finassist.common.v1.TransferModeR\ftransferMode\"\x98\x01\n" +
@@ -2210,11 +2259,13 @@ const file_finassist_assistant_v1_assistant_proto_rawDesc = "" +
 	"\n" +
 	"AnswerDone\x12\x18\n" +
 	"\acharged\x18\x01 \x01(\bR\acharged\x12'\n" +
-	"\x0fremaining_limit\x18\x02 \x01(\x05R\x0eremainingLimit\"\x8d\x01\n" +
+	"\x0fremaining_limit\x18\x02 \x01(\x05R\x0eremainingLimit\"\xbf\x01\n" +
 	"\vAnswerError\x12;\n" +
 	"\x04code\x18\x01 \x01(\x0e2'.finassist.assistant.v1.AnswerErrorCodeR\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12'\n" +
-	"\x0fremaining_limit\x18\x03 \x01(\x05R\x0eremainingLimit\"\xe6\x03\n" +
+	"\x0fremaining_limit\x18\x03 \x01(\x05R\x0eremainingLimit\x12\x12\n" +
+	"\x04text\x18\x04 \x01(\tR\x04text\x12\x1c\n" +
+	"\tretryable\x18\x05 \x01(\bR\tretryable\"\xe6\x03\n" +
 	"\x13WatchAnswerResponse\x12D\n" +
 	"\bsnapshot\x18\x01 \x01(\v2&.finassist.assistant.v1.AnswerSnapshotH\x00R\bsnapshot\x12;\n" +
 	"\x05chunk\x18\x02 \x01(\v2#.finassist.assistant.v1.AnswerChunkH\x00R\x05chunk\x12;\n" +
@@ -2269,11 +2320,12 @@ const file_finassist_assistant_v1_assistant_proto_rawDesc = "" +
 	"\x19ANSWER_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18ANSWER_STATUS_GENERATING\x10\x01\x12\x1a\n" +
 	"\x16ANSWER_STATUS_COMPLETE\x10\x02\x12\x18\n" +
-	"\x14ANSWER_STATUS_FAILED\x10\x03*|\n" +
+	"\x14ANSWER_STATUS_FAILED\x10\x03*\x9d\x01\n" +
 	"\x0fAnswerErrorCode\x12!\n" +
 	"\x1dANSWER_ERROR_CODE_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dANSWER_ERROR_CODE_MODEL_ERROR\x10\x01\x12#\n" +
-	"\x1fANSWER_ERROR_CODE_CANNOT_ANSWER\x10\x022\x96\x04\n" +
+	"\x1fANSWER_ERROR_CODE_CANNOT_ANSWER\x10\x02\x12\x1f\n" +
+	"\x1bANSWER_ERROR_CODE_OFF_TOPIC\x10\x032\x96\x04\n" +
 	"\x10AssistantService\x12f\n" +
 	"\vAskQuestion\x12*.finassist.assistant.v1.AskQuestionRequest\x1a+.finassist.assistant.v1.AskQuestionResponse\x12h\n" +
 	"\vWatchAnswer\x12*.finassist.assistant.v1.WatchAnswerRequest\x1a+.finassist.assistant.v1.WatchAnswerResponse0\x01\x12i\n" +

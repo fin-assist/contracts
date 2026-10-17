@@ -1639,7 +1639,8 @@ paths:
 
         Порядок: `snapshot` (всегда первым) → `chunk` / `block` / `source` / `chip` в любом порядке →
         терминальное `done` или `error`. При `error` попытка возвращается, ответ получает статус `failed`,
-        уже показанные блоки клиент убирает. Генерация дольше 3 минут завершается `MODEL_ERROR`.
+        уже показанные блоки клиент убирает; клиент показывает `text` события и «Повторить» только при
+        `retryable: true`. Генерация дольше 3 минут завершается `MODEL_ERROR`.
         Заменённый повтором ответ — 404.
       parameters:
       - $ref: '#/components/parameters/AnswerId'
@@ -1697,9 +1698,9 @@ paths:
       operationId: retryAnswer
       summary: Повторить ответ
       description: |
-        «Повторить» после `MODEL_ERROR`: тот же вопрос, новый ответ; неудачный ответ заменяется — вопрос в истории
+        «Повторить» у неудачного ответа с `retryable: true` (сейчас — только `MODEL_ERROR`): тот же вопрос, новый ответ; неудачный ответ заменяется — вопрос в истории
         не дублируется. Попытка списывается заново (неудачная уже возвращена). Дальше — `streamAnswer` по новому
-        `answer_id`. `RETRY_NOT_ALLOWED` (422) — ответ не в статусе `failed` с `MODEL_ERROR` или уже заменён.
+        `answer_id`. `RETRY_NOT_ALLOWED` (422) — ответ не в статусе `failed` с `retryable: true` или уже заменён.
       parameters:
       - $ref: '#/components/parameters/AnswerId'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2147,7 +2148,7 @@ components:
         code:
           type: string
           description: Машиночитаемый код (реестр — `api.md`, раздел 8). Коды, которые бывают только в событиях потоков (`PROCESSING_FAILED`,
-            `CANCELLED`, `MODEL_ERROR`, `CANNOT_ANSWER`), описаны в схемах событий.
+            `CANCELLED`, `MODEL_ERROR`, `CANNOT_ANSWER`, `OFF_TOPIC`), описаны в схемах событий.
           x-extensible-enum:
           - VALIDATION_ERROR
           - CLIENT_VERSION_UNSUPPORTED
@@ -3501,10 +3502,23 @@ components:
         error_code:
           type: string
           nullable: true
-          description: 'Только у `failed`: `MODEL_ERROR` («Повторить» доступно) или `CANNOT_ANSWER`. Неизвестный — как `MODEL_ERROR`.'
+          description: 'Только у `failed`: коды `AnswerErrorEvent.code`. Клиент по коду не строит текст и не решает о повторе;
+            неизвестный — по `error_text` и `retryable`, как известный.'
           x-extensible-enum:
           - MODEL_ERROR
           - CANNOT_ANSWER
+          - OFF_TOPIC
+        error_text:
+          type: string
+          nullable: true
+          description: 'Только у `failed`, есть всегда: готовый текст для пользователя, как `AnswerErrorEvent.text`; клиент
+            показывает его вместо ответа. Поля нет только у сообщения с неизвестным `status`, которое клиент показывает
+            как `failed`: тогда — общий текст клиента «Не получилось ответить» без «Повторить».'
+        retryable:
+          type: boolean
+          nullable: true
+          description: 'Только у `failed`, есть всегда: доступен ли повтор (`retryAnswer`), как `AnswerErrorEvent.retryable`.
+            `true` — «Повторить»; `false` или поля нет — без «Повторить».'
         charged:
           type: boolean
           nullable: true
@@ -4139,20 +4153,45 @@ components:
     AnswerErrorEvent:
       type: object
       description: |
-        Терминальное событие `error`. `MODEL_ERROR` — сбой или таймаут («Повторить» → `retryAnswer`);
-        `CANNOT_ANSWER` — нельзя ответить по данным, без «Повторить». Неизвестный код — как `MODEL_ERROR`.
-        Попытка возвращена.
+        Терминальное событие `error`, попытка возвращена. Клиент показывает `text` вместо ответа, «Повторить»
+        (`retryAnswer`) — только при `retryable: true`; по `code` текст не строит и о повторе не решает, поэтому
+        неизвестный код обрабатывается по `text` и `retryable`, как известный.
       required:
       - code
+      - text
+      - retryable
       - message
       - remaining_limit
+      example:
+        code: OFF_TOPIC
+        text: 'Вопрос не по теме — помощник отвечает только на вопросы о ваших финансах. С другими вопросами помогут
+          универсальные ассистенты: Алиса AI, GigaChat, ChatGPT, Claude, DeepSeek'
+        retryable: false
+        message: off_topic tool called
+        remaining_limit: 5
       properties:
         code:
           type: string
+          description: |
+            `MODEL_ERROR` — сбой или таймаут Alice AI; `CANNOT_ANSWER` — вопрос непонятен или на него нельзя ответить
+            по данным; `OFF_TOPIC` — вопрос не о данных пользователя и не о личных финансах (модель вызвала инструмент
+            `off_topic`, FIN-159). Для аналитики и логов.
           x-extensible-enum:
           - MODEL_ERROR
           - CANNOT_ANSWER
+          - OFF_TOPIC
+        text:
+          type: string
+          description: |
+            Готовый текст для пользователя, есть всегда. Сейчас: `MODEL_ERROR` — «Не получилось ответить. Вопрос не
+            потрачен»; `CANNOT_ANSWER` — текст макета `Chat` («…недостаточно данных, переформулируйте вопрос. Вопрос не
+            потрачен»); `OFF_TOPIC` — «Вопрос не по теме — помощник отвечает только на вопросы о ваших финансах. С
+            другими вопросами помогут универсальные ассистенты: Алиса AI, GigaChat, ChatGPT, Claude, DeepSeek».
+        retryable:
+          type: boolean
+          description: Доступен ли повтор (`retryAnswer`); `true` — «Повторить». Сейчас `true` только у `MODEL_ERROR`.
         message:
           type: string
+          description: Для логов и отладки, не для показа.
         remaining_limit:
           type: integer

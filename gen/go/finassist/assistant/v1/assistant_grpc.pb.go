@@ -48,8 +48,8 @@ type AssistantServiceClient interface {
 	// к данным и источником.
 	// GET /v1/assistant/messages.
 	ListMessages(ctx context.Context, in *ListMessagesRequest, opts ...grpc.CallOption) (*ListMessagesResponse, error)
-	// Повторить неудавшийся ответ (после MODEL_ERROR): создать новый ответ на тот же вопрос,
-	// заменить им неудачный, списать попытку заново.
+	// Повторить неудавшийся ответ (retryable = true; сейчас только MODEL_ERROR): создать новый ответ
+	// на тот же вопрос, заменить им неудачный, списать попытку заново.
 	// POST /v1/assistant/messages/{answer_id}/retry. Требует `idempotency-key`.
 	RetryAnswer(ctx context.Context, in *RetryAnswerRequest, opts ...grpc.CallOption) (*RetryAnswerResponse, error)
 	// Вернуть остаток суточного лимита вопросов и момент его сброса.
@@ -146,8 +146,8 @@ type AssistantServiceServer interface {
 	// к данным и источником.
 	// GET /v1/assistant/messages.
 	ListMessages(context.Context, *ListMessagesRequest) (*ListMessagesResponse, error)
-	// Повторить неудавшийся ответ (после MODEL_ERROR): создать новый ответ на тот же вопрос,
-	// заменить им неудачный, списать попытку заново.
+	// Повторить неудавшийся ответ (retryable = true; сейчас только MODEL_ERROR): создать новый ответ
+	// на тот же вопрос, заменить им неудачный, списать попытку заново.
 	// POST /v1/assistant/messages/{answer_id}/retry. Требует `idempotency-key`.
 	RetryAnswer(context.Context, *RetryAnswerRequest) (*RetryAnswerResponse, error)
 	// Вернуть остаток суточного лимита вопросов и момент его сброса.
