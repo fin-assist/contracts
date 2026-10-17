@@ -234,9 +234,11 @@ type StartPhoneVerificationResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Секрет заявки: 256 случайных бит, base64url.
 	VerificationToken string `protobuf:"bytes,1,opt,name=verification_token,json=verificationToken,proto3" json:"verification_token,omitempty"`
-	// Бесплатный номер, на который звонит пользователь (E.164).
+	// Номер подтверждения, на который звонит пользователь (E.164). Звонок оплачивается по тарифу
+	// абонента. Номер может быть общим для многих заявок: звонок засчитывается только с номера
+	// из заявки и только пока она действует.
 	CallbackNumber string `protobuf:"bytes,2,opt,name=callback_number,json=callbackNumber,proto3" json:"callback_number,omitempty"`
-	// Срок жизни заявки.
+	// Срок жизни заявки; задаёт сервер (сейчас 5 минут с создания — срок заявки у провайдера).
 	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
