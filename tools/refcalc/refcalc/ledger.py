@@ -1,4 +1,4 @@
-"""Operations of one user and the accounting rules of spec FIN-106, sections 2–4."""
+"""Operations of one user and the accounting rules of docs/calc.md, sections 2–4."""
 from __future__ import annotations
 
 import datetime as dt
@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from . import ofx
-from .registry import OWN_TRANSFER, REFUND, TRANSFERS_NAME, UNCATEGORIZED, Category, Registry
+from .registry import OWN_TRANSFER, REFUND, REFUND_NAME, TRANSFERS_NAME, UNCATEGORIZED, Category, Registry
 from .util import add_months, day_of, month_start
 
 SELF_TRANSFER_NAMES = {"Между своими счетами", "Себе в другой банк", "Себе из другого банка"}
@@ -341,7 +341,8 @@ class Ledger:
         return [d for d in debits if d.name and d.name.lower() == name and d.at < op.at and d.bank.name != TRANSFERS_NAME]
 
     def _is_refund(self, op: Op, debits: list) -> bool:
-        return op.bank.is_expense or bool(self._same_name_debits(op, debits)) or "возврат" in op.name.lower()
+        return op.bank.is_expense or op.memo == REFUND_NAME or bool(self._same_name_debits(op, debits)) or \
+            "возврат" in op.name.lower()
 
     def _target(self, op: Op, debits: list) -> Category:
         def usable(d: Op):

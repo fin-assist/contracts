@@ -1,4 +1,4 @@
-"""T-Bank OFX 2.0.2 reader (spec FIN-106, section 2; Confluence «Формат выписки Т-Банка (OFX)»).
+"""T-Bank OFX 2.0.2 reader (docs/calc.md, section 2; Confluence «Формат выписки Т-Банка (OFX)»).
 
 The format is flat XML, so a small scanner is enough. A transaction that cannot be counted becomes an unread line
 with the number of the line its `<STMTTRN>` tag is on.
@@ -64,7 +64,7 @@ class Document:
 
 
 def parse_date(raw: str) -> Optional[dt.datetime]:
-    """`20260930175338.000[+3:MSK]` → aware datetime; no zone → +03:00 (spec FIN-106, section 2)."""
+    """`20260930175338.000[+3:MSK]` → aware datetime; no zone → +03:00 (docs/calc.md, section 2)."""
     digits = ""
     for c in raw.strip():
         if not c.isdigit():

@@ -889,7 +889,7 @@ type RegularPayment struct {
 	// Сумма одного списания, копейки.
 	AmountMinor int64 `protobuf:"varint,3,opt,name=amount_minor,json=amountMinor,proto3" json:"amount_minor,omitempty"`
 	// Сумма в месяц, копейки. В MVP распознаются только платежи с одним списанием в месяц, и «в месяц» —
-	// медиана сумм списаний, как amount_minor (спецификация FIN-106, раздел 5); поле оставлено для
+	// медиана сумм списаний, как amount_minor (docs/calc.md, раздел 5); поле оставлено для
 	// других периодичностей.
 	MonthlyAmountMinor int64 `protobuf:"varint,4,opt,name=monthly_amount_minor,json=monthlyAmountMinor,proto3" json:"monthly_amount_minor,omitempty"`
 	// Когда списывается, готовая человекочитаемая строка («15-го числа»; в MVP только ежемесячные).

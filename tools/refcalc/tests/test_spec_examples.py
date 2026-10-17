@@ -1,10 +1,10 @@
-"""Examples of spec FIN-106, section 9, on the reference calculation (Confluence «Расчёт метрик и правила учёта»)."""
+"""Examples of docs/calc.md, section 9, on the reference calculation."""
 import datetime as dt
 import os
 import unittest
 from zoneinfo import ZoneInfo
 
-from refcalc.api import Backend
+from refcalc.api import ApiError, Backend
 from refcalc.compare import IGNORED, compare, redact
 from refcalc.registry import Registry
 from refcalc.util import round_half_up, tdiv
@@ -188,6 +188,59 @@ class SpecExamples(unittest.TestCase):
         self.assertEqual(self.block(self.screen(b, "2026-09"), "regular_payments")[0]["status"], "none")
 
 
+    def test_19_gap_crossing_the_period_is_whole(self):
+        b = self.backend("2026-09-05T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260701", "20260710", [("d1", "20260705120000", -100, "Кафе", "Рестораны")]))
+        r = b.upload("b.ofx", stmt("20260804", "20260831", [("d2", "20260825120000", -100, "Кафе", "Рестораны")]))
+        gap = [{"from": "2026-07-11T00:00:00+03:00", "to": "2026-08-04T00:00:00+03:00"}]
+        self.assertEqual(self.screen(b, "2026-08")["period"]["gaps"], gap)
+        months = {m["month"]: m["gaps"] for m in r["coverage"]["incomplete_months"]}
+        self.assertEqual((months["2026-07"], months["2026-08"]), (gap, gap))
+
+    def test_20_no_pair_across_currencies(self):
+        b = self.backend("2026-09-26T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260901", "20260925", [("d1", "20260918093000", -1000, "Между своими счетами", "Переводы")], SAV, "SAVINGS"))
+        b.upload("b.ofx", stmt("20260901", "20260925", [("c1", "20260918093100", 1000, "Иван", "Переводы")]).replace(
+            "<CURSYM>RUB</CURSYM>", "<CURSYM>USD</CURSYM>"))
+        kinds = sorted((i["kind"], i["category_id"]) for i in b.feed()["items"])
+        self.assertEqual(kinds, [("expense", "cat_own_transfer"), ("income", "cat_transfers")])
+
+    def test_21_search_like_analytics_drops_single_transfer_to_self(self):
+        b = self.backend("2026-09-26T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260901", "20260925", [
+            ("d1", "20260910120000", -5000, "Себе в другой банк", "Переводы"),
+            ("d2", "20260911120000", -100, "Кафе", "Рестораны")]))
+        self.assertEqual(b.search({})["total_count"], 2)
+        self.assertEqual(b.search({"transfer_mode": "with"})["total_count"], 1)
+    def test_22_manual_category_blocks_pairing(self):
+        b = self.backend("2026-09-26T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260901", "20260925", [("d1", "20260910120000", -5000, "Себе в другой банк", "Переводы")]))
+        b.change_category(CUR, "d1", "cat_gifts")
+        b.upload("b.ofx", stmt("20260901", "20260925", [("c1", "20260910120100", 5000, "Себе из другого банка", "Переводы")], SAV, "SAVINGS"))
+        kinds = sorted((i["kind"], i["category_id"]) for i in b.feed()["items"])
+        self.assertEqual(kinds, [("expense", "cat_gifts"), ("income", "cat_own_transfer")])
+
+    def test_23_memo_refund(self):
+        b = self.backend("2026-10-02T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260801", "20260930", [
+            ("d1", "20260828120000", -3000, "Ozon", "Маркетплейсы"),
+            ("c1", "20260903120000", 1200, "Ozon", "Возврат"),
+            ("d2", "20260904120000", -500, "Банк", "Возврат")]))
+        got = {i["id"]: (i["kind"], i["category_id"], i["note"]) for i in b.feed()["items"]}
+        self.assertEqual(sorted(got.values()), [
+            ("expense", "cat_marketplaces", None), ("expense", "cat_uncategorized", None),
+            ("income", "cat_refund", "возврат · Маркетплейсы")])
+        self.assertNotIn("Возврат", [c["name"] for c in b.categories()["categories"] if c["id"] != "cat_refund"])
+
+    def test_24_feed_before_mid_month_is_rejected(self):
+        b = self.backend("2026-09-26T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260601", "20260925", [("d1", "20260910120000", -100, "Кафе", "Рестораны")]))
+        with self.assertRaises(ApiError) as e:
+            b.feed("2026-07-15T00:00:00+03:00")
+        self.assertEqual((e.exception.status, e.exception.code), (400, "VALIDATION_ERROR"))
+        self.assertEqual(b.feed("2026-07-01T00:00:00+03:00")["range"]["from"], "2026-04-01T00:00:00+03:00")
+
+
 class Robustness(unittest.TestCase):
     def test_non_finite_amount_is_unread(self):
         b = Backend(Registry.load(os.path.join(ROOT, "categories.json")), MSK)
@@ -197,7 +250,6 @@ class Robustness(unittest.TestCase):
         r = b.upload("a.ofx", text)
         self.assertEqual((r["operation_count"], r["unread_count"]), (0, 1))
         self.assertEqual(b.search({"q": "NaN"})["total_count"], 0)
-
 
 class Rounding(unittest.TestCase):
     def test_tdiv_truncates_toward_zero(self):

@@ -68,6 +68,12 @@
       "expect": "expected/07-feed-before.json"
     },
     {
+      "name": "feed-before-mid-month",
+      "do": "get",
+      "request": "GET /v1/operations?before=2026-07-15T00:00:00%2B03:00",
+      "expect": "expected/07a-feed-before-mid-month.json"
+    },
+    {
       "name": "search-q",
       "do": "get",
       "request": "GET /v1/operations?q=%D0%BF%D1%8F%D1%82%D0%B5%D1%80%D0%BE%D1%87%D0%BA%D0%B0",

@@ -858,7 +858,8 @@ paths:
           type: string
       - name: before
         in: query
-        description: Только в ленте — вернуть 3 месяца до этого момента. Вместе с фильтрами — 400.
+        description: Только в ленте — вернуть 3 календарных месяца до этого момента. Только начало месяца в поясе
+          профиля (значение next_before); другой момент или вместе с фильтрами — 400.
         schema:
           type: string
           format: date-time
@@ -2734,7 +2735,7 @@ components:
           description: Время последней операции, если она в последний покрытый день месяца, иначе 23:59:59 этого дня.
         gaps:
           type: array
-          description: Дни без данных ни в одном файле.
+          description: Дни без данных ни в одном файле. Пропуск, пересекающий месяц, приходит целиком (docs/calc.md, раздел 4).
           items:
             $ref: '#/components/schemas/Range'
         in_progress:
@@ -3308,7 +3309,8 @@ components:
             `AnalyticsState.data_to`.
         gaps:
           type: array
-          description: Дни внутри данных, которых нет ни в одной загрузке.
+          description: Дни без данных ни в одной загрузке между первым и последним покрытым днём. Пропуск, пересекающий
+            период, приходит целиком, без обрезки границами периода (docs/calc.md, раздел 4).
           items:
             $ref: '#/components/schemas/Range'
     AnalyticsNavigation:

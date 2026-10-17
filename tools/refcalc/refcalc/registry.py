@@ -1,4 +1,4 @@
-"""Category registry (spec FIN-106, 3.1): known bank categories with their directions, plus the system ones."""
+"""Category registry (docs/calc.md, 3.1): known bank categories with their directions, plus the system ones."""
 from __future__ import annotations
 
 import json
@@ -12,6 +12,7 @@ UNCATEGORIZED = "cat_uncategorized"
 TRANSFERS_NAME = "Переводы"
 BANK_FEES_NAME = "Услуги банка"
 UNCATEGORIZED_NAME = "Без категории"
+REFUND_NAME = "Возврат"
 NAME_LIMIT = 64
 
 
@@ -59,10 +60,11 @@ class Registry:
         self.by_id[c.id] = c
 
     def bank(self, memo: str) -> Category:
-        """Category of a `MEMO`: empty or literal «Без категории» — the system one; a new one is added on first
-        sight with both directions; the name is cut to 64 characters and is the key (spec 3.1, FIN-126)."""
+        """Category of a `MEMO`: empty, literal «Без категории» or «Возврат» — the system «Без категории» (a credit
+        with `MEMO` «Возврат» is a refund, docs/calc.md 3.3); a new one is added on first sight with both directions;
+        the name is cut to 64 characters and is the key (docs/calc.md, 3.1)."""
         name = memo.strip()[:NAME_LIMIT]
-        if not name or name == UNCATEGORIZED_NAME:
+        if not name or name in (UNCATEGORIZED_NAME, REFUND_NAME):
             return self.by_id[UNCATEGORIZED]
         c = self.by_name.get(name)
         if c is None:

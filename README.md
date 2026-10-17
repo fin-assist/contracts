@@ -2,7 +2,7 @@
 
 Источник правды для API приложения «Понятные финансы». Агентам — сначала `AGENTS.md` (карта репозитория, правила контракта и ревью; `CLAUDE.md` импортирует его).
 
-- **Клиентский REST API** (мобильный клиент ↔ `bank-bff`): `docs/api.md` — спецификация и смысл полей, `openapi/openapi.yaml` — машиночитаемый контракт OpenAPI 3.0.3 (кодогенерация, валидация kin-openapi, oasdiff).
+- **Клиентский REST API** (мобильный клиент ↔ `bank-bff`): `docs/api.md` — спецификация и смысл полей, `docs/calc.md` — как они считаются (правила учёта и метрики), `openapi/openapi.yaml` — машиночитаемый контракт OpenAPI 3.0.3 (кодогенерация, валидация kin-openapi, oasdiff).
 - **Внутренний gRPC** между Go-сервисами: `proto/` — `.proto` (`buf`), `docs/grpc-api.md` — как сервисы делят работу, ошибки, идемпотентность, outbox.
 - **Go-модуль** `github.com/fin-assist/contracts/gen/go` — код, сгенерированный из `proto/`, и пакет ошибок `finerr`; его подключают все сервисы и библиотеки бэкенда (FIN-116).
 
@@ -13,6 +13,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | Путь | Что |
 | --- | --- |
 | `docs/api.md` | Клиентский API (REST + SSE), реестр ошибок — раздел 8 |
+| `docs/calc.md` | Расчёт метрик и правила учёта (FIN-106, FIN-158): пары, возвраты, покрытие, метрики «Аналитики», порядок и состав блоков |
 | `openapi/openapi.yaml` | OpenAPI 3.0.3 того же API |
 | `docs/grpc-api.md` | Внутренний gRPC API |
 | `proto/buf.yaml` | Модуль `buf`: lint STANDARD |
@@ -24,7 +25,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `tools/` | Модуль инструментов: версии `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` закреплены в `tools/go.mod` (`tool`); `tools/protoc-gen-finerr` — генератор `finerr` из опций `error_spec` |
 | `scripts/generate.sh` | Перегенерировать `gen/go` закреплёнными версиями |
 | `fixtures/calc/` | Эталонные данные расчёта (FIN-107): выписки, сценарий, ожидаемые ответы 3.3, 4.1, 4.3, 5.1, 6.1, 6.2 и правила сравнения — `fixtures/calc/README.md`. По ним тестируются фейковый бэкенд и Go-бэкенд |
-| `tools/refcalc/` | Референсный расчёт на Python (спецификация расчёта FIN-106): считает ожидаемые ответы `fixtures/calc/expected`, тесты — примеры спецификации |
+| `tools/refcalc/` | Референсный расчёт на Python по `docs/calc.md`: считает ожидаемые ответы `fixtures/calc/expected`, тесты — примеры раздела 9 |
 | `redocly.yaml` | Настройки линтера OpenAPI |
 | `AGENTS.md`, `CLAUDE.md` | Инструкции агентам: карта, правила контракта, процесс, `## Code Review Rules` |
 
@@ -51,7 +52,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `buf breaking` против базы PR | PR | несовместимые изменения `.proto`, повторное использование номеров и имён |
 | `check_error_registry.py` | всегда | расхождение `ErrorReason` с разделом 8 `docs/api.md`, неполный `error_spec`, `error_spec` вне реестра, больше 30 кодов |
 | `check_error_spec_stable.py` против базы PR | PR | изменение `error_spec` (`grpc_code`, `http_status`, `metadata_keys`, `details`) у существующего кода. Владелец принимает его меткой `breaking-accepted` — изменения перечисляются, проверка не падает |
-| Эталонные данные `fixtures/calc` | всегда | тесты референсного расчёта (примеры спецификации) падают; `expected/` не совпадает с перегенерированным сценарием; ответ (или `data` блока) не проходит схему `openapi.yaml`; поле схемы ответов не встречается ни в одном ожидаемом ответе и не внесено в `coverage-exceptions.json` |
+| Эталонные данные `fixtures/calc` | всегда | тесты референсного расчёта (примеры `docs/calc.md`) падают; `expected/` не совпадает с перегенерированным сценарием; ответ (или `data` блока) не проходит схему `openapi.yaml`; поле схемы ответов не встречается ни в одном ожидаемом ответе и не внесено в `coverage-exceptions.json` |
 | Go-модуль `gen/go` | всегда | `gen/go` не совпадает с тем, что генерирует `scripts/generate.sh` из `proto/`; модуль не собирается, `go vet` или тесты `finerr` падают; версия `buf` в `tools/go.mod` расходится с `BUF_VERSION` в `ci.yml` |
 
 Локально:

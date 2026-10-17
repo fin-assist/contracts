@@ -7,13 +7,13 @@ from zoneinfo import ZoneInfo
 
 
 def tdiv(a: int, b: int) -> int:
-    """Integer division truncating toward zero, like `/` in Go and Kotlin (spec FIN-106, section 1)."""
+    """Integer division truncating toward zero, like `/` in Go and Kotlin (docs/calc.md, section 1)."""
     q = abs(a) // abs(b)
     return q if (a >= 0) == (b > 0) else -q
 
 
 def round_half_up(x: Fraction) -> int:
-    """floor(x + 0.5) for any sign, like Math.round (spec FIN-106, section 1)."""
+    """floor(x + 0.5) for any sign, like Math.round (docs/calc.md, section 1)."""
     v = x + Fraction(1, 2)
     return v.numerator // v.denominator
 
@@ -28,7 +28,7 @@ def start_of_day(d: dt.date, zone: ZoneInfo) -> dt.datetime:
 
 
 def end_of_day(d: dt.date, zone: ZoneInfo) -> dt.datetime:
-    """23:59:59 of the day in the zone (spec FIN-106, section 4)."""
+    """23:59:59 of the day in the zone (docs/calc.md, section 4)."""
     return dt.datetime(d.year, d.month, d.day, 23, 59, 59, tzinfo=zone)
 
 
@@ -65,7 +65,7 @@ TRANSLIT = {
 
 
 def slug(name: str) -> str:
-    """`cat_<транслит>` slug of a bank category (spec FIN-106, 3.1)."""
+    """`cat_<транслит>` slug of a bank category (docs/calc.md, 3.1)."""
     out = []
     for c in name.lower():
         if c.isascii() and c.isalnum():
