@@ -1,0 +1,152 @@
+{
+  "items": [
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-11T19:37:14+03:00",
+      "amount": 22999,
+      "currency": "RUB",
+      "title": "Магнит",
+      "category_id": "cat_supermarkets",
+      "category_name": "Супермаркеты",
+      "category_icon": "cart",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-11T14:45:26+03:00",
+      "amount": 114500,
+      "currency": "RUB",
+      "title": "Госуслуги",
+      "category_id": "cat_gov",
+      "category_name": "Госуслуги",
+      "category_icon": "building",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-11T12:00:00+03:00",
+      "amount": 70000,
+      "currency": "RUB",
+      "title": "Ларёк у дома",
+      "category_id": "cat_uncategorized",
+      "category_name": "Без категории",
+      "category_icon": "tag",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-11T11:58:47+03:00",
+      "amount": 373047,
+      "currency": "RUB",
+      "title": "Квартплата онлайн",
+      "category_id": "cat_utilities",
+      "category_name": "ЖКХ",
+      "category_icon": "home",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-11T11:54:52+03:00",
+      "amount": 245000,
+      "currency": "RUB",
+      "title": "FirstVDS",
+      "category_id": "cat_service",
+      "category_name": "Сервис",
+      "category_icon": "wrench",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-11T11:13:11+03:00",
+      "amount": 70900,
+      "currency": "RUB",
+      "title": "Аптека Вита",
+      "category_id": "cat_pharmacy",
+      "category_name": "Аптеки",
+      "category_icon": "pill",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-11T09:26:06+03:00",
+      "amount": 488665,
+      "currency": "RUB",
+      "title": "Контрагент 1",
+      "category_id": "cat_transfers",
+      "category_name": "Переводы",
+      "category_icon": "users",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>"
+      },
+      "status": "posted"
+    },
+    {
+      "id": "<ignored>",
+      "kind": "expense",
+      "occurred_at": "2026-09-11T09:13:27+03:00",
+      "amount": 232700,
+      "currency": "RUB",
+      "title": "Яндекс Еда",
+      "category_id": "cat_fastfood",
+      "category_name": "Фастфуд",
+      "category_icon": "coffee",
+      "is_category_manual": false,
+      "note": null,
+      "account": {
+        "type_name": "<ignored>",
+        "mask": "··1111"
+      },
+      "status": "posted"
+    }
+  ],
+  "total_count": 8,
+  "range": {
+    "from": "2026-09-11T00:00:00+03:00",
+    "to": "2026-09-12T00:00:00+03:00"
+  }
+}
