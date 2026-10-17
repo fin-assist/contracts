@@ -16,9 +16,11 @@ option go_package = "github.com/fin-assist/contracts/gen/go/finassist/assistant/
 service AssistantService {
   // Задать вопрос помощнику: проверить согласие и лимит, списать попытку, сохранить вопрос и
   // запустить генерацию ответа на сервере. Возвращает сохранённый вопрос, ID ответа и остаток лимита.
-  // POST /v1/assistant/messages. Требует `idempotency-key`. Порядок: согласие (чтение primary в
-  // `user`) -> лимит (атомарный инкремент, primary) -> вопрос и ответ -> запуск генерации.
-  // CONSENT_REQUIRED / LIMIT_EXCEEDED под ключом не сохраняются.
+  // POST /v1/assistant/messages. Требует `idempotency-key`. Порядок: резервирование ключа (запись
+  // «выполняется» на 15 с; повтор до истечения -> REQUEST_IN_PROGRESS) -> согласие (чтение primary
+  // в `user`) -> одна транзакция: лимит (атомарный инкремент), вопрос и ответ, закрепление ключа ->
+  // запуск генерации. При ошибке до коммита транзакция откатывается и резерв снимается;
+  // CONSENT_REQUIRED / LIMIT_EXCEEDED под ключом не сохраняются (docs/grpc-api.md, 7.x).
   rpc AskQuestion(AskQuestionRequest) returns (AskQuestionResponse);
 
   // Читать поток генерации ответа: снимок состояния, фрагменты текста, готовые блоки, источник,
