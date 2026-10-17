@@ -38,24 +38,33 @@ type AuthServiceClient interface {
 	// Не сообщает, зарегистрирован ли номер (защита от перебора).
 	// POST /v1/auth/phone. Требует `idempotency-key`: повтор возвращает ту же заявку и не тратит
 	// лимит. Лимиты по номеру и по `x-client-ip` (ставит bank-bff по адресу соединения, из
-	// заголовков клиента никогда не берётся).
+	// заголовков клиента никогда не берётся). Ключ проверяется до лимитов; при превышенном лимите
+	// retry_at — срок лимита. Номер занят до expires_at последней заявки на него, закрыта она
+	// или нет: новый ключ на занятый номер -> RATE_LIMITED без обращения к провайдеру и без
+	// чужого секрета, retry_at = expires_at, округлённый вверх до целой минуты; такой отказ
+	// хранится под ключом до retry_at и засчитывается в лимитах не больше одного раза на окно
+	// до retry_at (docs/grpc-api.md, 6 и 7.1).
 	StartPhoneVerification(ctx context.Context, in *StartPhoneVerificationRequest, opts ...grpc.CallOption) (*StartPhoneVerificationResponse, error)
 	// Следить за статусом заявки на подтверждение: ждёт вебхук провайдера о звонке и отдаёт
 	// результат — для существующего пользователя пару токенов, для нового одноразовый токен
 	// регистрации. Заявка находится по хешу verification_token.
 	// GET /v1/auth/phone/events (SSE). Первое сообщение — текущее состояние; поток закрывается
-	// после терминального статуса. Результат `verified` доступен повторно до expires_at
-	// (те же токены).
+	// после терминального статуса. Результат `verified` доступен повторно 15 минут с момента
+	// подтверждения звонком, а не до expires_at (те же токены). Лимит попыток подключения за окно на `x-client-ip` проверяется до
+	// verification_token: сверх него -> RATE_LIMITED до первого сообщения (docs/grpc-api.md, 7.1).
 	WatchPhoneVerification(ctx context.Context, in *WatchPhoneVerificationRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchPhoneVerificationResponse], error)
 	// Создать пользователя после подтверждения нового номера: проверяет токен регистрации и
 	// версию согласия на обработку ПДн, фиксирует согласие и время, создаёт аккаунт и выдаёт
 	// первую пару токенов. Токен регистрации расходуется только успешным ответом.
-	// POST /v1/auth/register. Требует `idempotency-key`.
+	// POST /v1/auth/register. Требует `idempotency-key`. Лимит запросов за окно на `x-client-ip`
+	// проверяется после ключа и до registration_token: сверх него -> RATE_LIMITED.
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	// Обменять refresh-токен на новую пару токенов с ротацией: старый refresh становится
 	// недействительным, повторное его использование отзывает всю цепочку сессии.
 	// POST /v1/auth/token. Требует `idempotency-key` (хранится 60 с, сохранённый ответ зашифрован):
 	// повтор с тем же ключом в эти 60 с возвращает ту же пару и не считается повторным использованием.
+	// Лимит запросов за окно на `x-client-ip` проверяется после ключа и до refresh_token: сверх
+	// него -> RATE_LIMITED.
 	RefreshTokens(ctx context.Context, in *RefreshTokensRequest, opts ...grpc.CallOption) (*RefreshTokensResponse, error)
 	// Завершить сессию: удалить refresh-токен. Access-токен живёт до истечения срока.
 	// POST /v1/auth/logout. Идемпотентен.
@@ -141,24 +150,33 @@ type AuthServiceServer interface {
 	// Не сообщает, зарегистрирован ли номер (защита от перебора).
 	// POST /v1/auth/phone. Требует `idempotency-key`: повтор возвращает ту же заявку и не тратит
 	// лимит. Лимиты по номеру и по `x-client-ip` (ставит bank-bff по адресу соединения, из
-	// заголовков клиента никогда не берётся).
+	// заголовков клиента никогда не берётся). Ключ проверяется до лимитов; при превышенном лимите
+	// retry_at — срок лимита. Номер занят до expires_at последней заявки на него, закрыта она
+	// или нет: новый ключ на занятый номер -> RATE_LIMITED без обращения к провайдеру и без
+	// чужого секрета, retry_at = expires_at, округлённый вверх до целой минуты; такой отказ
+	// хранится под ключом до retry_at и засчитывается в лимитах не больше одного раза на окно
+	// до retry_at (docs/grpc-api.md, 6 и 7.1).
 	StartPhoneVerification(context.Context, *StartPhoneVerificationRequest) (*StartPhoneVerificationResponse, error)
 	// Следить за статусом заявки на подтверждение: ждёт вебхук провайдера о звонке и отдаёт
 	// результат — для существующего пользователя пару токенов, для нового одноразовый токен
 	// регистрации. Заявка находится по хешу verification_token.
 	// GET /v1/auth/phone/events (SSE). Первое сообщение — текущее состояние; поток закрывается
-	// после терминального статуса. Результат `verified` доступен повторно до expires_at
-	// (те же токены).
+	// после терминального статуса. Результат `verified` доступен повторно 15 минут с момента
+	// подтверждения звонком, а не до expires_at (те же токены). Лимит попыток подключения за окно на `x-client-ip` проверяется до
+	// verification_token: сверх него -> RATE_LIMITED до первого сообщения (docs/grpc-api.md, 7.1).
 	WatchPhoneVerification(*WatchPhoneVerificationRequest, grpc.ServerStreamingServer[WatchPhoneVerificationResponse]) error
 	// Создать пользователя после подтверждения нового номера: проверяет токен регистрации и
 	// версию согласия на обработку ПДн, фиксирует согласие и время, создаёт аккаунт и выдаёт
 	// первую пару токенов. Токен регистрации расходуется только успешным ответом.
-	// POST /v1/auth/register. Требует `idempotency-key`.
+	// POST /v1/auth/register. Требует `idempotency-key`. Лимит запросов за окно на `x-client-ip`
+	// проверяется после ключа и до registration_token: сверх него -> RATE_LIMITED.
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	// Обменять refresh-токен на новую пару токенов с ротацией: старый refresh становится
 	// недействительным, повторное его использование отзывает всю цепочку сессии.
 	// POST /v1/auth/token. Требует `idempotency-key` (хранится 60 с, сохранённый ответ зашифрован):
 	// повтор с тем же ключом в эти 60 с возвращает ту же пару и не считается повторным использованием.
+	// Лимит запросов за окно на `x-client-ip` проверяется после ключа и до refresh_token: сверх
+	// него -> RATE_LIMITED.
 	RefreshTokens(context.Context, *RefreshTokensRequest) (*RefreshTokensResponse, error)
 	// Завершить сессию: удалить refresh-токен. Access-токен живёт до истечения срока.
 	// POST /v1/auth/logout. Идемпотентен.
