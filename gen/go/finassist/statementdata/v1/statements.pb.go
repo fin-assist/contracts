@@ -135,7 +135,7 @@ type ImportErrorCode int32
 
 const (
 	ImportErrorCode_IMPORT_ERROR_CODE_UNSPECIFIED ImportErrorCode = 0
-	// Не удалось разобрать файл.
+	// Не удалось разобрать файл, в том числе разбор не завершился за 3 минуты (таймаут).
 	ImportErrorCode_IMPORT_ERROR_CODE_PROCESSING_FAILED ImportErrorCode = 1
 	// Разбор прерван пользователем.
 	ImportErrorCode_IMPORT_ERROR_CODE_CANCELLED ImportErrorCode = 2
