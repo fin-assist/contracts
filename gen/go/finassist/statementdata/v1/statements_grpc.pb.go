@@ -51,7 +51,8 @@ type StatementsServiceClient interface {
 	UploadStatement(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadStatementRequest, UploadStatementResponse], error)
 	// Следить за разбором загрузки: прогресс по этапам, затем итог импорта или ошибка.
 	// GET /v1/statements/{upload_id}/progress (SSE). Первое сообщение — текущее состояние;
-	// терминальные: `complete` или `error`.
+	// терминальные: `complete` или `error`. Разбор, не завершившийся за 3 минуты (в том числе прерванный
+	// падением пода), завершается PROCESSING_FAILED.
 	WatchUpload(ctx context.Context, in *WatchUploadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchUploadResponse], error)
 	// Удалить загрузку или прервать её разбор.
 	// DELETE /v1/statements/{upload_id}. DONE: удалить операции, которых нет в других загрузках,
@@ -171,7 +172,8 @@ type StatementsServiceServer interface {
 	UploadStatement(grpc.ClientStreamingServer[UploadStatementRequest, UploadStatementResponse]) error
 	// Следить за разбором загрузки: прогресс по этапам, затем итог импорта или ошибка.
 	// GET /v1/statements/{upload_id}/progress (SSE). Первое сообщение — текущее состояние;
-	// терминальные: `complete` или `error`.
+	// терминальные: `complete` или `error`. Разбор, не завершившийся за 3 минуты (в том числе прерванный
+	// падением пода), завершается PROCESSING_FAILED.
 	WatchUpload(*WatchUploadRequest, grpc.ServerStreamingServer[WatchUploadResponse]) error
 	// Удалить загрузку или прервать её разбор.
 	// DELETE /v1/statements/{upload_id}. DONE: удалить операции, которых нет в других загрузках,

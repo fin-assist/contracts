@@ -32,7 +32,8 @@ service StatementsService {
 
   // Следить за разбором загрузки: прогресс по этапам, затем итог импорта или ошибка.
   // GET /v1/statements/{upload_id}/progress (SSE). Первое сообщение — текущее состояние;
-  // терминальные: `complete` или `error`.
+  // терминальные: `complete` или `error`. Разбор, не завершившийся за 3 минуты (в том числе прерванный
+  // падением пода), завершается PROCESSING_FAILED.
   rpc WatchUpload(WatchUploadRequest) returns (stream WatchUploadResponse);
 
   // Удалить загрузку или прервать её разбор.
@@ -197,7 +198,7 @@ message ImportProgress {
 // Почему разбор не завершился.
 enum ImportErrorCode {
   IMPORT_ERROR_CODE_UNSPECIFIED = 0;
-  // Не удалось разобрать файл.
+  // Не удалось разобрать файл, в том числе разбор не завершился за 3 минуты (таймаут).
   IMPORT_ERROR_CODE_PROCESSING_FAILED = 1;
   // Разбор прерван пользователем.
   IMPORT_ERROR_CODE_CANCELLED = 2;

@@ -37,8 +37,8 @@ service AssistantService {
   // GET /v1/assistant/messages.
   rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
 
-  // Повторить неудавшийся ответ (после MODEL_ERROR): создать новый ответ на тот же вопрос,
-  // заменить им неудачный, списать попытку заново.
+  // Повторить неудавшийся ответ (retryable = true; сейчас только MODEL_ERROR): создать новый ответ
+  // на тот же вопрос, заменить им неудачный, списать попытку заново.
   // POST /v1/assistant/messages/{answer_id}/retry. Требует `idempotency-key`.
   rpc RetryAnswer(RetryAnswerRequest) returns (RetryAnswerResponse);
 
@@ -186,13 +186,17 @@ enum AnswerStatus {
   ANSWER_STATUS_FAILED = 3;
 }
 
-// Почему ответ не получился.
+// Почему ответ не получился. Набор растёт; текст и возможность повтора задают AnswerError.text и
+// AnswerError.retryable (Message.error_text, Message.retryable), а не код (FIN-159).
 enum AnswerErrorCode {
   ANSWER_ERROR_CODE_UNSPECIFIED = 0;
   // Сбой или таймаут Alice AI; ответ можно повторить (RetryAnswer).
   ANSWER_ERROR_CODE_MODEL_ERROR = 1;
   // Вопрос непонятен или на него нельзя ответить по данным; повтор не имеет смысла и недоступен.
   ANSWER_ERROR_CODE_CANNOT_ANSWER = 2;
+  // Вопрос не о данных пользователя и не о личных финансах: модель вызвала инструмент off_topic,
+  // генерация остановлена. Повтор недоступен (FIN-159).
+  ANSWER_ERROR_CODE_OFF_TOPIC = 3;
 }
 
 // Сообщение диалога: вопрос пользователя или ответ помощника. Набор заполненных полей зависит от
@@ -218,6 +222,11 @@ message Message {
   // Валюта сумм в blocks (ISO 4217), у каждого сообщения; сейчас RUB (FIN-82). У вопроса и у сообщений,
   // сохранённых до поля, — RUB (валюты в профиле пока нет); пустая строка — ошибка сервиса (grpc-api.md 5.3).
   string currency = 11;
+  // Только у FAILED, заполнено всегда: готовый текст для пользователя, как AnswerError.text. У ответов,
+  // сохранённых до поля, assistant заполняет его по error_code при чтении.
+  optional string error_text = 12;
+  // Только у FAILED, заполнено всегда: доступен ли повтор (RetryAnswer), как AnswerError.retryable.
+  optional bool retryable = 13;
 }
 
 // Новый вопрос помощнику.
@@ -282,6 +291,10 @@ message AnswerError {
   string message = 2;
   // Остаток после возврата попытки.
   int32 remaining_limit = 3;
+  // Готовый текст для пользователя; заполнен всегда, пустая строка — ошибка сервиса (grpc-api.md 5.3).
+  string text = 4;
+  // Доступен ли повтор (RetryAnswer); сейчас true только у MODEL_ERROR.
+  bool retryable = 5;
 }
 
 // Событие потока ответа.
@@ -316,7 +329,8 @@ message ListMessagesResponse {
 
 // Повтор неудавшегося ответа.
 message RetryAnswerRequest {
-  // Ответ в статусе FAILED с MODEL_ERROR; иначе RETRY_NOT_ALLOWED.
+  // Ответ в статусе FAILED с retryable = true; иначе RETRY_NOT_ALLOWED. У ответа, сохранённого до
+  // поля retryable, повтор решается по коду: MODEL_ERROR — разрешён.
   string answer_id = 1;
 }
 
