@@ -36,8 +36,8 @@ service AuthService {
   // результат — для существующего пользователя пару токенов, для нового одноразовый токен
   // регистрации. Заявка находится по хешу verification_token.
   // GET /v1/auth/phone/events (SSE). Первое сообщение — текущее состояние; поток закрывается
-  // после терминального статуса. Результат `verified` доступен повторно до expires_at
-  // (те же токены). Лимит попыток подключения за окно на `x-client-ip` проверяется до
+  // после терминального статуса. Результат `verified` доступен повторно 15 минут с момента
+  // подтверждения звонком, а не до expires_at (те же токены). Лимит попыток подключения за окно на `x-client-ip` проверяется до
   // verification_token: сверх него -> RATE_LIMITED до первого сообщения (docs/grpc-api.md, 7.1).
   rpc WatchPhoneVerification(WatchPhoneVerificationRequest) returns (stream WatchPhoneVerificationResponse);
 
@@ -110,7 +110,8 @@ message WatchPhoneVerificationResponse {
   optional bool is_new_user = 2;
   // Только при VERIFIED и !is_new_user.
   optional TokenPair tokens = 3;
-  // Только при VERIFIED и is_new_user. Одноразовый, живёт до expires_at заявки.
+  // Только при VERIFIED и is_new_user. Одноразовый, живёт 15 минут с момента подтверждения
+  // звонком (VERIFIED), а не до expires_at заявки; после срока Register -> TOKEN_EXPIRED.
   optional string registration_token = 4;
 }
 

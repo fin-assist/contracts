@@ -49,8 +49,8 @@ type AuthServiceClient interface {
 	// результат — для существующего пользователя пару токенов, для нового одноразовый токен
 	// регистрации. Заявка находится по хешу verification_token.
 	// GET /v1/auth/phone/events (SSE). Первое сообщение — текущее состояние; поток закрывается
-	// после терминального статуса. Результат `verified` доступен повторно до expires_at
-	// (те же токены). Лимит попыток подключения за окно на `x-client-ip` проверяется до
+	// после терминального статуса. Результат `verified` доступен повторно 15 минут с момента
+	// подтверждения звонком, а не до expires_at (те же токены). Лимит попыток подключения за окно на `x-client-ip` проверяется до
 	// verification_token: сверх него -> RATE_LIMITED до первого сообщения (docs/grpc-api.md, 7.1).
 	WatchPhoneVerification(ctx context.Context, in *WatchPhoneVerificationRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchPhoneVerificationResponse], error)
 	// Создать пользователя после подтверждения нового номера: проверяет токен регистрации и
@@ -161,8 +161,8 @@ type AuthServiceServer interface {
 	// результат — для существующего пользователя пару токенов, для нового одноразовый токен
 	// регистрации. Заявка находится по хешу verification_token.
 	// GET /v1/auth/phone/events (SSE). Первое сообщение — текущее состояние; поток закрывается
-	// после терминального статуса. Результат `verified` доступен повторно до expires_at
-	// (те же токены). Лимит попыток подключения за окно на `x-client-ip` проверяется до
+	// после терминального статуса. Результат `verified` доступен повторно 15 минут с момента
+	// подтверждения звонком, а не до expires_at (те же токены). Лимит попыток подключения за окно на `x-client-ip` проверяется до
 	// verification_token: сверх него -> RATE_LIMITED до первого сообщения (docs/grpc-api.md, 7.1).
 	WatchPhoneVerification(*WatchPhoneVerificationRequest, grpc.ServerStreamingServer[WatchPhoneVerificationResponse]) error
 	// Создать пользователя после подтверждения нового номера: проверяет токен регистрации и

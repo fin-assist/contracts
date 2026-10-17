@@ -363,7 +363,8 @@ type WatchPhoneVerificationResponse struct {
 	IsNewUser *bool `protobuf:"varint,2,opt,name=is_new_user,json=isNewUser,proto3,oneof" json:"is_new_user,omitempty"`
 	// Только при VERIFIED и !is_new_user.
 	Tokens *TokenPair `protobuf:"bytes,3,opt,name=tokens,proto3,oneof" json:"tokens,omitempty"`
-	// Только при VERIFIED и is_new_user. Одноразовый, живёт до expires_at заявки.
+	// Только при VERIFIED и is_new_user. Одноразовый, живёт 15 минут с момента подтверждения
+	// звонком (VERIFIED), а не до expires_at заявки; после срока Register -> TOKEN_EXPIRED.
 	RegistrationToken *string `protobuf:"bytes,4,opt,name=registration_token,json=registrationToken,proto3,oneof" json:"registration_token,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
