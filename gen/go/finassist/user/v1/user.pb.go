@@ -238,8 +238,14 @@ type StartPhoneVerificationResponse struct {
 	// абонента. Номер может быть общим для многих заявок: звонок засчитывается только с номера
 	// из заявки и только пока она действует.
 	CallbackNumber string `protobuf:"bytes,2,opt,name=callback_number,json=callbackNumber,proto3" json:"callback_number,omitempty"`
-	// Срок жизни заявки; задаёт сервер (сейчас 5 минут с создания — срок заявки у провайдера).
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// Срок жизни заявки по часам сервера; задаёт сервер (сейчас 5 минут с создания — срок заявки
+	// у провайдера). Клиент для отсчёта на устройстве его не использует (см. expires_in).
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// Оставшийся срок заявки в секундах на момент отправки ответа (expires_at минус время сервера,
+	// округлено вниз, не меньше 0). Вычисляется при каждой отправке, в том числе при повторе
+	// сохранённого ответа по idempotency-key (хранится expires_at). Клиент считает по нему время
+	// окончания по часам устройства.
+	ExpiresIn     *int32 `protobuf:"varint,4,opt,name=expires_in,json=expiresIn,proto3,oneof" json:"expires_in,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -293,6 +299,13 @@ func (x *StartPhoneVerificationResponse) GetExpiresAt() *timestamppb.Timestamp {
 		return x.ExpiresAt
 	}
 	return nil
+}
+
+func (x *StartPhoneVerificationResponse) GetExpiresIn() int32 {
+	if x != nil && x.ExpiresIn != nil {
+		return *x.ExpiresIn
+	}
+	return 0
 }
 
 // Подписка на статус заявки по её секрету.
@@ -1684,12 +1697,15 @@ const file_finassist_user_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"\x1cfinassist/user/v1/user.proto\x12\x11finassist.user.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"5\n" +
 	"\x1dStartPhoneVerificationRequest\x12\x14\n" +
-	"\x05phone\x18\x01 \x01(\tR\x05phone\"\xb3\x01\n" +
+	"\x05phone\x18\x01 \x01(\tR\x05phone\"\xe6\x01\n" +
 	"\x1eStartPhoneVerificationResponse\x12-\n" +
 	"\x12verification_token\x18\x01 \x01(\tR\x11verificationToken\x12'\n" +
 	"\x0fcallback_number\x18\x02 \x01(\tR\x0ecallbackNumber\x129\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"N\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\"\n" +
+	"\n" +
+	"expires_in\x18\x04 \x01(\x05H\x00R\texpiresIn\x88\x01\x01B\r\n" +
+	"\v_expires_in\"N\n" +
 	"\x1dWatchPhoneVerificationRequest\x12-\n" +
 	"\x12verification_token\x18\x01 \x01(\tR\x11verificationToken\"\xa5\x02\n" +
 	"\x1eWatchPhoneVerificationResponse\x12=\n" +
@@ -1908,6 +1924,7 @@ func file_finassist_user_v1_user_proto_init() {
 	if File_finassist_user_v1_user_proto != nil {
 		return
 	}
+	file_finassist_user_v1_user_proto_msgTypes[1].OneofWrappers = []any{}
 	file_finassist_user_v1_user_proto_msgTypes[3].OneofWrappers = []any{}
 	file_finassist_user_v1_user_proto_msgTypes[4].OneofWrappers = []any{}
 	file_finassist_user_v1_user_proto_msgTypes[16].OneofWrappers = []any{}
