@@ -154,6 +154,9 @@ paths:
         же токеном отдаёт те же токены. Заявка закрывается первым `/v1/auth/token` с выданным refresh или
         `/v1/auth/register`; после этого и после `expires_at` — 401 `INVALID_TOKEN`.
 
+        Лимит подключений на адрес клиента (значение задаёт сервер): сверх него — 429 `RATE_LIMITED` с
+        `error.retry_at` до начала потока и до проверки `X-Verification-Token`.
+
         Терминальные события: `status` с `verified` или `expired`.
       security:
       - verificationToken: []
@@ -199,6 +202,8 @@ paths:
         Вызывается с экрана согласия на обработку ПДн после подтверждения нового номера.
         `registration_token` расходуется только ответом `201`; после ошибки 4xx его можно отправить снова
         (с новым `Idempotency-Key`, если тело изменилось). Повтор с тем же ключом возвращает тот же `201`.
+        Лимит запросов на адрес клиента (значение задаёт сервер) проверяется до `registration_token`: сверх него —
+        429 `RATE_LIMITED`.
       security: []
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -251,6 +256,8 @@ paths:
       description: |
         Ротация refresh-токена. Повторное использование старого refresh отзывает всю цепочку сессии —
         кроме повтора с тем же `Idempotency-Key` в течение 60 секунд: тогда возвращается та же новая пара.
+        Лимит запросов на адрес клиента (значение задаёт сервер) проверяется до `refresh_token`: сверх него — 429
+        `RATE_LIMITED`.
       security: []
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
