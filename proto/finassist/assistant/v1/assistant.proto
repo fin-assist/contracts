@@ -325,7 +325,8 @@ message ListMessagesResponse {
 
 // Повтор неудавшегося ответа.
 message RetryAnswerRequest {
-  // Ответ в статусе FAILED с retryable = true; иначе RETRY_NOT_ALLOWED.
+  // Ответ в статусе FAILED с retryable = true; иначе RETRY_NOT_ALLOWED. У ответа, сохранённого до
+  // поля retryable, повтор решается по коду: MODEL_ERROR — разрешён.
   string answer_id = 1;
 }
 

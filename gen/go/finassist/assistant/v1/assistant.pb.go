@@ -1946,7 +1946,8 @@ func (x *ListMessagesResponse) GetTimeZone() string {
 // Повтор неудавшегося ответа.
 type RetryAnswerRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Ответ в статусе FAILED с retryable = true; иначе RETRY_NOT_ALLOWED.
+	// Ответ в статусе FAILED с retryable = true; иначе RETRY_NOT_ALLOWED. У ответа, сохранённого до
+	// поля retryable, повтор решается по коду: MODEL_ERROR — разрешён.
 	AnswerId      string `protobuf:"bytes,1,opt,name=answer_id,json=answerId,proto3" json:"answer_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
