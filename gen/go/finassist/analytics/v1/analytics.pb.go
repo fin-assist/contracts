@@ -1793,8 +1793,9 @@ type ScreenState struct {
 	UnreadLinesCount int32 `protobuf:"varint,6,opt,name=unread_lines_count,json=unreadLinesCount,proto3" json:"unread_lines_count,omitempty"`
 	// Когда посчитаны метрики.
 	CalculatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=calculated_at,json=calculatedAt,proto3" json:"calculated_at,omitempty"`
-	// Идёт пересчёт (после смены категории, удаления загрузки, смены пояса, исключения платежа из
-	// регулярных): цифры могут измениться, клиенту стоит запросить аналитику позже.
+	// Идёт пересчёт, вызванный действием пользователя (смена категории, удаление загрузки, смена
+	// пояса, исключение платежа из регулярных): цифры могут измениться, клиенту стоит запросить
+	// аналитику позже. Пересчёт по новой версии реестра признак не ставит (FIN-196).
 	Recalculating bool `protobuf:"varint,8,opt,name=recalculating,proto3" json:"recalculating,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2492,7 +2493,9 @@ type UserDataState struct {
 	StaleAfter *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=stale_after,json=staleAfter,proto3,oneof" json:"stale_after,omitempty"`
 	// Полных календарных месяцев с данными.
 	FullMonths int32 `protobuf:"varint,6,opt,name=full_months,json=fullMonths,proto3" json:"full_months,omitempty"`
-	// Идёт пересчёт метрик пользователя.
+	// Идёт пересчёт, вызванный действием пользователя: смена категории, удаление загрузки, смена
+	// пояса, исключение платежа из регулярных. Пересчёт после релиза, меняющего реестр (новая версия
+	// определений), признак не ставит: снимки заменяются молча, по периодам (FIN-196).
 	Recalculating bool `protobuf:"varint,7,opt,name=recalculating,proto3" json:"recalculating,omitempty"`
 	// Пояс профиля (IANA), в котором посчитаны периоды.
 	TimeZone      string                 `protobuf:"bytes,8,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
@@ -2607,6 +2610,9 @@ type UpsertUserMetricsRequest struct {
 	State       *UserDataState `protobuf:"bytes,3,opt,name=state,proto3,oneof" json:"state,omitempty"`
 	// Снимки обоих режимов переводов одного периода — всегда в этом же вызове: большой пересчёт
 	// режется на вызовы только по границам периодов, вызов применяется одной транзакцией (FIN-196).
+	// analytics это не проверяет и вызов не отклоняет (ответственность на bank-statement-data):
+	// период с одним режимом применяется как пришёл, с предупреждением в логе и метрикой
+	// analytics_incomplete_period_snapshots_total (grpc-api.md 9).
 	Periods []*PeriodSnapshot `protobuf:"bytes,4,rep,name=periods,proto3" json:"periods,omitempty"`
 	// Периоды, в которых данных больше нет (загрузка удалена). Удаляются для обоих режимов переводов.
 	RemovedPeriods []*PeriodRef `protobuf:"bytes,5,rep,name=removed_periods,json=removedPeriods,proto3" json:"removed_periods,omitempty"`
