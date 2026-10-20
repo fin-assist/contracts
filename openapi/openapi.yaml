@@ -617,8 +617,6 @@ paths:
                   resolved_by_uploaded_at: '2026-10-12T10:05:00+03:00'
                   period_from: '2026-04-01'
                   period_to: '2026-09-30'
-                  first_operation_at: '2026-04-01T09:12:00+03:00'
-                  last_operation_at: '2026-09-25T21:40:00+03:00'
                   source_name: Выписка Т-Банка
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -2964,23 +2962,6 @@ components:
             максимального `DTEND` по счетам файла (блоки, где есть оба тега); если таких блоков нет — день последней
             операции файла. Приходит вместе с `period_from`.
           example: '2026-09-30'
-        first_operation_at:
-          type: string
-          format: date-time
-          nullable: true
-          deprecated: true
-          description: |
-            Устарело (FIN-197), замена — `period_from`. Первая операция в файле; нет, если операций нет. Удаляется по
-            «Удалению устаревшего» (api.md, «Расширяемость»): минимальная поддерживаемая версия клиента выше версии
-            с `period_from` / `period_to` (FIN-198) и ноль запросов к истории загрузок от более старых версий.
-        last_operation_at:
-          type: string
-          format: date-time
-          nullable: true
-          deprecated: true
-          description: |
-            Устарело (FIN-197), замена — `period_to`. Последняя операция в файле; нет, если операций нет. Удаляется
-            вместе с `first_operation_at`, по тому же условию.
         source_name:
           type: string
           description: Название источника для показа («Выписка Т-Банка»); клиент по нему не ветвится.
