@@ -1793,8 +1793,8 @@ type ScreenState struct {
 	UnreadLinesCount int32 `protobuf:"varint,6,opt,name=unread_lines_count,json=unreadLinesCount,proto3" json:"unread_lines_count,omitempty"`
 	// Когда посчитаны метрики.
 	CalculatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=calculated_at,json=calculatedAt,proto3" json:"calculated_at,omitempty"`
-	// Идёт пересчёт, вызванный действием пользователя (смена категории, удаление загрузки, смена
-	// пояса, исключение платежа из регулярных): цифры могут измениться, клиенту стоит запросить
+	// Идёт пересчёт, вызванный действием пользователя (импорт выписки, смена категории, удаление
+	// загрузки, смена пояса, исключение платежа из регулярных): цифры могут измениться, клиенту стоит запросить
 	// аналитику позже. Пересчёт по новой версии реестра признак не ставит (FIN-196).
 	Recalculating bool `protobuf:"varint,8,opt,name=recalculating,proto3" json:"recalculating,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -2493,8 +2493,8 @@ type UserDataState struct {
 	StaleAfter *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=stale_after,json=staleAfter,proto3,oneof" json:"stale_after,omitempty"`
 	// Полных календарных месяцев с данными.
 	FullMonths int32 `protobuf:"varint,6,opt,name=full_months,json=fullMonths,proto3" json:"full_months,omitempty"`
-	// Идёт пересчёт, вызванный действием пользователя: смена категории, удаление загрузки, смена
-	// пояса, исключение платежа из регулярных. Пересчёт после релиза, меняющего реестр (новая версия
+	// Идёт пересчёт, вызванный действием пользователя: импорт выписки, смена категории, удаление
+	// загрузки, смена пояса, исключение платежа из регулярных. Пересчёт после релиза, меняющего реестр (новая версия
 	// определений), признак не ставит: снимки заменяются молча, по периодам (FIN-196).
 	Recalculating bool `protobuf:"varint,7,opt,name=recalculating,proto3" json:"recalculating,omitempty"`
 	// Пояс профиля (IANA), в котором посчитаны периоды.
