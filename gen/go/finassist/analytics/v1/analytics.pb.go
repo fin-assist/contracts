@@ -2605,8 +2605,8 @@ type UpsertUserMetricsRequest struct {
 	// применяются, только если calc_version >= сохранённой версии для этого ключа; иначе
 	// пропускаются, но подтверждаются. Повторы — пустые операции. Применённый снимок периода
 	// заменяет прежний целиком: метрики разных версий реестра в одном периоде не смешиваются
-	// (FIN-196).
-	CalcVersion int64          `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
+	// (FIN-196). int32: bank-statement-data и analytics хранят её в integer (FIN-207).
+	CalcVersion int32          `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
 	State       *UserDataState `protobuf:"bytes,3,opt,name=state,proto3,oneof" json:"state,omitempty"`
 	// Снимки обоих режимов переводов одного периода — всегда в этом же вызове: большой пересчёт
 	// режется на вызовы только по границам периодов, вызов применяется одной транзакцией (FIN-196).
@@ -2657,7 +2657,7 @@ func (x *UpsertUserMetricsRequest) GetUserId() string {
 	return ""
 }
 
-func (x *UpsertUserMetricsRequest) GetCalcVersion() int64 {
+func (x *UpsertUserMetricsRequest) GetCalcVersion() int32 {
 	if x != nil {
 		return x.CalcVersion
 	}
@@ -2973,7 +2973,7 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\f_stale_after\"\xb0\x02\n" +
 	"\x18UpsertUserMetricsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
-	"\fcalc_version\x18\x02 \x01(\x03R\vcalcVersion\x12@\n" +
+	"\fcalc_version\x18\x02 \x01(\x05R\vcalcVersion\x12@\n" +
 	"\x05state\x18\x03 \x01(\v2%.finassist.analytics.v1.UserDataStateH\x00R\x05state\x88\x01\x01\x12@\n" +
 	"\aperiods\x18\x04 \x03(\v2&.finassist.analytics.v1.PeriodSnapshotR\aperiods\x12J\n" +
 	"\x0fremoved_periods\x18\x05 \x03(\v2!.finassist.analytics.v1.PeriodRefR\x0eremovedPeriodsB\b\n" +

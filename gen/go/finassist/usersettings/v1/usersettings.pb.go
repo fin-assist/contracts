@@ -27,8 +27,9 @@ type SetUserTimezoneRequest struct {
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// IANA.
 	Timezone string `protobuf:"bytes,2,opt,name=timezone,proto3" json:"timezone,omitempty"`
-	// Монотонная на пользователя, назначает `user`.
-	SettingsVersion int64 `protobuf:"varint,3,opt,name=settings_version,json=settingsVersion,proto3" json:"settings_version,omitempty"`
+	// Монотонная на пользователя, назначает `user`. int32: производитель и получатели хранят её в
+	// integer, не уже (FIN-207).
+	SettingsVersion int32 `protobuf:"varint,3,opt,name=settings_version,json=settingsVersion,proto3" json:"settings_version,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -77,7 +78,7 @@ func (x *SetUserTimezoneRequest) GetTimezone() string {
 	return ""
 }
 
-func (x *SetUserTimezoneRequest) GetSettingsVersion() int64 {
+func (x *SetUserTimezoneRequest) GetSettingsVersion() int32 {
 	if x != nil {
 		return x.SettingsVersion
 	}
@@ -129,7 +130,7 @@ const file_finassist_usersettings_v1_usersettings_proto_rawDesc = "" +
 	"\x16SetUserTimezoneRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1a\n" +
 	"\btimezone\x18\x02 \x01(\tR\btimezone\x12)\n" +
-	"\x10settings_version\x18\x03 \x01(\x03R\x0fsettingsVersion\"\x19\n" +
+	"\x10settings_version\x18\x03 \x01(\x05R\x0fsettingsVersion\"\x19\n" +
 	"\x17SetUserTimezoneResponse2\x93\x01\n" +
 	"\x17UserSettingsSyncService\x12x\n" +
 	"\x0fSetUserTimezone\x121.finassist.usersettings.v1.SetUserTimezoneRequest\x1a2.finassist.usersettings.v1.SetUserTimezoneResponseBQZOgithub.com/fin-assist/contracts/gen/go/finassist/usersettings/v1;usersettingsv1b\x06proto3"

@@ -21,8 +21,9 @@ message SetUserTimezoneRequest {
   string user_id = 1;
   // IANA.
   string timezone = 2;
-  // Монотонная на пользователя, назначает `user`.
-  int64 settings_version = 3;
+  // Монотонная на пользователя, назначает `user`. int32: производитель и получатели хранят её в
+  // integer, не уже (FIN-207).
+  int32 settings_version = 3;
 }
 
 // Пустой ответ: пояс принят (или проигнорирован как устаревший).
