@@ -39,7 +39,9 @@ const (
 	// Посчитали и ничего не нашли (нет регулярных платежей, нет комиссий). Значения нет,
 	// base может быть заполнена.
 	MetricStatus_METRIC_STATUS_NONE MetricStatus = 4
-	// Ставит только analytics: снимка нет или определение сменилось и бэкфилл не дошёл (FIN-5/6).
+	// Ставит только analytics и только когда прежнего значения нет: снимка периода нет или в нём нет
+	// этой метрики (новая в реестре, период ещё не пересчитан). Смена версии определения метрику не
+	// закрывает: до пересчёта отдаётся прежний снимок периода (FIN-6, FIN-196).
 	// В REST — открытый код `unavailable`; клиент трактует неизвестный статус как `locked`.
 	MetricStatus_METRIC_STATUS_UNAVAILABLE MetricStatus = 5
 )
@@ -2244,7 +2246,9 @@ type MetricSnapshot struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ID метрики из реестра (см. список выше).
 	MetricId string `protobuf:"bytes,1,opt,name=metric_id,json=metricId,proto3" json:"metric_id,omitempty"`
-	// Версия определения метрики в реестре; analytics хранит её рядом со значением (FIN-6).
+	// Версия определения метрики в реестре; analytics хранит её рядом со значением (FIN-6) и не
+	// сравнивает с текущей версией реестра: метрика прежней версии отдаётся, пока снимок периода не
+	// заменён пересчитанным (FIN-196).
 	DefinitionVersion int32 `protobuf:"varint,2,opt,name=definition_version,json=definitionVersion,proto3" json:"definition_version,omitempty"`
 	// Значение метрики в том виде, в котором оно уйдёт клиенту.
 	Metric        *Metric `protobuf:"bytes,3,opt,name=metric,proto3" json:"metric,omitempty"`
@@ -2596,7 +2600,9 @@ type UpsertUserMetricsRequest struct {
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// Монотонная на пользователя (sequence в bank-statement-data). Снимок периода и состояние
 	// применяются, только если calc_version >= сохранённой версии для этого ключа; иначе
-	// пропускаются, но подтверждаются. Повторы — пустые операции.
+	// пропускаются, но подтверждаются. Повторы — пустые операции. Применённый снимок периода
+	// заменяет прежний целиком: метрики разных версий реестра в одном периоде не смешиваются
+	// (FIN-196).
 	CalcVersion int64             `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
 	State       *UserDataState    `protobuf:"bytes,3,opt,name=state,proto3,oneof" json:"state,omitempty"`
 	Periods     []*PeriodSnapshot `protobuf:"bytes,4,rep,name=periods,proto3" json:"periods,omitempty"`
