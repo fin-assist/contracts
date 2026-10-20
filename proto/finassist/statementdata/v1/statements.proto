@@ -113,6 +113,11 @@ enum UploadStatus {
 
 // Одна загрузка выписки.
 message Upload {
+  // 7, 8 — first_operation_at / last_operation_at (первая и последняя операция файла); удалены в FIN-197,
+  // замена — period_from / period_to.
+  reserved 7, 8;
+  reserved "first_operation_at", "last_operation_at";
+
   string upload_id = 1;
   string file_name = 2;
   UploadStatus status = 3;
@@ -121,9 +126,6 @@ message Upload {
   int64 operation_count = 5;
   // Непрочитанных строк, ещё не закрытых более поздней загрузкой (FIN-79).
   int32 unread_count = 6;
-  // Период файла.
-  optional google.protobuf.Timestamp first_operation_at = 7;
-  optional google.protobuf.Timestamp last_operation_at = 8;
   // Название источника данных («Выписка Т-Банка»).
   string source_name = 9;
   // Строк этой загрузки, дочитанных более поздними загрузками (FIN-79); строки, заменённые записью
@@ -132,6 +134,15 @@ message Upload {
   // Когда загружена самая поздняя из загрузок, дочитавших строки; есть, только если
   // resolved_unread_count > 0.
   optional google.protobuf.Timestamp resolved_by_uploaded_at = 11;
+  // Первый день периода файла, `YYYY-MM-DD` в поясе профиля, включительно (FIN-197): день минимального
+  // DTSTART по счетам файла среди блоков, где есть и DTSTART, и DTEND; если таких блоков нет — день
+  // первой операции файла (calc.md, раздел 4). Задаётся вместе с period_to: оба есть или обоих нет.
+  // Нет у загрузки в PROCESSING и у файла без периода и без операций.
+  optional string period_from = 12;
+  // Последний день периода файла, `YYYY-MM-DD` в поясе профиля, включительно (FIN-197): день
+  // максимального DTEND по тем же блокам; если таких блоков нет — день последней операции файла.
+  // Задаётся вместе с period_from.
+  optional string period_to = 13;
 }
 
 // Сообщение клиентского потока загрузки: заголовок файла или очередной кусок содержимого.

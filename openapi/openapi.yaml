@@ -610,13 +610,13 @@ paths:
                 - upload_id: 01a10812-9d00-77d9-8c3d-b350e0119cd5
                   file_name: operations_2026.ofx
                   status: done
-                  uploaded_at: '2026-09-25T21:50:00+03:00'
+                  uploaded_at: '2026-10-01T10:15:00+03:00'
                   operation_count: 1086
                   unread_count: 0
                   resolved_unread_count: 2
                   resolved_by_uploaded_at: '2026-10-12T10:05:00+03:00'
-                  first_operation_at: '2026-04-01T09:12:00+03:00'
-                  last_operation_at: '2026-09-25T21:40:00+03:00'
+                  period_from: '2026-04-01'
+                  period_to: '2026-09-30'
                   source_name: Выписка Т-Банка
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -2943,14 +2943,25 @@ components:
           description: |
             Когда загружена самая поздняя из загрузок, дочитавших строки («Строки дочитаны в загрузке от 12 октября»).
             Есть, только если `resolved_unread_count` > 0.
-        first_operation_at:
+        period_from:
           type: string
-          format: date-time
+          format: date
           nullable: true
-        last_operation_at:
+          description: |
+            Первый день периода файла `YYYY-MM-DD` в поясе профиля, включительно (api.md 3.4; FIN-197): день
+            минимального `DTSTART` по счетам файла (блоки, где есть и `DTSTART`, и `DTEND`); если таких блоков нет —
+            день первой операции файла (docs/calc.md, раздел 4). Приходит вместе с `period_to`: оба есть или обоих нет.
+            Нет у загрузки в статусе `processing` и у файла без периода и без операций.
+          example: '2026-04-01'
+        period_to:
           type: string
-          format: date-time
+          format: date
           nullable: true
+          description: |
+            Последний день периода файла `YYYY-MM-DD` в поясе профиля, включительно (api.md 3.4; FIN-197): день
+            максимального `DTEND` по счетам файла (блоки, где есть оба тега); если таких блоков нет — день последней
+            операции файла. Приходит вместе с `period_from`.
+          example: '2026-09-30'
         source_name:
           type: string
           description: Название источника для показа («Выписка Т-Банка»); клиент по нему не ветвится.

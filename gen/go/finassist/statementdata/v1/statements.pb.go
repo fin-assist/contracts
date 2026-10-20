@@ -810,9 +810,6 @@ type Upload struct {
 	OperationCount int64 `protobuf:"varint,5,opt,name=operation_count,json=operationCount,proto3" json:"operation_count,omitempty"`
 	// Непрочитанных строк, ещё не закрытых более поздней загрузкой (FIN-79).
 	UnreadCount int32 `protobuf:"varint,6,opt,name=unread_count,json=unreadCount,proto3" json:"unread_count,omitempty"`
-	// Период файла.
-	FirstOperationAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=first_operation_at,json=firstOperationAt,proto3,oneof" json:"first_operation_at,omitempty"`
-	LastOperationAt  *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_operation_at,json=lastOperationAt,proto3,oneof" json:"last_operation_at,omitempty"`
 	// Название источника данных («Выписка Т-Банка»).
 	SourceName string `protobuf:"bytes,9,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
 	// Строк этой загрузки, дочитанных более поздними загрузками (FIN-79); строки, заменённые записью
@@ -821,8 +818,17 @@ type Upload struct {
 	// Когда загружена самая поздняя из загрузок, дочитавших строки; есть, только если
 	// resolved_unread_count > 0.
 	ResolvedByUploadedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=resolved_by_uploaded_at,json=resolvedByUploadedAt,proto3,oneof" json:"resolved_by_uploaded_at,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// Первый день периода файла, `YYYY-MM-DD` в поясе профиля, включительно (FIN-197): день минимального
+	// DTSTART по счетам файла среди блоков, где есть и DTSTART, и DTEND; если таких блоков нет — день
+	// первой операции файла (calc.md, раздел 4). Задаётся вместе с period_to: оба есть или обоих нет.
+	// Нет у загрузки в PROCESSING и у файла без периода и без операций.
+	PeriodFrom *string `protobuf:"bytes,12,opt,name=period_from,json=periodFrom,proto3,oneof" json:"period_from,omitempty"`
+	// Последний день периода файла, `YYYY-MM-DD` в поясе профиля, включительно (FIN-197): день
+	// максимального DTEND по тем же блокам; если таких блоков нет — день последней операции файла.
+	// Задаётся вместе с period_from.
+	PeriodTo      *string `protobuf:"bytes,13,opt,name=period_to,json=periodTo,proto3,oneof" json:"period_to,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Upload) Reset() {
@@ -897,20 +903,6 @@ func (x *Upload) GetUnreadCount() int32 {
 	return 0
 }
 
-func (x *Upload) GetFirstOperationAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.FirstOperationAt
-	}
-	return nil
-}
-
-func (x *Upload) GetLastOperationAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.LastOperationAt
-	}
-	return nil
-}
-
 func (x *Upload) GetSourceName() string {
 	if x != nil {
 		return x.SourceName
@@ -930,6 +922,20 @@ func (x *Upload) GetResolvedByUploadedAt() *timestamppb.Timestamp {
 		return x.ResolvedByUploadedAt
 	}
 	return nil
+}
+
+func (x *Upload) GetPeriodFrom() string {
+	if x != nil && x.PeriodFrom != nil {
+		return *x.PeriodFrom
+	}
+	return ""
+}
+
+func (x *Upload) GetPeriodTo() string {
+	if x != nil && x.PeriodTo != nil {
+		return *x.PeriodTo
+	}
+	return ""
 }
 
 // Сообщение клиентского потока загрузки: заголовок файла или очередной кусок содержимого.
@@ -2294,7 +2300,7 @@ const file_finassist_statementdata_v1_statements_proto_rawDesc = "" +
 	"\x0foperation_count\x18\x02 \x01(\x03R\x0eoperationCount\x12H\n" +
 	"\x12first_operation_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x10firstOperationAt\x12F\n" +
 	"\x11last_operation_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0flastOperationAt\x122\n" +
-	"\x04gaps\x18\x05 \x03(\v2\x1e.finassist.common.v1.TimeRangeR\x04gaps\"\x9f\x05\n" +
+	"\x04gaps\x18\x05 \x03(\v2\x1e.finassist.common.v1.TimeRangeR\x04gaps\"\xef\x04\n" +
 	"\x06Upload\x12\x1b\n" +
 	"\tupload_id\x18\x01 \x01(\tR\buploadId\x12\x1b\n" +
 	"\tfile_name\x18\x02 \x01(\tR\bfileName\x12@\n" +
@@ -2302,17 +2308,19 @@ const file_finassist_statementdata_v1_statements_proto_rawDesc = "" +
 	"\vuploaded_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"uploadedAt\x12'\n" +
 	"\x0foperation_count\x18\x05 \x01(\x03R\x0eoperationCount\x12!\n" +
-	"\funread_count\x18\x06 \x01(\x05R\vunreadCount\x12M\n" +
-	"\x12first_operation_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x10firstOperationAt\x88\x01\x01\x12K\n" +
-	"\x11last_operation_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampH\x01R\x0flastOperationAt\x88\x01\x01\x12\x1f\n" +
+	"\funread_count\x18\x06 \x01(\x05R\vunreadCount\x12\x1f\n" +
 	"\vsource_name\x18\t \x01(\tR\n" +
 	"sourceName\x122\n" +
 	"\x15resolved_unread_count\x18\n" +
 	" \x01(\x05R\x13resolvedUnreadCount\x12V\n" +
-	"\x17resolved_by_uploaded_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampH\x02R\x14resolvedByUploadedAt\x88\x01\x01B\x15\n" +
-	"\x13_first_operation_atB\x14\n" +
-	"\x12_last_operation_atB\x1a\n" +
-	"\x18_resolved_by_uploaded_at\"|\n" +
+	"\x17resolved_by_uploaded_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x14resolvedByUploadedAt\x88\x01\x01\x12$\n" +
+	"\vperiod_from\x18\f \x01(\tH\x01R\n" +
+	"periodFrom\x88\x01\x01\x12 \n" +
+	"\tperiod_to\x18\r \x01(\tH\x02R\bperiodTo\x88\x01\x01B\x1a\n" +
+	"\x18_resolved_by_uploaded_atB\x0e\n" +
+	"\f_period_fromB\f\n" +
+	"\n" +
+	"_period_toJ\x04\b\a\x10\bJ\x04\b\b\x10\tR\x12first_operation_atR\x11last_operation_at\"|\n" +
 	"\x16UploadStatementRequest\x12B\n" +
 	"\x06header\x18\x01 \x01(\v2(.finassist.statementdata.v1.UploadHeaderH\x00R\x06header\x12\x16\n" +
 	"\x05chunk\x18\x02 \x01(\fH\x00R\x05chunkB\x06\n" +
@@ -2521,51 +2529,49 @@ var file_finassist_statementdata_v1_statements_proto_depIdxs = []int32{
 	32, // 8: finassist.statementdata.v1.UploadsSummary.gaps:type_name -> finassist.common.v1.TimeRange
 	0,  // 9: finassist.statementdata.v1.Upload.status:type_name -> finassist.statementdata.v1.UploadStatus
 	33, // 10: finassist.statementdata.v1.Upload.uploaded_at:type_name -> google.protobuf.Timestamp
-	33, // 11: finassist.statementdata.v1.Upload.first_operation_at:type_name -> google.protobuf.Timestamp
-	33, // 12: finassist.statementdata.v1.Upload.last_operation_at:type_name -> google.protobuf.Timestamp
-	33, // 13: finassist.statementdata.v1.Upload.resolved_by_uploaded_at:type_name -> google.protobuf.Timestamp
-	15, // 14: finassist.statementdata.v1.UploadStatementRequest.header:type_name -> finassist.statementdata.v1.UploadHeader
-	19, // 15: finassist.statementdata.v1.WatchUploadResponse.progress:type_name -> finassist.statementdata.v1.ImportProgress
-	26, // 16: finassist.statementdata.v1.WatchUploadResponse.complete:type_name -> finassist.statementdata.v1.ImportResult
-	20, // 17: finassist.statementdata.v1.WatchUploadResponse.error:type_name -> finassist.statementdata.v1.ImportStreamError
-	1,  // 18: finassist.statementdata.v1.ImportProgress.stage:type_name -> finassist.statementdata.v1.ImportStage
-	2,  // 19: finassist.statementdata.v1.ImportStreamError.code:type_name -> finassist.statementdata.v1.ImportErrorCode
-	3,  // 20: finassist.statementdata.v1.ImportTotals.scope:type_name -> finassist.statementdata.v1.ImportTotalsScope
-	32, // 21: finassist.statementdata.v1.IncompleteMonth.range:type_name -> finassist.common.v1.TimeRange
-	33, // 22: finassist.statementdata.v1.IncompleteMonth.data_from:type_name -> google.protobuf.Timestamp
-	33, // 23: finassist.statementdata.v1.IncompleteMonth.data_to:type_name -> google.protobuf.Timestamp
-	32, // 24: finassist.statementdata.v1.IncompleteMonth.gaps:type_name -> finassist.common.v1.TimeRange
-	4,  // 25: finassist.statementdata.v1.FeatureAvailability.feature:type_name -> finassist.statementdata.v1.Feature
-	23, // 26: finassist.statementdata.v1.ImportCoverage.incomplete_months:type_name -> finassist.statementdata.v1.IncompleteMonth
-	24, // 27: finassist.statementdata.v1.ImportCoverage.features:type_name -> finassist.statementdata.v1.FeatureAvailability
-	33, // 28: finassist.statementdata.v1.ImportResult.first_operation_at:type_name -> google.protobuf.Timestamp
-	33, // 29: finassist.statementdata.v1.ImportResult.last_operation_at:type_name -> google.protobuf.Timestamp
-	21, // 30: finassist.statementdata.v1.ImportResult.totals:type_name -> finassist.statementdata.v1.ImportTotals
-	22, // 31: finassist.statementdata.v1.ImportResult.accounts:type_name -> finassist.statementdata.v1.ImportAccount
-	34, // 32: finassist.statementdata.v1.ImportResult.uncategorized_filters:type_name -> finassist.common.v1.OperationsFilter
-	25, // 33: finassist.statementdata.v1.ImportResult.coverage:type_name -> finassist.statementdata.v1.ImportCoverage
-	5,  // 34: finassist.statementdata.v1.ImportResult.notices:type_name -> finassist.statementdata.v1.ImportNotice
-	32, // 35: finassist.statementdata.v1.ListUnreadLinesRequest.period:type_name -> finassist.common.v1.TimeRange
-	33, // 36: finassist.statementdata.v1.UnreadLine.date:type_name -> google.protobuf.Timestamp
-	6,  // 37: finassist.statementdata.v1.UnreadLine.reason:type_name -> finassist.statementdata.v1.UnreadReason
-	30, // 38: finassist.statementdata.v1.ListUnreadLinesResponse.lines:type_name -> finassist.statementdata.v1.UnreadLine
-	7,  // 39: finassist.statementdata.v1.StatementsService.GetImportConfig:input_type -> finassist.statementdata.v1.GetImportConfigRequest
-	10, // 40: finassist.statementdata.v1.StatementsService.ListUploads:input_type -> finassist.statementdata.v1.ListUploadsRequest
-	14, // 41: finassist.statementdata.v1.StatementsService.UploadStatement:input_type -> finassist.statementdata.v1.UploadStatementRequest
-	17, // 42: finassist.statementdata.v1.StatementsService.WatchUpload:input_type -> finassist.statementdata.v1.WatchUploadRequest
-	27, // 43: finassist.statementdata.v1.StatementsService.DeleteUpload:input_type -> finassist.statementdata.v1.DeleteUploadRequest
-	29, // 44: finassist.statementdata.v1.StatementsService.ListUnreadLines:input_type -> finassist.statementdata.v1.ListUnreadLinesRequest
-	8,  // 45: finassist.statementdata.v1.StatementsService.GetImportConfig:output_type -> finassist.statementdata.v1.GetImportConfigResponse
-	11, // 46: finassist.statementdata.v1.StatementsService.ListUploads:output_type -> finassist.statementdata.v1.ListUploadsResponse
-	16, // 47: finassist.statementdata.v1.StatementsService.UploadStatement:output_type -> finassist.statementdata.v1.UploadStatementResponse
-	18, // 48: finassist.statementdata.v1.StatementsService.WatchUpload:output_type -> finassist.statementdata.v1.WatchUploadResponse
-	28, // 49: finassist.statementdata.v1.StatementsService.DeleteUpload:output_type -> finassist.statementdata.v1.DeleteUploadResponse
-	31, // 50: finassist.statementdata.v1.StatementsService.ListUnreadLines:output_type -> finassist.statementdata.v1.ListUnreadLinesResponse
-	45, // [45:51] is the sub-list for method output_type
-	39, // [39:45] is the sub-list for method input_type
-	39, // [39:39] is the sub-list for extension type_name
-	39, // [39:39] is the sub-list for extension extendee
-	0,  // [0:39] is the sub-list for field type_name
+	33, // 11: finassist.statementdata.v1.Upload.resolved_by_uploaded_at:type_name -> google.protobuf.Timestamp
+	15, // 12: finassist.statementdata.v1.UploadStatementRequest.header:type_name -> finassist.statementdata.v1.UploadHeader
+	19, // 13: finassist.statementdata.v1.WatchUploadResponse.progress:type_name -> finassist.statementdata.v1.ImportProgress
+	26, // 14: finassist.statementdata.v1.WatchUploadResponse.complete:type_name -> finassist.statementdata.v1.ImportResult
+	20, // 15: finassist.statementdata.v1.WatchUploadResponse.error:type_name -> finassist.statementdata.v1.ImportStreamError
+	1,  // 16: finassist.statementdata.v1.ImportProgress.stage:type_name -> finassist.statementdata.v1.ImportStage
+	2,  // 17: finassist.statementdata.v1.ImportStreamError.code:type_name -> finassist.statementdata.v1.ImportErrorCode
+	3,  // 18: finassist.statementdata.v1.ImportTotals.scope:type_name -> finassist.statementdata.v1.ImportTotalsScope
+	32, // 19: finassist.statementdata.v1.IncompleteMonth.range:type_name -> finassist.common.v1.TimeRange
+	33, // 20: finassist.statementdata.v1.IncompleteMonth.data_from:type_name -> google.protobuf.Timestamp
+	33, // 21: finassist.statementdata.v1.IncompleteMonth.data_to:type_name -> google.protobuf.Timestamp
+	32, // 22: finassist.statementdata.v1.IncompleteMonth.gaps:type_name -> finassist.common.v1.TimeRange
+	4,  // 23: finassist.statementdata.v1.FeatureAvailability.feature:type_name -> finassist.statementdata.v1.Feature
+	23, // 24: finassist.statementdata.v1.ImportCoverage.incomplete_months:type_name -> finassist.statementdata.v1.IncompleteMonth
+	24, // 25: finassist.statementdata.v1.ImportCoverage.features:type_name -> finassist.statementdata.v1.FeatureAvailability
+	33, // 26: finassist.statementdata.v1.ImportResult.first_operation_at:type_name -> google.protobuf.Timestamp
+	33, // 27: finassist.statementdata.v1.ImportResult.last_operation_at:type_name -> google.protobuf.Timestamp
+	21, // 28: finassist.statementdata.v1.ImportResult.totals:type_name -> finassist.statementdata.v1.ImportTotals
+	22, // 29: finassist.statementdata.v1.ImportResult.accounts:type_name -> finassist.statementdata.v1.ImportAccount
+	34, // 30: finassist.statementdata.v1.ImportResult.uncategorized_filters:type_name -> finassist.common.v1.OperationsFilter
+	25, // 31: finassist.statementdata.v1.ImportResult.coverage:type_name -> finassist.statementdata.v1.ImportCoverage
+	5,  // 32: finassist.statementdata.v1.ImportResult.notices:type_name -> finassist.statementdata.v1.ImportNotice
+	32, // 33: finassist.statementdata.v1.ListUnreadLinesRequest.period:type_name -> finassist.common.v1.TimeRange
+	33, // 34: finassist.statementdata.v1.UnreadLine.date:type_name -> google.protobuf.Timestamp
+	6,  // 35: finassist.statementdata.v1.UnreadLine.reason:type_name -> finassist.statementdata.v1.UnreadReason
+	30, // 36: finassist.statementdata.v1.ListUnreadLinesResponse.lines:type_name -> finassist.statementdata.v1.UnreadLine
+	7,  // 37: finassist.statementdata.v1.StatementsService.GetImportConfig:input_type -> finassist.statementdata.v1.GetImportConfigRequest
+	10, // 38: finassist.statementdata.v1.StatementsService.ListUploads:input_type -> finassist.statementdata.v1.ListUploadsRequest
+	14, // 39: finassist.statementdata.v1.StatementsService.UploadStatement:input_type -> finassist.statementdata.v1.UploadStatementRequest
+	17, // 40: finassist.statementdata.v1.StatementsService.WatchUpload:input_type -> finassist.statementdata.v1.WatchUploadRequest
+	27, // 41: finassist.statementdata.v1.StatementsService.DeleteUpload:input_type -> finassist.statementdata.v1.DeleteUploadRequest
+	29, // 42: finassist.statementdata.v1.StatementsService.ListUnreadLines:input_type -> finassist.statementdata.v1.ListUnreadLinesRequest
+	8,  // 43: finassist.statementdata.v1.StatementsService.GetImportConfig:output_type -> finassist.statementdata.v1.GetImportConfigResponse
+	11, // 44: finassist.statementdata.v1.StatementsService.ListUploads:output_type -> finassist.statementdata.v1.ListUploadsResponse
+	16, // 45: finassist.statementdata.v1.StatementsService.UploadStatement:output_type -> finassist.statementdata.v1.UploadStatementResponse
+	18, // 46: finassist.statementdata.v1.StatementsService.WatchUpload:output_type -> finassist.statementdata.v1.WatchUploadResponse
+	28, // 47: finassist.statementdata.v1.StatementsService.DeleteUpload:output_type -> finassist.statementdata.v1.DeleteUploadResponse
+	31, // 48: finassist.statementdata.v1.StatementsService.ListUnreadLines:output_type -> finassist.statementdata.v1.ListUnreadLinesResponse
+	43, // [43:49] is the sub-list for method output_type
+	37, // [37:43] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_finassist_statementdata_v1_statements_proto_init() }
