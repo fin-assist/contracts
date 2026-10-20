@@ -885,10 +885,10 @@ type GetOperationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Время совершения записи, как в Operation.occurred_at из ленты или поиска (у пары — время
-	// списания); обязательное. Сужает поиск до секции года (FIN-202). Если по (пользователь,
-	// occurred_at, id) записи нет — время могло измениться (холд проведён, повторный импорт), — запись
-	// ищется по (пользователь, id) за всё время: неверное время — не ошибка. Нет записи и так —
-	// NOT_FOUND. Не передано — VALIDATION_ERROR.
+	// списания); обязательное. Запись ищется по (пользователь, occurred_at, id) — точное равенство
+	// момента, одна секция года (FIN-202). Если записи так нет — время могло измениться (холд
+	// проведён, повторный импорт), — она ищется по (пользователь, id) за всё время: неверное время —
+	// не ошибка. Нет записи и так — NOT_FOUND. Не передано — VALIDATION_ERROR.
 	OccurredAt    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
