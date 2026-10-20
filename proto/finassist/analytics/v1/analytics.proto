@@ -552,6 +552,8 @@ message UpsertUserMetricsRequest {
   // (FIN-196).
   int64 calc_version = 2;
   optional UserDataState state = 3;
+  // Снимки обоих режимов переводов одного периода — всегда в этом же вызове: большой пересчёт
+  // режется на вызовы только по границам периодов, вызов применяется одной транзакцией (FIN-196).
   repeated PeriodSnapshot periods = 4;
   // Периоды, в которых данных больше нет (загрузка удалена). Удаляются для обоих режимов переводов.
   repeated PeriodRef removed_periods = 5;

@@ -2603,9 +2603,11 @@ type UpsertUserMetricsRequest struct {
 	// пропускаются, но подтверждаются. Повторы — пустые операции. Применённый снимок периода
 	// заменяет прежний целиком: метрики разных версий реестра в одном периоде не смешиваются
 	// (FIN-196).
-	CalcVersion int64             `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
-	State       *UserDataState    `protobuf:"bytes,3,opt,name=state,proto3,oneof" json:"state,omitempty"`
-	Periods     []*PeriodSnapshot `protobuf:"bytes,4,rep,name=periods,proto3" json:"periods,omitempty"`
+	CalcVersion int64          `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
+	State       *UserDataState `protobuf:"bytes,3,opt,name=state,proto3,oneof" json:"state,omitempty"`
+	// Снимки обоих режимов переводов одного периода — всегда в этом же вызове: большой пересчёт
+	// режется на вызовы только по границам периодов, вызов применяется одной транзакцией (FIN-196).
+	Periods []*PeriodSnapshot `protobuf:"bytes,4,rep,name=periods,proto3" json:"periods,omitempty"`
 	// Периоды, в которых данных больше нет (загрузка удалена). Удаляются для обоих режимов переводов.
 	RemovedPeriods []*PeriodRef `protobuf:"bytes,5,rep,name=removed_periods,json=removedPeriods,proto3" json:"removed_periods,omitempty"`
 	unknownFields  protoimpl.UnknownFields
