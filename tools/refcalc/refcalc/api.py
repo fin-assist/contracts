@@ -268,8 +268,23 @@ class Backend:
     # ---- 4.3 ----
 
     def change_category(self, account_id: str, fitid: str, category_id: str) -> dict:
+        """Scenario step: 4.3 for the record of this operation, with `id` and `occurred_at` of its 4.1 record."""
         op = self.ledger.ops[(account_id, fitid)]
-        record_id = op.pair or op.id
+        rec = item(next(r for r in records(self.ledger) if r.id == (op.pair or op.id)))
+        return self.patch_operation(rec["id"], rec["occurred_at"], category_id)
+
+    def patch_operation(self, record_id: str, occurred_at: Optional[str], category_id: str) -> dict:
+        """4.3. `occurred_at` is required; a time that does not match the record is a miss, not an error: the record
+        is then found by `id` alone (api.md 4.2, FIN-202). The reference keeps no partitions, so it always looks up
+        by `id` once the time is valid."""
+        try:
+            moment = parse_iso(occurred_at)
+        except (AttributeError, TypeError, ValueError):
+            raise ApiError(400, "VALIDATION_ERROR")
+        if "T" not in occurred_at or moment.tzinfo is None:  # `datetime` of the contract: a moment with an offset
+            raise ApiError(400, "VALIDATION_ERROR")
+        if record_id not in {r.id for r in records(self.ledger)}:
+            raise ApiError(404, "NOT_FOUND")
         try:
             recs, replaced = self.ledger.change_category(record_id, category_id)
         except ValueError:

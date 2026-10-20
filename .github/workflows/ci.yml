@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # buf lint on every run; buf breaking against the PR base on pull requests.
-      # format/push are off: sources are kept as is, BSR is not used.
+      # format/push are off: sources are kept as is, nothing is pushed to BSR (deps of proto/buf.lock are read from it).
       - uses: bufbuild/buf-action@v1
         with:
           version: ${{ env.BUF_VERSION }}

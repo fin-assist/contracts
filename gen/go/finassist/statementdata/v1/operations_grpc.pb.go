@@ -43,12 +43,14 @@ type OperationsServiceClient interface {
 	SearchOperations(ctx context.Context, in *SearchOperationsRequest, opts ...grpc.CallOption) (*SearchOperationsResponse, error)
 	// Вернуть операцию со всеми деталями: описание, дата проведения, категория банка, MCC,
 	// пояснение учёта, произносимые формы счетов, источник.
-	// GET /v1/operations/{id}. ID операции или пары переводов между своими счетами.
+	// GET /v1/operations/{id}?occurred_at=…. ID операции или пары переводов между своими счетами и
+	// время её совершения из ленты или поиска.
 	GetOperation(ctx context.Context, in *GetOperationRequest, opts ...grpc.CallOption) (*GetOperationResponse, error)
 	// Сменить категорию операции вручную. Пара переводов при смене на другую категорию
 	// разделяется на две операции; одиночный перевод между своими счетами с найденной второй стороной
 	// становится парой. Правка не перетирается повторным импортом; помечает месяц для пересчёта.
-	// PATCH /v1/operations/{id}. Присваивает, а не переключает — идемпотентен без ключа.
+	// PATCH /v1/operations/{id}, occurred_at — в теле. Присваивает, а не переключает — идемпотентен
+	// без ключа.
 	ChangeCategory(ctx context.Context, in *ChangeCategoryRequest, opts ...grpc.CallOption) (*ChangeCategoryResponse, error)
 }
 
@@ -118,12 +120,14 @@ type OperationsServiceServer interface {
 	SearchOperations(context.Context, *SearchOperationsRequest) (*SearchOperationsResponse, error)
 	// Вернуть операцию со всеми деталями: описание, дата проведения, категория банка, MCC,
 	// пояснение учёта, произносимые формы счетов, источник.
-	// GET /v1/operations/{id}. ID операции или пары переводов между своими счетами.
+	// GET /v1/operations/{id}?occurred_at=…. ID операции или пары переводов между своими счетами и
+	// время её совершения из ленты или поиска.
 	GetOperation(context.Context, *GetOperationRequest) (*GetOperationResponse, error)
 	// Сменить категорию операции вручную. Пара переводов при смене на другую категорию
 	// разделяется на две операции; одиночный перевод между своими счетами с найденной второй стороной
 	// становится парой. Правка не перетирается повторным импортом; помечает месяц для пересчёта.
-	// PATCH /v1/operations/{id}. Присваивает, а не переключает — идемпотентен без ключа.
+	// PATCH /v1/operations/{id}, occurred_at — в теле. Присваивает, а не переключает — идемпотентен
+	// без ключа.
 	ChangeCategory(context.Context, *ChangeCategoryRequest) (*ChangeCategoryResponse, error)
 	mustEmbedUnimplementedOperationsServiceServer()
 }

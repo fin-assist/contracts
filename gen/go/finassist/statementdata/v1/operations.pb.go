@@ -7,6 +7,7 @@
 package statementdatav1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v1 "github.com/fin-assist/contracts/gen/go/finassist/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -881,8 +882,14 @@ func (x *SearchOperationsResponse) GetTimeZone() string {
 
 // Запрос одной операции или пары переводов по ID.
 type GetOperationRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Время совершения записи, как в Operation.occurred_at из ленты или поиска (у пары — время
+	// списания); обязательное. Сужает поиск до секции года (FIN-202). Если по (пользователь,
+	// occurred_at, id) записи нет — время могло измениться (холд проведён, повторный импорт), — запись
+	// ищется по (пользователь, id) за всё время: неверное время — не ошибка. Нет записи и так —
+	// NOT_FOUND. Не передано — VALIDATION_ERROR.
+	OccurredAt    *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -922,6 +929,13 @@ func (x *GetOperationRequest) GetId() string {
 		return x.Id
 	}
 	return ""
+}
+
+func (x *GetOperationRequest) GetOccurredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OccurredAt
+	}
+	return nil
 }
 
 // Операция со всеми деталями.
@@ -983,7 +997,10 @@ type ChangeCategoryRequest struct {
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Категория с assignable, kinds которой включает kind записи; для пары — любая с assignable.
 	// Иначе CATEGORY_NOT_ASSIGNABLE.
-	CategoryId    string `protobuf:"bytes,2,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
+	CategoryId string `protobuf:"bytes,2,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
+	// Время совершения записи, как в Operation.occurred_at; обязательное. Поиск записи — как в
+	// GetOperationRequest.occurred_at: неверное время — не ошибка, а поиск по ID за всё время.
+	OccurredAt    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1030,6 +1047,13 @@ func (x *ChangeCategoryRequest) GetCategoryId() string {
 		return x.CategoryId
 	}
 	return ""
+}
+
+func (x *ChangeCategoryRequest) GetOccurredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OccurredAt
+	}
+	return nil
 }
 
 // Результат смены категории: изменённые записи и ID записи, которой больше нет.
@@ -1448,7 +1472,7 @@ var File_finassist_statementdata_v1_operations_proto protoreflect.FileDescriptor
 
 const file_finassist_statementdata_v1_operations_proto_rawDesc = "" +
 	"\n" +
-	"+finassist/statementdata/v1/operations.proto\x12\x1afinassist.statementdata.v1\x1a finassist/common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"E\n" +
+	"+finassist/statementdata/v1/operations.proto\x12\x1afinassist.statementdata.v1\x1a\x1bbuf/validate/validate.proto\x1a finassist/common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"E\n" +
 	"\vCategoryRef\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -1528,16 +1552,20 @@ const file_finassist_statementdata_v1_operations_proto_rawDesc = "" +
 	"\x0ehas_older_data\x18\x04 \x01(\bH\x01R\fhasOlderData\x88\x01\x01\x12\x1b\n" +
 	"\ttime_zone\x18\x05 \x01(\tR\btimeZoneB\b\n" +
 	"\x06_rangeB\x11\n" +
-	"\x0f_has_older_data\"%\n" +
+	"\x0f_has_older_data\"j\n" +
 	"\x13GetOperationRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"x\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12C\n" +
+	"\voccurred_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"occurredAt\"x\n" +
 	"\x14GetOperationResponse\x12C\n" +
 	"\toperation\x18\x01 \x01(\v2%.finassist.statementdata.v1.OperationR\toperation\x12\x1b\n" +
-	"\ttime_zone\x18\x02 \x01(\tR\btimeZone\"H\n" +
+	"\ttime_zone\x18\x02 \x01(\tR\btimeZone\"\x8d\x01\n" +
 	"\x15ChangeCategoryRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vcategory_id\x18\x02 \x01(\tR\n" +
-	"categoryId\"\xa8\x01\n" +
+	"categoryId\x12C\n" +
+	"\voccurred_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"occurredAt\"\xa8\x01\n" +
 	"\x16ChangeCategoryResponse\x12;\n" +
 	"\x05items\x18\x01 \x03(\v2%.finassist.statementdata.v1.OperationR\x05items\x12$\n" +
 	"\vreplaced_id\x18\x02 \x01(\tH\x00R\n" +
@@ -1655,29 +1683,31 @@ var file_finassist_statementdata_v1_operations_proto_depIdxs = []int32{
 	25, // 19: finassist.statementdata.v1.SearchOperationsRequest.filter:type_name -> finassist.common.v1.OperationsFilter
 	4,  // 20: finassist.statementdata.v1.SearchOperationsResponse.items:type_name -> finassist.statementdata.v1.Operation
 	24, // 21: finassist.statementdata.v1.SearchOperationsResponse.range:type_name -> finassist.common.v1.TimeRange
-	4,  // 22: finassist.statementdata.v1.GetOperationResponse.operation:type_name -> finassist.statementdata.v1.Operation
-	4,  // 23: finassist.statementdata.v1.ChangeCategoryResponse.items:type_name -> finassist.statementdata.v1.Operation
-	2,  // 24: finassist.statementdata.v1.Category.kinds:type_name -> finassist.statementdata.v1.CategoryKind
-	15, // 25: finassist.statementdata.v1.ListCategoriesResponse.categories:type_name -> finassist.statementdata.v1.Category
-	5,  // 26: finassist.statementdata.v1.OperationsService.ListFeed:input_type -> finassist.statementdata.v1.ListFeedRequest
-	9,  // 27: finassist.statementdata.v1.OperationsService.SearchOperations:input_type -> finassist.statementdata.v1.SearchOperationsRequest
-	11, // 28: finassist.statementdata.v1.OperationsService.GetOperation:input_type -> finassist.statementdata.v1.GetOperationRequest
-	13, // 29: finassist.statementdata.v1.OperationsService.ChangeCategory:input_type -> finassist.statementdata.v1.ChangeCategoryRequest
-	16, // 30: finassist.statementdata.v1.CategoriesService.ListCategories:input_type -> finassist.statementdata.v1.ListCategoriesRequest
-	18, // 31: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:input_type -> finassist.statementdata.v1.DismissRegularPaymentRequest
-	20, // 32: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:input_type -> finassist.statementdata.v1.RestoreRegularPaymentRequest
-	8,  // 33: finassist.statementdata.v1.OperationsService.ListFeed:output_type -> finassist.statementdata.v1.ListFeedResponse
-	10, // 34: finassist.statementdata.v1.OperationsService.SearchOperations:output_type -> finassist.statementdata.v1.SearchOperationsResponse
-	12, // 35: finassist.statementdata.v1.OperationsService.GetOperation:output_type -> finassist.statementdata.v1.GetOperationResponse
-	14, // 36: finassist.statementdata.v1.OperationsService.ChangeCategory:output_type -> finassist.statementdata.v1.ChangeCategoryResponse
-	17, // 37: finassist.statementdata.v1.CategoriesService.ListCategories:output_type -> finassist.statementdata.v1.ListCategoriesResponse
-	19, // 38: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:output_type -> finassist.statementdata.v1.DismissRegularPaymentResponse
-	21, // 39: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:output_type -> finassist.statementdata.v1.RestoreRegularPaymentResponse
-	33, // [33:40] is the sub-list for method output_type
-	26, // [26:33] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	22, // 22: finassist.statementdata.v1.GetOperationRequest.occurred_at:type_name -> google.protobuf.Timestamp
+	4,  // 23: finassist.statementdata.v1.GetOperationResponse.operation:type_name -> finassist.statementdata.v1.Operation
+	22, // 24: finassist.statementdata.v1.ChangeCategoryRequest.occurred_at:type_name -> google.protobuf.Timestamp
+	4,  // 25: finassist.statementdata.v1.ChangeCategoryResponse.items:type_name -> finassist.statementdata.v1.Operation
+	2,  // 26: finassist.statementdata.v1.Category.kinds:type_name -> finassist.statementdata.v1.CategoryKind
+	15, // 27: finassist.statementdata.v1.ListCategoriesResponse.categories:type_name -> finassist.statementdata.v1.Category
+	5,  // 28: finassist.statementdata.v1.OperationsService.ListFeed:input_type -> finassist.statementdata.v1.ListFeedRequest
+	9,  // 29: finassist.statementdata.v1.OperationsService.SearchOperations:input_type -> finassist.statementdata.v1.SearchOperationsRequest
+	11, // 30: finassist.statementdata.v1.OperationsService.GetOperation:input_type -> finassist.statementdata.v1.GetOperationRequest
+	13, // 31: finassist.statementdata.v1.OperationsService.ChangeCategory:input_type -> finassist.statementdata.v1.ChangeCategoryRequest
+	16, // 32: finassist.statementdata.v1.CategoriesService.ListCategories:input_type -> finassist.statementdata.v1.ListCategoriesRequest
+	18, // 33: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:input_type -> finassist.statementdata.v1.DismissRegularPaymentRequest
+	20, // 34: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:input_type -> finassist.statementdata.v1.RestoreRegularPaymentRequest
+	8,  // 35: finassist.statementdata.v1.OperationsService.ListFeed:output_type -> finassist.statementdata.v1.ListFeedResponse
+	10, // 36: finassist.statementdata.v1.OperationsService.SearchOperations:output_type -> finassist.statementdata.v1.SearchOperationsResponse
+	12, // 37: finassist.statementdata.v1.OperationsService.GetOperation:output_type -> finassist.statementdata.v1.GetOperationResponse
+	14, // 38: finassist.statementdata.v1.OperationsService.ChangeCategory:output_type -> finassist.statementdata.v1.ChangeCategoryResponse
+	17, // 39: finassist.statementdata.v1.CategoriesService.ListCategories:output_type -> finassist.statementdata.v1.ListCategoriesResponse
+	19, // 40: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:output_type -> finassist.statementdata.v1.DismissRegularPaymentResponse
+	21, // 41: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:output_type -> finassist.statementdata.v1.RestoreRegularPaymentResponse
+	35, // [35:42] is the sub-list for method output_type
+	28, // [28:35] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_finassist_statementdata_v1_operations_proto_init() }

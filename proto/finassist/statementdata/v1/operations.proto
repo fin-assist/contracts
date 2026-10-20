@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package finassist.statementdata.v1;
 
+import "buf/validate/validate.proto";
 import "finassist/common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -26,13 +27,15 @@ service OperationsService {
 
   // Вернуть операцию со всеми деталями: описание, дата проведения, категория банка, MCC,
   // пояснение учёта, произносимые формы счетов, источник.
-  // GET /v1/operations/{id}. ID операции или пары переводов между своими счетами.
+  // GET /v1/operations/{id}?occurred_at=…. ID операции или пары переводов между своими счетами и
+  // время её совершения из ленты или поиска.
   rpc GetOperation(GetOperationRequest) returns (GetOperationResponse);
 
   // Сменить категорию операции вручную. Пара переводов при смене на другую категорию
   // разделяется на две операции; одиночный перевод между своими счетами с найденной второй стороной
   // становится парой. Правка не перетирается повторным импортом; помечает месяц для пересчёта.
-  // PATCH /v1/operations/{id}. Присваивает, а не переключает — идемпотентен без ключа.
+  // PATCH /v1/operations/{id}, occurred_at — в теле. Присваивает, а не переключает — идемпотентен
+  // без ключа.
   rpc ChangeCategory(ChangeCategoryRequest) returns (ChangeCategoryResponse);
 }
 
@@ -203,6 +206,12 @@ message SearchOperationsResponse {
 // Запрос одной операции или пары переводов по ID.
 message GetOperationRequest {
   string id = 1;
+  // Время совершения записи, как в Operation.occurred_at из ленты или поиска (у пары — время
+  // списания); обязательное. Сужает поиск до секции года (FIN-202). Если по (пользователь,
+  // occurred_at, id) записи нет — время могло измениться (холд проведён, повторный импорт), — запись
+  // ищется по (пользователь, id) за всё время: неверное время — не ошибка. Нет записи и так —
+  // NOT_FOUND. Не передано — VALIDATION_ERROR.
+  google.protobuf.Timestamp occurred_at = 2 [(buf.validate.field).required = true];
 }
 
 // Операция со всеми деталями.
@@ -217,6 +226,9 @@ message ChangeCategoryRequest {
   // Категория с assignable, kinds которой включает kind записи; для пары — любая с assignable.
   // Иначе CATEGORY_NOT_ASSIGNABLE.
   string category_id = 2;
+  // Время совершения записи, как в Operation.occurred_at; обязательное. Поиск записи — как в
+  // GetOperationRequest.occurred_at: неверное время — не ошибка, а поиск по ID за всё время.
+  google.protobuf.Timestamp occurred_at = 3 [(buf.validate.field).required = true];
 }
 
 // Результат смены категории: изменённые записи и ID записи, которой больше нет.

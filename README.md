@@ -16,7 +16,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `docs/calc.md` | Расчёт метрик и правила учёта (FIN-106, FIN-158): пары, возвраты, покрытие, метрики «Аналитики», порядок и состав блоков |
 | `openapi/openapi.yaml` | OpenAPI 3.0.3 того же API |
 | `docs/grpc-api.md` | Внутренний gRPC API |
-| `proto/buf.yaml` | Модуль `buf`: lint STANDARD |
+| `proto/buf.yaml`, `proto/buf.lock` | Модуль `buf`: lint STANDARD; зависимость `buf.build/bufbuild/protovalidate` для аннотаций проверки полей (`docs/grpc-api.md`, раздел 8) — тот же коммит, из которого собран Go-модуль protovalidate у сервисов (FIN-202) |
 | `proto/finassist/<сервис>/v1/*.proto` | Контракты сервисов и `common/v1` (типы, реестр ошибок `ErrorReason`) |
 | `proto/scripts/check_error_registry.py` | Сверка реестра ошибок с разделом 8 `docs/api.md` |
 | `proto/scripts/check_error_spec_stable.py` | `error_spec` существующих кодов не меняется относительно базы PR |
