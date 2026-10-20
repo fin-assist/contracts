@@ -15,7 +15,8 @@ same PR.
 - Here: `docs/api.md` (meaning of fields — wins over `openapi/openapi.yaml` when they differ), `openapi/openapi.yaml`,
   `docs/calc.md` (how the fields are calculated — accounting rules and metrics, FIN-158), `docs/grpc-api.md`, `proto/`.
   For calculation the order is: the owner's latest decision → `docs/calc.md` → `docs/api.md` / `openapi.yaml` →
-  `fixtures/calc` (an executable copy of the first two). Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) holds only a summary
+  `fixtures/calc` (an executable copy of the first two; its `categories.json` is also the list of known bank
+  categories the services use, FIN-200). Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) holds only a summary
   and a link here; MVP scope, architecture and product decisions live there («Состав MVP», «Архитектура»,
   «Продуктовые решения»).
 - Version 0.2 is crystallized: every change goes through a YouTrack issue (`FIN-<n>`, finassist.youtrack.cloud) and
@@ -45,7 +46,7 @@ same PR.
 | Registry check | `proto/scripts/check_error_registry.py` |
 | Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
-| Calculation fixtures: statements, scenario, expected responses, comparison rules (FIN-107) | `fixtures/calc/` (format and rules — `fixtures/calc/README.md`) |
+| Calculation fixtures: statements, scenario, expected responses, comparison rules (FIN-107); the list of known bank categories (`categories.json`, FIN-200) | `fixtures/calc/` (format and rules — `fixtures/calc/README.md`) |
 | Reference calculation that produces the expected responses (`docs/calc.md`) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
 | PR review by Claude | `.github/workflows/claude.yml` |
 

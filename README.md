@@ -24,7 +24,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `gen/go/` | Go-модуль `github.com/fin-assist/contracts/gen/go` (свой `go.mod`): `finassist/<сервис>/v1` — сообщения и gRPC, `finerr` — конструкторы ошибок и таблица перевода в REST. Сгенерирован, руками не правится (кроме `go.mod` и тестов) |
 | `tools/` | Модуль инструментов: версии `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` закреплены в `tools/go.mod` (`tool`); `tools/protoc-gen-finerr` — генератор `finerr` из опций `error_spec` |
 | `scripts/generate.sh` | Перегенерировать `gen/go` закреплёнными версиями |
-| `fixtures/calc/` | Эталонные данные расчёта (FIN-107): выписки, сценарий, ожидаемые ответы 3.3, 4.1, 4.3, 5.1, 6.1, 6.2 и правила сравнения — `fixtures/calc/README.md`. По ним тестируются фейковый бэкенд и Go-бэкенд |
+| `fixtures/calc/` | Эталонные данные расчёта (FIN-107): выписки, сценарий, ожидаемые ответы 3.3, 4.1, 4.3, 5.1, 6.1, 6.2 и правила сравнения — `fixtures/calc/README.md`. По ним тестируются фейковый бэкенд и Go-бэкенд. `categories.json` — ещё и список известных категорий банка, который берут сервисы (`docs/calc.md` 3.1, FIN-200) |
 | `tools/refcalc/` | Референсный расчёт на Python по `docs/calc.md`: считает ожидаемые ответы `fixtures/calc/expected`, тесты — примеры раздела 9 |
 | `redocly.yaml` | Настройки линтера OpenAPI |
 | `AGENTS.md`, `CLAUDE.md` | Инструкции агентам: карта, правила контракта, процесс, `## Code Review Rules` |
