@@ -810,9 +810,18 @@ type Upload struct {
 	OperationCount int64 `protobuf:"varint,5,opt,name=operation_count,json=operationCount,proto3" json:"operation_count,omitempty"`
 	// Непрочитанных строк, ещё не закрытых более поздней загрузкой (FIN-79).
 	UnreadCount int32 `protobuf:"varint,6,opt,name=unread_count,json=unreadCount,proto3" json:"unread_count,omitempty"`
-	// Период файла.
+	// Устарело (FIN-197), замена — period_from. Первая операция в файле; нет, если операций нет.
+	// Удаляется по «Удалению устаревшего» (api.md, «Расширяемость») вместе с REST-полем: минимальная
+	// поддерживаемая версия клиента выше версии с period_from / period_to (FIN-198) и ноль запросов
+	// ListUploads от более старых версий.
+	//
+	// Deprecated: Marked as deprecated in finassist/statementdata/v1/statements.proto.
 	FirstOperationAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=first_operation_at,json=firstOperationAt,proto3,oneof" json:"first_operation_at,omitempty"`
-	LastOperationAt  *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_operation_at,json=lastOperationAt,proto3,oneof" json:"last_operation_at,omitempty"`
+	// Устарело (FIN-197), замена — period_to. Последняя операция в файле; нет, если операций нет.
+	// Удаляется вместе с first_operation_at, по тому же условию.
+	//
+	// Deprecated: Marked as deprecated in finassist/statementdata/v1/statements.proto.
+	LastOperationAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_operation_at,json=lastOperationAt,proto3,oneof" json:"last_operation_at,omitempty"`
 	// Название источника данных («Выписка Т-Банка»).
 	SourceName string `protobuf:"bytes,9,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
 	// Строк этой загрузки, дочитанных более поздними загрузками (FIN-79); строки, заменённые записью
@@ -821,8 +830,17 @@ type Upload struct {
 	// Когда загружена самая поздняя из загрузок, дочитавших строки; есть, только если
 	// resolved_unread_count > 0.
 	ResolvedByUploadedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=resolved_by_uploaded_at,json=resolvedByUploadedAt,proto3,oneof" json:"resolved_by_uploaded_at,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// Первый день периода файла, `YYYY-MM-DD` в поясе профиля, включительно (FIN-197): день минимального
+	// DTSTART по счетам файла среди блоков, где есть и DTSTART, и DTEND; если таких блоков нет — день
+	// первой операции файла (calc.md, раздел 4). Задаётся вместе с period_to: оба есть или обоих нет.
+	// Нет у загрузки в PROCESSING и у файла без периода и без операций.
+	PeriodFrom *string `protobuf:"bytes,12,opt,name=period_from,json=periodFrom,proto3,oneof" json:"period_from,omitempty"`
+	// Последний день периода файла, `YYYY-MM-DD` в поясе профиля, включительно (FIN-197): день
+	// максимального DTEND по тем же блокам; если таких блоков нет — день последней операции файла.
+	// Задаётся вместе с period_from.
+	PeriodTo      *string `protobuf:"bytes,13,opt,name=period_to,json=periodTo,proto3,oneof" json:"period_to,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Upload) Reset() {
@@ -897,6 +915,7 @@ func (x *Upload) GetUnreadCount() int32 {
 	return 0
 }
 
+// Deprecated: Marked as deprecated in finassist/statementdata/v1/statements.proto.
 func (x *Upload) GetFirstOperationAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.FirstOperationAt
@@ -904,6 +923,7 @@ func (x *Upload) GetFirstOperationAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// Deprecated: Marked as deprecated in finassist/statementdata/v1/statements.proto.
 func (x *Upload) GetLastOperationAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.LastOperationAt
@@ -930,6 +950,20 @@ func (x *Upload) GetResolvedByUploadedAt() *timestamppb.Timestamp {
 		return x.ResolvedByUploadedAt
 	}
 	return nil
+}
+
+func (x *Upload) GetPeriodFrom() string {
+	if x != nil && x.PeriodFrom != nil {
+		return *x.PeriodFrom
+	}
+	return ""
+}
+
+func (x *Upload) GetPeriodTo() string {
+	if x != nil && x.PeriodTo != nil {
+		return *x.PeriodTo
+	}
+	return ""
 }
 
 // Сообщение клиентского потока загрузки: заголовок файла или очередной кусок содержимого.
@@ -2294,7 +2328,7 @@ const file_finassist_statementdata_v1_statements_proto_rawDesc = "" +
 	"\x0foperation_count\x18\x02 \x01(\x03R\x0eoperationCount\x12H\n" +
 	"\x12first_operation_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x10firstOperationAt\x12F\n" +
 	"\x11last_operation_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0flastOperationAt\x122\n" +
-	"\x04gaps\x18\x05 \x03(\v2\x1e.finassist.common.v1.TimeRangeR\x04gaps\"\x9f\x05\n" +
+	"\x04gaps\x18\x05 \x03(\v2\x1e.finassist.common.v1.TimeRangeR\x04gaps\"\x8d\x06\n" +
 	"\x06Upload\x12\x1b\n" +
 	"\tupload_id\x18\x01 \x01(\tR\buploadId\x12\x1b\n" +
 	"\tfile_name\x18\x02 \x01(\tR\bfileName\x12@\n" +
@@ -2302,17 +2336,23 @@ const file_finassist_statementdata_v1_statements_proto_rawDesc = "" +
 	"\vuploaded_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"uploadedAt\x12'\n" +
 	"\x0foperation_count\x18\x05 \x01(\x03R\x0eoperationCount\x12!\n" +
-	"\funread_count\x18\x06 \x01(\x05R\vunreadCount\x12M\n" +
-	"\x12first_operation_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x10firstOperationAt\x88\x01\x01\x12K\n" +
-	"\x11last_operation_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampH\x01R\x0flastOperationAt\x88\x01\x01\x12\x1f\n" +
+	"\funread_count\x18\x06 \x01(\x05R\vunreadCount\x12Q\n" +
+	"\x12first_operation_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampB\x02\x18\x01H\x00R\x10firstOperationAt\x88\x01\x01\x12O\n" +
+	"\x11last_operation_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampB\x02\x18\x01H\x01R\x0flastOperationAt\x88\x01\x01\x12\x1f\n" +
 	"\vsource_name\x18\t \x01(\tR\n" +
 	"sourceName\x122\n" +
 	"\x15resolved_unread_count\x18\n" +
 	" \x01(\x05R\x13resolvedUnreadCount\x12V\n" +
-	"\x17resolved_by_uploaded_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampH\x02R\x14resolvedByUploadedAt\x88\x01\x01B\x15\n" +
+	"\x17resolved_by_uploaded_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampH\x02R\x14resolvedByUploadedAt\x88\x01\x01\x12$\n" +
+	"\vperiod_from\x18\f \x01(\tH\x03R\n" +
+	"periodFrom\x88\x01\x01\x12 \n" +
+	"\tperiod_to\x18\r \x01(\tH\x04R\bperiodTo\x88\x01\x01B\x15\n" +
 	"\x13_first_operation_atB\x14\n" +
 	"\x12_last_operation_atB\x1a\n" +
-	"\x18_resolved_by_uploaded_at\"|\n" +
+	"\x18_resolved_by_uploaded_atB\x0e\n" +
+	"\f_period_fromB\f\n" +
+	"\n" +
+	"_period_to\"|\n" +
 	"\x16UploadStatementRequest\x12B\n" +
 	"\x06header\x18\x01 \x01(\v2(.finassist.statementdata.v1.UploadHeaderH\x00R\x06header\x12\x16\n" +
 	"\x05chunk\x18\x02 \x01(\fH\x00R\x05chunkB\x06\n" +
