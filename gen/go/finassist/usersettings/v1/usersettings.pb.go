@@ -27,8 +27,8 @@ type SetUserTimezoneRequest struct {
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// IANA.
 	Timezone string `protobuf:"bytes,2,opt,name=timezone,proto3" json:"timezone,omitempty"`
-	// Монотонная на пользователя, назначает `user`. int32: `user` хранит её в integer (FIN-207);
-	// получатель с более узкой колонкой отказывает при значении, которое в неё не помещается.
+	// Монотонная на пользователя, назначает `user`. int32: производитель и получатели хранят её в
+	// integer, не уже (FIN-207).
 	SettingsVersion int32 `protobuf:"varint,3,opt,name=settings_version,json=settingsVersion,proto3" json:"settings_version,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
