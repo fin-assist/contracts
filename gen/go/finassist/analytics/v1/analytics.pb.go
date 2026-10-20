@@ -2612,7 +2612,7 @@ type UpsertUserMetricsRequest struct {
 	// режется на вызовы только по границам периодов, вызов применяется одной транзакцией (FIN-196).
 	// analytics это не проверяет и вызов не отклоняет (ответственность на bank-statement-data):
 	// период с одним режимом применяется как пришёл, с предупреждением в логе и метрикой
-	// analytics_incomplete_period_snapshots_total (grpc-api.md 9).
+	// finassist_incomplete_period_snapshots_total (grpc-api.md 9).
 	Periods []*PeriodSnapshot `protobuf:"bytes,4,rep,name=periods,proto3" json:"periods,omitempty"`
 	// Периоды, в которых данных больше нет (загрузка удалена). Удаляются для обоих режимов переводов.
 	RemovedPeriods []*PeriodRef `protobuf:"bytes,5,rep,name=removed_periods,json=removedPeriods,proto3" json:"removed_periods,omitempty"`

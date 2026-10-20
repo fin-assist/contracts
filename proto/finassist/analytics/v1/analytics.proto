@@ -559,7 +559,7 @@ message UpsertUserMetricsRequest {
   // режется на вызовы только по границам периодов, вызов применяется одной транзакцией (FIN-196).
   // analytics это не проверяет и вызов не отклоняет (ответственность на bank-statement-data):
   // период с одним режимом применяется как пришёл, с предупреждением в логе и метрикой
-  // analytics_incomplete_period_snapshots_total (grpc-api.md 9).
+  // finassist_incomplete_period_snapshots_total (grpc-api.md 9).
   repeated PeriodSnapshot periods = 4;
   // Периоды, в которых данных больше нет (загрузка удалена). Удаляются для обоих режимов переводов.
   repeated PeriodRef removed_periods = 5;
