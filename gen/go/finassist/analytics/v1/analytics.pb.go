@@ -39,7 +39,9 @@ const (
 	// Посчитали и ничего не нашли (нет регулярных платежей, нет комиссий). Значения нет,
 	// base может быть заполнена.
 	MetricStatus_METRIC_STATUS_NONE MetricStatus = 4
-	// Ставит только analytics: снимка нет или определение сменилось и бэкфилл не дошёл (FIN-5/6).
+	// Ставит только analytics и только когда прежнего значения нет: снимка периода нет или в нём нет
+	// этой метрики (новая в реестре, период ещё не пересчитан). Смена версии определения метрику не
+	// закрывает: до пересчёта отдаётся прежний снимок периода (FIN-6, FIN-196).
 	// В REST — открытый код `unavailable`; клиент трактует неизвестный статус как `locked`.
 	MetricStatus_METRIC_STATUS_UNAVAILABLE MetricStatus = 5
 )
@@ -1791,8 +1793,9 @@ type ScreenState struct {
 	UnreadLinesCount int32 `protobuf:"varint,6,opt,name=unread_lines_count,json=unreadLinesCount,proto3" json:"unread_lines_count,omitempty"`
 	// Когда посчитаны метрики.
 	CalculatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=calculated_at,json=calculatedAt,proto3" json:"calculated_at,omitempty"`
-	// Идёт пересчёт (после смены категории, удаления загрузки, смены пояса, исключения платежа из
-	// регулярных): цифры могут измениться, клиенту стоит запросить аналитику позже.
+	// Идёт пересчёт, вызванный действием пользователя (импорт выписки, смена категории, удаление
+	// загрузки, смена пояса, исключение платежа из регулярных): цифры могут измениться, клиенту стоит запросить
+	// аналитику позже. Пересчёт по новой версии реестра признак не ставит (FIN-196).
 	Recalculating bool `protobuf:"varint,8,opt,name=recalculating,proto3" json:"recalculating,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2244,7 +2247,9 @@ type MetricSnapshot struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ID метрики из реестра (см. список выше).
 	MetricId string `protobuf:"bytes,1,opt,name=metric_id,json=metricId,proto3" json:"metric_id,omitempty"`
-	// Версия определения метрики в реестре; analytics хранит её рядом со значением (FIN-6).
+	// Версия определения метрики в реестре; analytics хранит её рядом со значением (FIN-6) и не
+	// сравнивает с текущей версией реестра: метрика прежней версии отдаётся, пока снимок периода не
+	// заменён пересчитанным (FIN-196).
 	DefinitionVersion int32 `protobuf:"varint,2,opt,name=definition_version,json=definitionVersion,proto3" json:"definition_version,omitempty"`
 	// Значение метрики в том виде, в котором оно уйдёт клиенту.
 	Metric        *Metric `protobuf:"bytes,3,opt,name=metric,proto3" json:"metric,omitempty"`
@@ -2488,7 +2493,9 @@ type UserDataState struct {
 	StaleAfter *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=stale_after,json=staleAfter,proto3,oneof" json:"stale_after,omitempty"`
 	// Полных календарных месяцев с данными.
 	FullMonths int32 `protobuf:"varint,6,opt,name=full_months,json=fullMonths,proto3" json:"full_months,omitempty"`
-	// Идёт пересчёт метрик пользователя.
+	// Идёт пересчёт, вызванный действием пользователя: импорт выписки, смена категории, удаление
+	// загрузки, смена пояса, исключение платежа из регулярных. Пересчёт после релиза, меняющего реестр (новая версия
+	// определений), признак не ставит: снимки заменяются молча, по периодам (FIN-196).
 	Recalculating bool `protobuf:"varint,7,opt,name=recalculating,proto3" json:"recalculating,omitempty"`
 	// Пояс профиля (IANA), в котором посчитаны периоды.
 	TimeZone      string                 `protobuf:"bytes,8,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
@@ -2596,10 +2603,17 @@ type UpsertUserMetricsRequest struct {
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// Монотонная на пользователя (sequence в bank-statement-data). Снимок периода и состояние
 	// применяются, только если calc_version >= сохранённой версии для этого ключа; иначе
-	// пропускаются, но подтверждаются. Повторы — пустые операции.
-	CalcVersion int64             `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
-	State       *UserDataState    `protobuf:"bytes,3,opt,name=state,proto3,oneof" json:"state,omitempty"`
-	Periods     []*PeriodSnapshot `protobuf:"bytes,4,rep,name=periods,proto3" json:"periods,omitempty"`
+	// пропускаются, но подтверждаются. Повторы — пустые операции. Применённый снимок периода
+	// заменяет прежний целиком: метрики разных версий реестра в одном периоде не смешиваются
+	// (FIN-196).
+	CalcVersion int64          `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
+	State       *UserDataState `protobuf:"bytes,3,opt,name=state,proto3,oneof" json:"state,omitempty"`
+	// Снимки обоих режимов переводов одного периода — всегда в этом же вызове: большой пересчёт
+	// режется на вызовы только по границам периодов, вызов применяется одной транзакцией (FIN-196).
+	// analytics это не проверяет и вызов не отклоняет (ответственность на bank-statement-data):
+	// период с одним режимом применяется как пришёл, с предупреждением в логе и метрикой
+	// finassist_incomplete_period_snapshots_total (grpc-api.md 9).
+	Periods []*PeriodSnapshot `protobuf:"bytes,4,rep,name=periods,proto3" json:"periods,omitempty"`
 	// Периоды, в которых данных больше нет (загрузка удалена). Удаляются для обоих режимов переводов.
 	RemovedPeriods []*PeriodRef `protobuf:"bytes,5,rep,name=removed_periods,json=removedPeriods,proto3" json:"removed_periods,omitempty"`
 	unknownFields  protoimpl.UnknownFields
