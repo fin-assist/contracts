@@ -107,5 +107,5 @@ return nil, finerr.LimitExceeded(resetsAt.In(moscow)) // *_at keys are RFC 3339 
 
 Ревью PR — два ревьюера по разделу `## Code Review Rules` в `AGENTS.md`, с отдельными проходами «Безопасность» и «Расширяемость». Запрос — один комментарий в PR, начинающийся с `@codex @claude` (пример — `AGENTS.md`, Workflow).
 
-- `.github/workflows/claude.yml` (FIN-97): упоминание `@claude` запускает Claude Code на Claude Fable 5.1 (`claude-fable-5-1`) — ревью с замечаниями inline на изменённых строках. Нужны GitHub-приложение Claude на репозитории и секрет `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`). Workflow по комментариям запускается из `main`, поэтому правки в нём действуют после мержа.
+- `.github/workflows/claude.yml` (FIN-97): упоминание `@claude` запускает Claude Code на Claude Opus 5.5 (`claude-opus-5-5`, `--effort high`; FIN-204) — ревью с замечаниями inline на изменённых строках. Нужны GitHub-приложение Claude на репозитории и секрет `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`). Workflow по комментариям запускается из `main`, поэтому правки в нём действуют после мержа.
 - `@codex` — интеграция Codex на GitHub по подписке ChatGPT владельца; модель выбирает OpenAI, из репозитория она не задаётся (FIN-103).
