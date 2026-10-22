@@ -8,6 +8,10 @@
 
 Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только выжимка и ссылка сюда. Правится здесь.
 
+## Автоматизация обновлений зависимостей
+
+[Политика Renovate](docs/renovate-policy.md) (FIN-211): одна актуальная release/main, автомерж полностью ботских PR после обязательного CI, один повтор красного CI и закрытие с явным повтором через Dependency Dashboard. AndroidX/Compose остаются на ручной проверке. Исходные группировки, ограничения версий и расписания — `renovate-base.json`; generated target и quarantine — ветка `renovate-policy`. Активация требует отдельного токена и строгой защиты веток; по умолчанию выключена.
+
 ## Раскладка
 
 | Путь | Что |
