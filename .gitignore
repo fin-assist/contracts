@@ -1,2 +1,5 @@
 .bin/
 __pycache__/
+
+# Local Renovate runtime dependencies
+node_modules/
