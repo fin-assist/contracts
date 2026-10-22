@@ -16,5 +16,22 @@
       }
     },
     "comment_id": 6341446084
+  },
+  "29:2646bdd87c2bab8878fa495099ee666867869703": {
+    "state": {
+      "sha": "2646bdd87c2bab8878fa495099ee666867869703",
+      "runs": {
+        "ci.yml": {
+          "run_id": 39786564363,
+          "attempt": 1,
+          "retried": true
+        },
+        "renovate-policy-tests.yml": {
+          "run_id": 39786564341,
+          "attempt": 1,
+          "retried": false
+        }
+      }
+    }
   }
 }
