@@ -8,6 +8,10 @@
 
 Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только выжимка и ссылка сюда. Правится здесь.
 
+## Автоматизация обновлений зависимостей
+
+[Политика Renovate](docs/renovate-policy.md) (FIN-211): одна актуальная release/main, автомерж полностью ботских PR после обязательного CI, один повтор красного CI и закрытие с явным повтором через Dependency Dashboard. AndroidX/Compose остаются на ручной проверке. Исходные группировки, ограничения версий и расписания — `renovate-base.json`; generated target и quarantine — ветка `renovate-policy`. Активация требует отдельного токена и строгой защиты веток; по умолчанию выключена.
+
 ## Раскладка
 
 | Путь | Что |
@@ -109,7 +113,3 @@ return nil, finerr.LimitExceeded(resetsAt.In(moscow)) // *_at keys are RFC 3339 
 
 - `.github/workflows/claude.yml` (FIN-97): упоминание `@claude` запускает Claude Code на Claude Opus 5.5 (`claude-opus-5-5`, `--effort high`; FIN-204) — ревью с замечаниями inline на изменённых строках. Нужны GitHub-приложение Claude на репозитории и секрет `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`). Workflow по комментариям запускается из `main`, поэтому правки в нём действуют после мержа.
 - `@codex` — интеграция Codex на GitHub по подписке ChatGPT владельца; модель выбирает OpenAI, из репозитория она не задаётся (FIN-103).
-
-## Автоматизация обновлений зависимостей
-
-[Политика Renovate](docs/renovate-policy.md) (FIN-211): одна актуальная release/main, автомерж полностью ботских PR после обязательного CI, один повтор красного CI и закрытие с явным повтором через Dependency Dashboard. AndroidX/Compose остаются на ручной проверке. Исходные группировки, ограничения версий и расписания — `renovate-base.json`; generated target и quarantine — ветка `renovate-policy`. Активация требует отдельного токена и строгой защиты веток; по умолчанию выключена.
