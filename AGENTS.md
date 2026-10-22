@@ -237,3 +237,7 @@ The decision of 13.10.2026 («Расширяемость» and «Нотация�
   that can grow.
 - Every new endpoint documents auth, consent, limits and errors; every new gRPC method its callers and call model.
 - A contract change names its client issue.
+
+## Renovate automation
+
+FIN-211: dependency-only Renovate PRs may be merged/closed by the reviewed `renovate-policy.yml` controller, after exact-head required CI and bot-only commit checks. Ordinary PRs and release-to-main PRs still require the owner. Do not enable native automerge or bypass protections. Preserve base policy in `renovate-base.json` (schedules, groups, allowed versions and manual Go upgrades); generated target/version approvals live on the separate `renovate-policy` branch. Failed exact values are isolated for explicit Dashboard approval; new values keep their original groups. AndroidX/Compose and mixed groups never auto-merge. See `docs/renovate-policy.md` for credentials, safeguards, bootstrap and verification.

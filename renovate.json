@@ -1,6 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "local>fin-assist/contracts:base#renovate-policy",
+    "local>fin-assist/contracts:policy#renovate-policy"
+  ],
+  "automerge": false,
+  "dependencyDashboard": true,
+  "prBodyNotes": [
+    "<!-- fin211-updates {{{encodeBase64 (toJSON upgrades)}}} -->"
   ]
 }
