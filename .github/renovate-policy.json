@@ -6,7 +6,8 @@
     "Error registry vs docs/api.md",
     "Go module gen/go (generation, build, tests)",
     "Calculation fixtures (reference calculation, schema)",
-    "Renovate policy tests"
+    "Renovate policy tests",
+    "Renovate runtime contract"
   ],
   "controllerLogin": "avtomon",
   "ciChecks": [
