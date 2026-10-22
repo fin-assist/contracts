@@ -3,3 +3,8 @@ __pycache__/
 
 # Local Renovate runtime dependencies
 node_modules/
+
+# Local Go coverage and CI report artifacts.
+cover.out
+coverage.md
+comment.md
