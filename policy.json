@@ -17,6 +17,19 @@
       ]
     },
     {
+      "description": "FIN-211: recovery of an automatically failed dependency family",
+      "matchPackageNames": [
+        "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
+      ],
+      "matchDatasources": [
+        "go"
+      ],
+      "recreateWhen": "always",
+      "matchJsonata": [
+        "newMajor = 1"
+      ]
+    },
+    {
       "description": "FIN-211: failed twice; retry explicitly in Dependency Dashboard",
       "matchPackageNames": [
         "github.com/bufbuild/buf"
@@ -29,6 +42,23 @@
       "groupName": null,
       "additionalBranchPrefix": "fin211-retry-29-",
       "matchNewValue": "/^v1\\.75\\.0$/",
+      "matchJsonata": [
+        "$not($exists(newDigest)) or newDigest = null"
+      ]
+    },
+    {
+      "description": "FIN-211: failed twice; retry explicitly in Dependency Dashboard",
+      "matchPackageNames": [
+        "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
+      ],
+      "matchDatasources": [
+        "go"
+      ],
+      "dependencyDashboardApproval": true,
+      "recreateWhen": "never",
+      "groupName": null,
+      "additionalBranchPrefix": "fin211-retry-30-",
+      "matchNewValue": "/^v1\\.6\\.2$/",
       "matchJsonata": [
         "$not($exists(newDigest)) or newDigest = null"
       ]
