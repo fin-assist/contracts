@@ -48,6 +48,7 @@ same PR.
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
 | Calculation fixtures: statements, scenario, expected responses, comparison rules (FIN-107); the list of known bank categories (`categories.json`, FIN-200) | `fixtures/calc/` (format and rules — `fixtures/calc/README.md`) |
 | Reference calculation that produces the expected responses (`docs/calc.md`) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
+| Go coverage reports and regression tests | `scripts/coverage-diff.py`, `scripts/test_coverage_diff.py` |
 | PR review by Claude | `.github/workflows/claude.yml` |
 
 ## Checks
@@ -55,7 +56,8 @@ same PR.
 CI (`.github/workflows/ci.yml`, table in `README.md`): `redocly lint`, `oasdiff breaking` against the PR base,
 `buf lint`, `buf breaking`, `check_error_registry.py`, `check_error_spec_stable.py` (error_spec of existing codes
 unchanged against the PR base; the owner accepts a change with `breaking-accepted`), and the Go module job (`gen/go` equals a fresh
-`scripts/generate.sh`, `go build`, `go vet`, `go test`). Run them locally before pushing (commands in `README.md`,
+`scripts/generate.sh`, `go build`, `go vet`, race tests with coverage in both `gen/go` and `tools`,
+and `scripts/test_coverage_diff.py`). Run them locally before pushing (commands in `README.md`,
 «CI»). A PR that changes `proto/` commits the regenerated `gen/go`. `buf` is pinned twice — `tools/go.mod` and
 `BUF_VERSION` in `ci.yml` — and CI fails when they differ. The calculation fixtures job runs the reference
 calculation tests and requires `fixtures/calc/expected` to equal a fresh scenario run that passes `openapi.yaml`
@@ -98,8 +100,7 @@ The rules below are the ones the review checks (Code Review Rules); the full tex
 ### Coverage reports (FIN-210)
 
 CI reports project totals and changed executable lines together from the same profile per Go module in one
-updated PR comment and the run summary; push runs retain project totals. The 80% target remains for changed
-lines only. Count unique lines in blocks with nonzero statement counts, including generated production code;
+updated PR comment and the run summary; push runs retain project totals. Both percentages are informational here; no new coverage target is introduced for generated or handwritten code. Count unique lines in blocks with nonzero statement counts, including generated production code;
 exclude `_test.go` and `testdata/`. An empty profile means no data, never 100%. Fork PRs cannot post comments.
 Test changes to the report with `python3 -m unittest discover -s scripts -p 'test_coverage_diff.py'`.
 
