@@ -17,7 +17,7 @@ jobs:
     name: OpenAPI lint (Redocly)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -29,7 +29,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: oasdiff/oasdiff-action/breaking@main
@@ -44,7 +44,7 @@ jobs:
     name: Protobuf lint and breaking changes (buf)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # buf lint on every run; buf breaking against the PR base on pull requests.
       # format/push are off: sources are kept as is, nothing is pushed to BSR (deps of proto/buf.lock are read from it).
       - uses: bufbuild/buf-action@v1
@@ -63,7 +63,7 @@ jobs:
     name: Error registry vs docs/api.md
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: bufbuild/buf-action@v1
         with:
           version: ${{ env.BUF_VERSION }}
@@ -100,7 +100,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -192,7 +192,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: '3.15'
