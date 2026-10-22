@@ -109,3 +109,17 @@ return nil, finerr.LimitExceeded(resetsAt.In(moscow)) // *_at keys are RFC 3339 
 
 - `.github/workflows/claude.yml` (FIN-97): упоминание `@claude` запускает Claude Code на Claude Opus 5.5 (`claude-opus-5-5`, `--effort high`; FIN-204) — ревью с замечаниями inline на изменённых строках. Нужны GitHub-приложение Claude на репозитории и секрет `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`). Workflow по комментариям запускается из `main`, поэтому правки в нём действуют после мержа.
 - `@codex` — интеграция Codex на GitHub по подписке ChatGPT владельца; модель выбирает OpenAI, из репозитория она не задаётся (FIN-103).
+
+### Общее покрытие и изменённые строки
+
+CI публикует разделы «Покрытие проекта» и «Покрытие изменённых строк» в сводке запуска и одном обновляемом комментарии PR. Оба раздела используют один профиль на Go-модуль, без повторного запуска тестов; на push сохраняется общее покрытие. Комментарий для PR из fork не записывается.
+
+Метрика — уникальные строки внутри блоков Go-профиля с ненулевым числом statements, а не процент statements из `go tool cover`. `_test.go` и `testdata/` исключены; сгенерированный production-код включён на тех же условиях. Повторные блоки разных тестовых бинарей объединяются: достаточно одного выполнения. Без исполняемых строк отчёт сообщает «Нет данных», а не 100 %. Цель **80 %** относится только к изменённым строкам и проверяется на ревью; общий процент её не заменяет.
+
+В `contracts` итог суммирует `gen/go` (включая сгенерированные сообщения и `finerr`) и `tools` (генератор). Пути в таблице относительно корня репозитория, модули не смешиваются:
+
+```bash
+(cd gen/go && go test -race -count=1 -coverpkg=./... -coverprofile=cover.out ./...)
+(cd tools && go test -race -count=1 -coverpkg=./... -coverprofile=cover.out ./...)
+python3 scripts/coverage-diff.py --module-profile gen/go gen/go/cover.out --module-profile tools tools/cover.out --base origin/main
+```

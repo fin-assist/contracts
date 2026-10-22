@@ -95,6 +95,14 @@ The rules below are the ones the review checks (Code Review Rules); the full tex
 - Every new endpoint states who may call it (token or not, which consent), its limits (size, count, rate) and its
   errors.
 
+### Coverage reports (FIN-210)
+
+CI reports project totals and changed executable lines together from the same profile per Go module in one
+updated PR comment and the run summary; push runs retain project totals. The 80% target remains for changed
+lines only. Count unique lines in blocks with nonzero statement counts, including generated production code;
+exclude `_test.go` and `testdata/`. An empty profile means no data, never 100%. Fork PRs cannot post comments.
+Test changes to the report with `python3 -m unittest discover -s scripts -p 'test_coverage_diff.py'`.
+
 ## Workflow
 
 - Branches: `<kind>/<slug>` — `feature/…`, `fix/…`, `tooling/…`. No release branches here: a PR targets `main`.
