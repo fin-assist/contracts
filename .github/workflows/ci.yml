@@ -68,7 +68,7 @@ jobs:
         with:
           version: ${{ env.BUF_VERSION }}
           setup_only: true
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.15'
       - run: pip install 'protobuf>=5,<8'
@@ -193,7 +193,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.15'
       - run: pip install 'pyyaml>=6,<7' 'openapi-schema-validator>=0.6,<0.7' 'rfc3339-validator>=0.1,<0.2'
