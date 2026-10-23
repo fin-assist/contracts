@@ -7,6 +7,6 @@
     "node": "24.x"
   },
   "dependencies": {
-    "renovate": "44.178.5"
+    "renovate": "44.179.2"
   }
 }
