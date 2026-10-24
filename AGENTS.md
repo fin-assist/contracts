@@ -104,6 +104,16 @@ updated PR comment and the run summary; push runs retain project totals. Both pe
 exclude `_test.go` and `testdata/`. An empty profile means no data, never 100%. Fork PRs cannot post comments.
 Test changes to the report with `python3 -m unittest discover -s scripts -p 'test_coverage_diff.py'`.
 
+## SQL construction in Go
+
+Applies when handwritten Go code in this repository needs to build SQL queries.
+
+- **SQL construction:** use [Squirrel](https://github.com/Masterminds/squirrel)
+  (`github.com/Masterminds/squirrel`) instead of assembling SQL by concatenating Go strings wherever the builder
+  supports the query. This is an approved exception to "standard library first". Pass values as query arguments,
+  use `PlaceholderFormat(sq.Dollar)` for PostgreSQL, and keep table and column names constant. If the builder
+  cannot express the query, explain the limitation next to the manual SQL construction and keep it parameterized.
+
 ## Workflow
 
 - Branches: `<kind>/<slug>` — `feature/…`, `fix/…`, `tooling/…`. No release branches here: a PR targets `main`.
