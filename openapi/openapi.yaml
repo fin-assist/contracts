@@ -637,7 +637,8 @@ paths:
         Синхронно, до `202`, проверяется видимое без разбора: размер, формат по содержимому, банк по заголовку
         OFX. Ошибки — обычным HTTP-ответом, загрузка не создаётся: `FILE_TOO_LARGE` (413), `CSV_NOT_ACCEPTED`,
         `WRONG_FORMAT`, `WRONG_BANK` (422). Ошибки разбора операций — событием `error` в потоке прогресса.
-        Повтор с тем же `Idempotency-Key` возвращает ту же загрузку.
+        Повтор с тем же `Idempotency-Key` возвращает ту же загрузку; тело сравнивается по хешу содержимого файла
+        и его имени — тот же ключ с тем же файлом под другим именем даёт 409 `IDEMPOTENCY_CONFLICT`.
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/XRequestId'
