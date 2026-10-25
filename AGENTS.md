@@ -119,7 +119,9 @@ check the six JSON-body routes, their minimum supported 65536-byte transport bud
 Shared raw HTTP examples in `fixtures/requests/body-policy.json` cover actual zero-byte/chunked requests, unexpected
 nonempty bodies and supported/unsupported Content-Encoding. BFF FIN-268 tests enforce the bodyless policy;
 kin-openapi alone does not reject a body on an operation without requestBody. Existing protections of other
-body-bearing routes remain unchanged; the new code/minimum apply only to the six routes.
+body-bearing routes remain: bounded reads and transport 413. For other JSON operations the refusal code and
+byte budget are not yet defined by the contract; agreement belongs to FIN-225, outside FIN-268 implementation.
+The new code/minimum apply only to the six routes; separately documented file limits/codes stay unchanged.
 This BFF-only code is absent from ErrorReason/error_spec/gen/go; FILE_TOO_LARGE remains file-only.
 
 ## Writing the contract
