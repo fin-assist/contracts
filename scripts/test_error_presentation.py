@@ -1,7 +1,7 @@
 """Validate the FIN-224 error examples and producer schema boundaries.
 
 Client display/fallback behavior is implemented and tested in FIN-223; this suite validates the wire contract,
-including old responses, open codes, malformed optional presentation and unchanged retry metadata.
+including old responses, open codes, and schema errors local to malformed optional presentation.
 """
 from __future__ import annotations
 
@@ -61,15 +61,14 @@ class ErrorPresentationSchemaTests(unittest.TestCase):
                 self.assertTrue(self.errors("ErrorSeverity", value))
 
     def test_malformed_presentation_is_local_to_optional_fields(self):
-        # Producers must satisfy the schema. Tolerant consumers must retain code/retry when optional fields are
-        # malformed; demonstrate that these payloads still satisfy the original schema after ignoring only those
-        # fields, rather than accepting diagnostics as UI text or changing the original metadata.
+        # Producers must satisfy the schema. Validate that schema errors concern only the malformed optional
+        # property and that ignoring that property leaves a valid wire payload. Consumer retention of code/retry
+        # metadata is tested in FIN-223, not by comparing a deep copy of the unchanged input here.
         names = {"ErrorResponse", "SseError", "StreamError", "AnswerErrorEvent", "Message"}
         for example in self.examples:
             if example["schema"] not in names:
                 continue
             source = example["value"]
-            original = source.get("error", source)
             history = example["schema"] == "Message"
             text_field = "error_user_message" if history else "user_message"
             severity_field = "error_severity" if history else "severity"
@@ -84,8 +83,6 @@ class ErrorPresentationSchemaTests(unittest.TestCase):
                     self.assertTrue(all(list(e.absolute_path)[-1] == field for e in errors))
                     del error[field]
                     self.assertEqual(self.errors(example["schema"], value), [])
-                    for key in ("code", "error_code", "retry_at", "retryable", "remaining_limit"):
-                        self.assertEqual(error.get(key), original.get(key))
 
 
 if __name__ == "__main__":
