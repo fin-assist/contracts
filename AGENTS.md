@@ -48,7 +48,7 @@ same PR.
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
 | Actual Go OpenAPI engine compatibility, shared error fixtures, Unicode boundaries and optional/non-null fields | `tools/openapicheck/` — test-only `kin-openapi v0.133.0` dependency, run by the existing tools race-test job |
 | Calculation fixtures: statements, scenario, expected responses, comparison rules (FIN-107); the list of known bank categories (`categories.json`, FIN-200) | `fixtures/calc/` (format and rules — `fixtures/calc/README.md`) |
-| Error presentation wire examples and OpenAPI boundaries (FIN-224): REST/SSE/history, old responses, open codes/severity, Unicode text | `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` |
+| Error wire examples and OpenAPI boundaries (FIN-224): REST/SSE/history, old responses, open codes/severity, Unicode text, REST retryable boolean | `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` |
 | Reference calculation that produces the expected responses (`docs/calc.md`) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
 | Go coverage reports and regression tests | `scripts/coverage-diff.py`, `scripts/test_coverage_diff.py` |
 | PR review by Claude | `.github/workflows/claude.yml` |
@@ -81,6 +81,12 @@ not internal services or generated `finerr`; existing assistant proto text field
 (`docs/grpc-api.md`, 5.4). The four new presentation fields are optional but non-null (`optional<T>` in
 `docs/api.md`); producers omit absent values, including both new error fields on non-failed history messages.
 Existing nullable fields keep their semantics. Presentation must not change special actions or retry metadata.
+
+REST `Error.retryable` is a separate optional/non-null boolean combining request-specific retry safety AND
+permission; it does not declare global endpoint idempotency or extend key validity. BFF computes it from the
+known operation and validated error/context; no proof means false. Existing assistant SSE/history retryable
+still authorizes RetryAnswer (new generation/key), not resending the original AskQuestion. Schema tests cover
+true/false/absence and malformed values locally; actual retry-policy/client behavior belongs to FIN-225/FIN-223.
 
 `tools/openapicheck` validates the full specification and the shared error fixtures with the actual Go engine
 selected for REST (`kin-openapi`, pinned to v0.133.0 for this compatibility regression). Stdlib has no OpenAPI

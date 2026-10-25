@@ -60,6 +60,25 @@ class ErrorPresentationSchemaTests(unittest.TestCase):
             with self.subTest(value=repr(value)):
                 self.assertTrue(self.errors("ErrorSeverity", value))
 
+    def test_rest_retryable_is_an_optional_nonnull_boolean(self):
+        # Schema conformance only: method/error retry policy is implemented in FIN-225, decoded in FIN-223.
+        original = {"error": {"code": "RATE_LIMITED", "message": "Rate limited", "user_message": "Попробуйте позже.",
+                              "severity": "warning", "retry_at": "2026-10-25T20:00:00+03:00"}}
+        self.assertEqual(self.errors("ErrorResponse", original), [])
+        for allowed in [True, False]:
+            value = copy.deepcopy(original)
+            value["error"]["retryable"] = allowed
+            self.assertEqual(self.errors("ErrorResponse", value), [])
+        for invalid in [None, 0, 1, "true", "false", [], {}]:
+            with self.subTest(invalid=repr(invalid)):
+                value = copy.deepcopy(original)
+                value["error"]["retryable"] = invalid
+                errors = self.errors("ErrorResponse", value)
+                self.assertTrue(errors)
+                self.assertTrue(all(list(e.absolute_path) == ["error", "retryable"] for e in errors))
+                del value["error"]["retryable"]
+                self.assertEqual(self.errors("ErrorResponse", value), [])
+
     def test_malformed_presentation_is_local_to_optional_fields(self):
         # Producers must satisfy the schema. Validate that schema errors concern only the malformed optional
         # property and that ignoring that property leaves a valid wire payload. Consumer retention of code/retry

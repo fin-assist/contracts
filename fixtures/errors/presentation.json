@@ -2,17 +2,17 @@
   {
     "name": "unknown ordinary REST code",
     "schema": "ErrorResponse",
-    "value": {"error": {"code": "NEW_ORDINARY_ERROR", "message": "Request rejected", "user_message": "Сейчас выполнить действие не получилось. Попробуйте позже.", "severity": "warning"}}
+    "value": {"error": {"code": "NEW_ORDINARY_ERROR", "message": "Request rejected", "user_message": "Сейчас выполнить действие не получилось. Попробуйте позже.", "severity": "warning", "retryable": false}}
   },
   {
     "name": "rate limit keeps its retry time",
     "schema": "ErrorResponse",
-    "value": {"error": {"code": "RATE_LIMITED", "message": "Rate limited", "user_message": "Слишком много попыток. Попробуйте позже.", "severity": "warning", "retry_at": "2026-10-25T20:00:00+03:00"}}
+    "value": {"error": {"code": "RATE_LIMITED", "message": "Rate limited", "user_message": "Слишком много попыток. Попробуйте позже.", "severity": "warning", "retry_at": "2026-10-25T20:00:00+03:00", "retryable": true}}
   },
   {
     "name": "unknown severity retains valid text",
     "schema": "ErrorResponse",
-    "value": {"error": {"code": "NEW_ORDINARY_ERROR", "message": "Request rejected", "user_message": "Попробуйте позже.", "severity": "future_level"}}
+    "value": {"error": {"code": "NEW_ORDINARY_ERROR", "message": "Request rejected", "user_message": "Попробуйте позже.", "severity": "future_level", "retryable": false}}
   },
   {
     "name": "legacy REST response without presentation",
@@ -68,5 +68,15 @@
     "name": "legacy durable failed assistant message",
     "schema": "Message",
     "value": {"id": "answer-1", "role": "assistant", "created_at": "2026-10-25T18:00:00+03:00", "currency": "RUB", "status": "failed", "error_code": "OFF_TOPIC", "error_text": "Помощник отвечает только на вопросы о ваших финансах", "retryable": false, "blocks": []}
+  },
+  {
+    "name": "safe GET still requires corrected input",
+    "schema": "ErrorResponse",
+    "value": {"error": {"code": "VALIDATION_ERROR", "message": "Request validation failed", "user_message": "Проверьте параметры запроса.", "severity": "warning", "retryable": false, "details": [{"field": "date", "code": "INVALID_FORMAT", "message": "Invalid date"}]}}
+  },
+  {
+    "name": "corrected upload is a new logical action",
+    "schema": "ErrorResponse",
+    "value": {"error": {"code": "WRONG_BANK", "message": "Wrong bank", "user_message": "Выберите OFX-выписку Т-Банка.", "severity": "warning", "retryable": false}}
   }
 ]

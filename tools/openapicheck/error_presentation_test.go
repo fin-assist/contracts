@@ -3,6 +3,7 @@ package openapicheck_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -112,7 +113,7 @@ func TestPresentationIsOptionalNonNullWithKinOpenAPI(t *testing.T) {
 		value  map[string]any
 		fields []string
 	}{
-		{"Error", map[string]any{"code": "RATE_LIMITED", "message": "Rate limited", "retry_at": "2026-10-25T20:00:00+03:00"}, []string{"user_message", "severity"}},
+		{"Error", map[string]any{"code": "RATE_LIMITED", "message": "Rate limited", "retry_at": "2026-10-25T20:00:00+03:00"}, []string{"user_message", "severity", "retryable"}},
 		{"SseError", map[string]any{"code": "NEW_ERROR", "message": "Domain failure"}, []string{"user_message", "severity"}},
 		{"StreamError", map[string]any{"code": "CANCELLED", "message": "Import cancelled"}, []string{"user_message", "severity"}},
 		{"AnswerErrorEvent", map[string]any{"code": "MODEL_ERROR", "message": "Answer failed", "text": "Прежний безопасный текст", "retryable": false, "remaining_limit": 5}, []string{"user_message", "severity"}},
@@ -132,5 +133,32 @@ func TestPresentationIsOptionalNonNullWithKinOpenAPI(t *testing.T) {
 				delete(item.value, field)
 			}
 		})
+	}
+}
+
+func TestRESTRetryableIsOptionalNonNullBooleanWithKinOpenAPI(t *testing.T) {
+	wire := schema(t, loadContract(t), "Error")
+	value := map[string]any{"code": "RATE_LIMITED", "message": "Rate limited", "user_message": "Попробуйте позже.",
+		"severity": "warning", "retry_at": "2026-10-25T20:00:00+03:00"}
+	if err := wire.VisitJSON(value); err != nil {
+		t.Fatalf("absent retryable rejected: %v", err)
+	}
+	for _, allowed := range []bool{true, false} {
+		value["retryable"] = allowed
+		if err := wire.VisitJSON(value); err != nil {
+			t.Errorf("retryable=%t rejected: %v", allowed, err)
+		}
+	}
+	for _, invalid := range []any{nil, 0, float64(1), "true", "false", []any{}, map[string]any{}} {
+		value["retryable"] = invalid
+		err := wire.VisitJSON(value)
+		var fieldError *openapi3.SchemaError
+		if !errors.As(err, &fieldError) || strings.Join(fieldError.JSONPointer(), "/") != "retryable" {
+			t.Errorf("invalid retryable type %T must fail locally at retryable: %v", invalid, err)
+		}
+		delete(value, "retryable")
+		if err := wire.VisitJSON(value); err != nil {
+			t.Errorf("ignoring malformed optional retryable did not leave a valid wire payload: %v", err)
+		}
 	}
 }
