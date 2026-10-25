@@ -114,6 +114,7 @@ func TestPresentationIsOptionalNonNullWithKinOpenAPI(t *testing.T) {
 		fields []string
 	}{
 		{"Error", map[string]any{"code": "RATE_LIMITED", "message": "Rate limited", "retry_at": "2026-10-25T20:00:00+03:00"}, []string{"user_message", "severity", "retryable"}},
+		{"ErrorEvent", map[string]any{"code": "NEW_ERROR", "message": "Domain failure"}, []string{"user_message", "severity"}},
 		{"SseError", map[string]any{"code": "NEW_ERROR", "message": "Domain failure"}, []string{"user_message", "severity"}},
 		{"StreamError", map[string]any{"code": "CANCELLED", "message": "Import cancelled"}, []string{"user_message", "severity"}},
 		{"AnswerErrorEvent", map[string]any{"code": "MODEL_ERROR", "message": "Answer failed", "text": "Прежний безопасный текст", "retryable": false, "remaining_limit": 5}, []string{"user_message", "severity"}},

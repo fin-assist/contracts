@@ -321,15 +321,20 @@ func render(importPath string, registry protoreflect.FileDescriptor, codes []cod
 	p("package %s", pkg)
 	p("")
 	p("import (")
+	p("\t\"errors\"")
+	p("\t\"fmt\"")
 	p("\t\"regexp\"")
 	p("\t\"strings\"")
 	p("\t\"time\"")
 	p("")
 	p("\tcommonv1 %q", commonImport)
 	p("\t\"google.golang.org/genproto/googleapis/rpc/errdetails\"")
+	p("\tstatuspb \"google.golang.org/genproto/googleapis/rpc/status\"")
 	p("\t\"google.golang.org/grpc/codes\"")
 	p("\t\"google.golang.org/grpc/status\"")
 	p("\t\"google.golang.org/protobuf/protoadapt\"")
+	p("\t\"google.golang.org/protobuf/proto\"")
+	p("\t\"google.golang.org/protobuf/types/known/anypb\"")
 	p("\t\"google.golang.org/protobuf/types/known/durationpb\"")
 	p(")")
 	p("")
@@ -483,6 +488,165 @@ type REST struct {
 	Violations []*errdetails.BadRequest_FieldViolation
 	// RetryAfter from google.rpc.RetryInfo, when Spec.RetryInfo; always positive then (REST Retry-After).
 	RetryAfter time.Duration
+	// RequestRetryable is service advice for repeating the ORIGINAL RPC only; nil means unknown.
+	// It never authorizes a new operation attempt. The BFF must still verify the whole REST request's safety.
+	RequestRetryable *bool
+}
+
+// WithRequestRetryInfo sets service-owned advice for the original request, preserving other status details.
+// Reapplying the helper replaces the prior advice, so recalculation cannot create duplicate permissions.
+// Nil/plain errors are returned unchanged and do not acquire a positive permission.
+func WithRequestRetryInfo(err error, retryable bool) error {
+	var carrier interface{ GRPCStatus() *status.Status }
+	if err == nil || !errors.As(err, &carrier) {
+		return err
+	}
+	st := carrier.GRPCStatus()
+	if st == nil || st.Code() == codes.OK {
+		return err
+	}
+	if _, valid := decodeStatus(st.Proto()); !valid {
+		return err
+	}
+	// status.FromError would replace a wrapped status message with the whole wrapper Error string.
+	// Keep the underlying message and details, never serialize wrapper diagnostics into the new status.
+	wire := proto.Clone(st.Proto()).(*statuspb.Status)
+	detail, encodeErr := anypb.New(&commonv1.RequestRetryInfo{Retryable: retryable})
+	if encodeErr != nil {
+		return status.Error(codes.Internal, "cannot encode request retry advice")
+	}
+	kept := make([]*anypb.Any, 0, len(wire.Details)+1)
+	for _, existing := range wire.Details {
+		if existing != nil && existing.MessageIs(&commonv1.RequestRetryInfo{}) {
+			continue
+		}
+		kept = append(kept, existing)
+	}
+	wire.Details = append(kept, detail)
+	return status.FromProto(wire).Err()
+}
+
+// ResultError is a decoded nested failure, independent of the unary reason/HTTP registry.
+// It exposes no diagnostic message, request-retry permission or relative request wait.
+type ResultError struct {
+	Code codes.Code
+	Reason string
+	Metadata map[string]string
+	Violations []*errdetails.BadRequest_FieldViolation
+}
+
+// NewResultStatus builds the generic cause/parameters of a failed result. Business state and permission
+// to start a new attempt belong to the surrounding result, not to this payload.
+func NewResultStatus(code codes.Code, reason string, metadata map[string]string) (*statuspb.Status, error) {
+	st, err := status.New(code, reason).WithDetails(&errdetails.ErrorInfo{Domain: Domain, Reason: reason, Metadata: metadata})
+	if err != nil {
+		return nil, err
+	}
+	wire := st.Proto()
+	if _, ok := DecodeResultStatus(wire); !ok {
+		return nil, fmt.Errorf("invalid result status")
+	}
+	return wire, nil
+}
+
+// Standard ErrorInfo machine identifiers; parameters remain opaque until the scenario validates them.
+var reasonPattern = regexp.MustCompile("^[A-Z][A-Z0-9_]+[A-Z0-9]$")
+var metadataKeyPattern = regexp.MustCompile("^[a-z][a-zA-Z0-9_-]+$")
+
+type decodedStatus struct {
+	info *errdetails.ErrorInfo
+	violations []*errdetails.BadRequest_FieldViolation
+	retryAfter time.Duration
+	hasRetryInfo bool
+	requestRetryable *bool
+}
+
+// decodeStatus parses standard details without applying a business reason or unary HTTP policy.
+// Unknown Any extensions are ignored; malformed/duplicate recognized details fail closed.
+func decodeStatus(wire *statuspb.Status) (decodedStatus, bool) {
+	var out decodedStatus
+	if wire == nil || wire.Code <= 0 || wire.Code > int32(codes.Unauthenticated) {
+		return out, false
+	}
+	hasBadRequest := false
+	for _, detail := range wire.Details {
+		if detail == nil {
+			return decodedStatus{}, false
+		}
+		switch {
+		case detail.MessageIs(&errdetails.ErrorInfo{}):
+			if out.info != nil {
+				return decodedStatus{}, false
+			}
+			info := new(errdetails.ErrorInfo)
+			if detail.UnmarshalTo(info) != nil || info.Domain != Domain || len(info.Reason) > 63 || !reasonPattern.MatchString(info.Reason) {
+				return decodedStatus{}, false
+			}
+			for key := range info.Metadata {
+				if len(key) > 64 || !metadataKeyPattern.MatchString(key) {
+					return decodedStatus{}, false
+				}
+			}
+			out.info = info
+		case detail.MessageIs(&errdetails.BadRequest{}):
+			if hasBadRequest {
+				return decodedStatus{}, false
+			}
+			hasBadRequest = true
+			bad := new(errdetails.BadRequest)
+			if detail.UnmarshalTo(bad) != nil || len(bad.FieldViolations) == 0 {
+				return decodedStatus{}, false
+			}
+			for _, violation := range bad.FieldViolations {
+				if violation == nil || violation.Reason == "" {
+					return decodedStatus{}, false
+				}
+			}
+			out.violations = bad.FieldViolations
+		case detail.MessageIs(&errdetails.RetryInfo{}):
+			if out.hasRetryInfo {
+				return decodedStatus{}, false
+			}
+			out.hasRetryInfo = true
+			retry := new(errdetails.RetryInfo)
+			if detail.UnmarshalTo(retry) != nil || retry.RetryDelay == nil || retry.RetryDelay.CheckValid() != nil || retry.RetryDelay.AsDuration() <= 0 {
+				return decodedStatus{}, false
+			}
+			out.retryAfter = retry.RetryDelay.AsDuration()
+			canonical := durationpb.New(out.retryAfter)
+			if canonical.Seconds != retry.RetryDelay.Seconds || canonical.Nanos != retry.RetryDelay.Nanos {
+				return decodedStatus{}, false
+			}
+		case detail.MessageIs(&commonv1.RequestRetryInfo{}):
+			if out.requestRetryable != nil {
+				return decodedStatus{}, false
+			}
+			advice := new(commonv1.RequestRetryInfo)
+			if detail.UnmarshalTo(advice) != nil {
+				return decodedStatus{}, false
+			}
+			out.requestRetryable = &advice.Retryable
+		}
+	}
+	if out.info == nil {
+		return decodedStatus{}, false
+	}
+	return out, true
+}
+
+// DecodeResultStatus reads the initial nested-result profile: a non-OK status with one open ErrorInfo
+// and optional validation details. RequestRetryInfo and RetryInfo are forbidden in this profile: watch/list
+// succeeded, and new-attempt permission/wait belongs to the outer operation. Unknown extensions are ignored.
+func DecodeResultStatus(wire *statuspb.Status) (ResultError, bool) {
+	decoded, ok := decodeStatus(wire)
+	if !ok || decoded.requestRetryable != nil || decoded.hasRetryInfo {
+		return ResultError{}, false
+	}
+	metadata := make(map[string]string, len(decoded.info.Metadata))
+	for key, value := range decoded.info.Metadata {
+		metadata[key] = value
+	}
+	return ResultError{Code: codes.Code(wire.Code), Reason: decoded.info.Reason, Metadata: metadata, Violations: decoded.violations}, true
 }
 
 // ToREST reads a registry error from a gRPC error. ok is false when the error carries no finassist ErrorInfo, the
@@ -494,24 +658,12 @@ func ToREST(err error) (rest REST, ok bool) {
 	if !isStatus || st.Code() == codes.OK {
 		return REST{}, false
 	}
-	var info *errdetails.ErrorInfo
-	for _, d := range st.Details() {
-		switch d := d.(type) {
-		case *errdetails.ErrorInfo:
-			if d.GetDomain() == Domain && info == nil {
-				info = d
-			}
-		case *errdetails.BadRequest:
-			rest.Violations = append(rest.Violations, d.GetFieldViolations()...)
-		case *errdetails.RetryInfo:
-			if d.GetRetryDelay() != nil {
-				rest.RetryAfter = d.GetRetryDelay().AsDuration()
-			}
-		}
-	}
-	if info == nil {
+	decoded, valid := decodeStatus(st.Proto())
+	if !valid {
 		return REST{}, false
 	}
+	info := decoded.info
+	rest.Violations, rest.RetryAfter, rest.RequestRetryable = decoded.violations, decoded.retryAfter, decoded.requestRetryable
 	spec, known := Lookup(info.GetReason())
 	if !known {
 		return REST{}, false

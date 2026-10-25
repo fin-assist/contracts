@@ -84,9 +84,29 @@ Existing nullable fields keep their semantics. Presentation must not change spec
 
 REST `Error.retryable` is a separate optional/non-null boolean combining request-specific retry safety AND
 permission; it does not declare global endpoint idempotency or extend key validity. BFF computes it from the
-known operation and validated error/context; no proof means false. Existing assistant SSE/history retryable
-still authorizes RetryAnswer (new generation/key), not resending the original AskQuestion. Schema tests cover
+service-owned original-RPC permission (`common.v1.RequestRetryInfo`) AND verified safety of the WHOLE outer
+REST call; no proof/absent advice means false. Do not infer business permission by reason/code in the BFF. Existing assistant SSE/history retryable
+still authorizes RetryAnswer (new generation/key), not resending the original AskQuestion. Generic request advice
+never authorizes a new operation attempt. Preserve documented auth/maintenance recovery flows separately from
+unchanged-context direct retry, with the same original key and actual safety/TTL checks. Schema tests cover
 true/false/absence and malformed values locally; actual retry-policy/client behavior belongs to FIN-225/FIN-223.
+
+FIN-224 reuses google.rpc.Status and standard details for unary and nested result failures. New additive fields
+are AnswerError.status=6, Message.error=14 and ImportStreamError.status=3; old fields/events/types/numbers dual-write
+until decoder rollout and recorded rollback floors. Initial nested profile forbids RequestRetryInfo and RetryInfo:
+reading the failed resource succeeded; domain new-attempt permission/quotas remain outside the common error.
+Absent canonical payload uses the legacy adapter; valid open reason wins; present-invalid fails safely without
+resurrecting a conflicting legacy action. ErrorEvent is the neutral external schema; keep SseError as a ref alias.
+Generator owns WithRequestRetryInfo, REST.RequestRetryable and NewResultStatus/DecodeResultStatus. Preserve recognized
+detail validation, unknown Any compatibility and wrapped-status diagnostics protection. This is a generated Go API
+addition: owner-created immutable gen/go tag after merge precedes dependent backend/library PRs. Existing error_spec
+and constructor signatures stay unchanged. The cached phone429 advice-loss path in go-idempotency needs a separate
+rollout prerequisite; do not claim that library/service change implemented here.
+
+Clock rules live in docs/api.md, “Время ожидания и часы”: fresh server duration plus sleep-aware monotonic elapsed;
+BFF Date on fresh responses including errors; same-response Date fallback is approximate UI, never authorization,
+permission or key-age proof. No new server_time fields, no wall-clock countdown or restart of stale duration after
+a lost anchor/reboot. Runtime behavior tests belong to consumers.
 
 `tools/openapicheck` validates the full specification and the shared error fixtures with the actual Go engine
 selected for REST (`kin-openapi`, pinned to v0.133.0 for this compatibility regression). Stdlib has no OpenAPI

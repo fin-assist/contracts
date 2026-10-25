@@ -3,6 +3,8 @@ version: v2
 # Go module buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go is built from (v1.36.12-20260825204119-511051f7f437.2).
 deps:
   - buf.build/bufbuild/protovalidate:511051f7f4374c3ca873b53ae68a9288
+  # Standard google.rpc.Status; exact source commit and digest are pinned in buf.lock.
+  - buf.build/googleapis/googleapis:8ac61b9e502343289c8c42b17aa5b245
 lint:
   use: [STANDARD]
   ignore_only:

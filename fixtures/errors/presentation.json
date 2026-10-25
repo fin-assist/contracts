@@ -26,7 +26,7 @@
   },
   {
     "name": "generic SSE presentation",
-    "schema": "SseError",
+    "schema": "ErrorEvent",
     "value": {"code": "NEW_ORDINARY_ERROR", "message": "Domain failure", "user_message": "Сейчас выполнить действие не получилось.", "severity": "error"}
   },
   {

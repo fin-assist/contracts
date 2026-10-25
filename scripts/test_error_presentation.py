@@ -83,7 +83,7 @@ class ErrorPresentationSchemaTests(unittest.TestCase):
         # Producers must satisfy the schema. Validate that schema errors concern only the malformed optional
         # property and that ignoring that property leaves a valid wire payload. Consumer retention of code/retry
         # metadata is tested in FIN-223, not by comparing a deep copy of the unchanged input here.
-        names = {"ErrorResponse", "SseError", "StreamError", "AnswerErrorEvent", "Message"}
+        names = {"ErrorResponse", "ErrorEvent", "SseError", "StreamError", "AnswerErrorEvent", "Message"}
         for example in self.examples:
             if example["schema"] not in names:
                 continue
