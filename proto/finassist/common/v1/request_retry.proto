@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package finassist.common.v1;
+
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/common/v1;commonv1";
+
+// Необязательная деталь google.rpc.Status: разрешение сервиса повторить только исходный запрос.
+// Отсутствие детали — разрешение неизвестно; false — прямой повтор запрещён; true — разрешён
+// в рамках условий метода. Идемпотентность, действительность ключа и время ожидания проверяются
+// отдельно; google.rpc.RetryInfo задаёт задержку, а не разрешение. Эта деталь не разрешает
+// новую попытку операции и не передаётся во вложенных ошибках результата/истории.
+message RequestRetryInfo {
+  bool retryable = 1;
+}

@@ -1,0 +1,108 @@
+"""Validate the FIN-224 error examples and producer schema boundaries.
+
+Client display/fallback behavior is implemented and tested in FIN-223; this suite validates the wire contract,
+including old responses, open codes, and schema errors local to malformed optional presentation.
+"""
+from __future__ import annotations
+
+import copy
+import json
+from pathlib import Path
+import unittest
+
+import yaml
+from openapi_schema_validator import OAS30Validator
+from referencing import Registry, Resource
+from referencing.jsonschema import DRAFT4
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class ErrorPresentationSchemaTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        spec = yaml.safe_load((ROOT / "openapi/openapi.yaml").read_text(encoding="utf-8"))
+        cls.registry = Registry().with_resource("openapi.yaml", Resource.from_contents(spec, DRAFT4))
+        cls.examples = json.loads((ROOT / "fixtures/errors/presentation.json").read_text(encoding="utf-8"))
+
+    def errors(self, name, value):
+        schema = {"$ref": f"openapi.yaml#/components/schemas/{name}"}
+        validator = OAS30Validator(schema, registry=self.registry, format_checker=OAS30Validator.FORMAT_CHECKER)
+        return list(validator.iter_errors(value))
+
+    def test_wire_examples(self):
+        for example in self.examples:
+            with self.subTest(example=example["name"]):
+                self.assertEqual(self.errors(example["schema"], example["value"]), [])
+
+    def test_text_is_bounded_in_unicode_code_points(self):
+        for value in ["Я", "🪙" * 1000, "\u200b", "\u00a0Текст\u3000"]:
+            with self.subTest(value=value[:20]):
+                self.assertEqual(self.errors("UserMessage", value), [])
+        for value in ["", "я" * 1001, "🪙" * 1001, None, 1, [], {}]:
+            with self.subTest(value=repr(value)[:20]):
+                self.assertTrue(self.errors("UserMessage", value))
+
+    def test_nonblank_uses_the_documented_unicode_white_space_set(self):
+        # Explicit code points avoid language-specific isspace/trim/regex shorthand differences.
+        points = list(range(0x9, 0xE)) + [0x20, 0x85, 0xA0, 0x1680] + list(range(0x2000, 0x200B))
+        points += [0x2028, 0x2029, 0x202F, 0x205F, 0x3000]
+        for value in [chr(point) for point in points] + ["".join(map(chr, points))]:
+            with self.subTest(value=repr(value)):
+                self.assertTrue(self.errors("UserMessage", value))
+
+    def test_severity_is_open(self):
+        for value in ["info", "warning", "error", "future_level"]:
+            with self.subTest(value=value):
+                self.assertEqual(self.errors("ErrorSeverity", value), [])
+        for value in [None, 1, [], {}]:
+            with self.subTest(value=repr(value)):
+                self.assertTrue(self.errors("ErrorSeverity", value))
+
+    def test_rest_retryable_is_an_optional_nonnull_boolean(self):
+        # Schema conformance only: method/error retry policy is implemented in FIN-225, decoded in FIN-223.
+        original = {"error": {"code": "RATE_LIMITED", "message": "Rate limited", "user_message": "Попробуйте позже.",
+                              "severity": "warning", "retry_at": "2026-10-25T20:00:00+03:00"}}
+        self.assertEqual(self.errors("ErrorResponse", original), [])
+        for allowed in [True, False]:
+            value = copy.deepcopy(original)
+            value["error"]["retryable"] = allowed
+            self.assertEqual(self.errors("ErrorResponse", value), [])
+        for invalid in [None, 0, 1, "true", "false", [], {}]:
+            with self.subTest(invalid=repr(invalid)):
+                value = copy.deepcopy(original)
+                value["error"]["retryable"] = invalid
+                errors = self.errors("ErrorResponse", value)
+                self.assertTrue(errors)
+                self.assertTrue(all(list(e.absolute_path) == ["error", "retryable"] for e in errors))
+                del value["error"]["retryable"]
+                self.assertEqual(self.errors("ErrorResponse", value), [])
+
+    def test_malformed_presentation_is_local_to_optional_fields(self):
+        # Producers must satisfy the schema. Validate that schema errors concern only the malformed optional
+        # property and that ignoring that property leaves a valid wire payload. Consumer retention of code/retry
+        # metadata is tested in FIN-223, not by comparing a deep copy of the unchanged input here.
+        names = {"ErrorResponse", "ErrorEvent", "SseError", "StreamError", "AnswerErrorEvent", "Message"}
+        for example in self.examples:
+            if example["schema"] not in names:
+                continue
+            source = example["value"]
+            history = example["schema"] == "Message"
+            text_field = "error_user_message" if history else "user_message"
+            severity_field = "error_severity" if history else "severity"
+            for field, invalid in [(text_field, " "), (text_field, None), (text_field, {}),
+                                   (severity_field, []), (severity_field, None)]:
+                with self.subTest(example=example["name"], field=field, invalid=invalid):
+                    value = copy.deepcopy(source)
+                    error = value.get("error", value)
+                    error[field] = invalid
+                    errors = self.errors(example["schema"], value)
+                    self.assertTrue(errors)
+                    self.assertTrue(all(list(e.absolute_path)[-1] == field for e in errors))
+                    del error[field]
+                    self.assertEqual(self.errors(example["schema"], value), [])
+
+
+if __name__ == "__main__":
+    unittest.main()

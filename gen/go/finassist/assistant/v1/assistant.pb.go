@@ -8,6 +8,7 @@ package assistantv1
 
 import (
 	v1 "github.com/fin-assist/contracts/gen/go/finassist/common/v1"
+	status "google.golang.org/genproto/googleapis/rpc/status"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -334,8 +335,8 @@ func (AnswerStatus) EnumDescriptor() ([]byte, []int) {
 	return file_finassist_assistant_v1_assistant_proto_rawDescGZIP(), []int{5}
 }
 
-// Почему ответ не получился. Набор растёт; текст и возможность повтора задают AnswerError.text и
-// AnswerError.retryable (Message.error_text, Message.retryable), а не код (FIN-159).
+// Почему ответ не получился. Набор растёт; возможность повтора задают AnswerError.retryable и
+// Message.retryable (FIN-159). Представление ошибки формирует bank-bff по коду (FIN-224).
 type AnswerErrorCode int32
 
 const (
@@ -1039,11 +1040,17 @@ type Message struct {
 	// Валюта сумм в blocks (ISO 4217), у каждого сообщения; сейчас RUB (FIN-82). У вопроса и у сообщений,
 	// сохранённых до поля, — RUB (валюты в профиле пока нет); пустая строка — ошибка сервиса (grpc-api.md 5.3).
 	Currency string `protobuf:"bytes,11,opt,name=currency,proto3" json:"currency,omitempty"`
-	// Только у FAILED, заполнено всегда: готовый текст для пользователя, как AnswerError.text. У ответов,
-	// сохранённых до поля, assistant заполняет его по error_code при чтении.
+	// Прежняя строка ошибки у FAILED; сохраняется для совместимости формата. Новый bank-bff её
+	// игнорирует и формирует представление по error_code. Сервис прекращает заполнение только после
+	// обновления всех bank-bff и фиксации границ отката (grpc-api.md 5.4, FIN-224).
 	ErrorText *string `protobuf:"bytes,12,opt,name=error_text,json=errorText,proto3,oneof" json:"error_text,omitempty"`
 	// Только у FAILED, заполнено всегда: доступен ли повтор (RetryAnswer), как AnswerError.retryable.
-	Retryable     *bool `protobuf:"varint,13,opt,name=retryable,proto3,oneof" json:"retryable,omitempty"`
+	Retryable *bool `protobuf:"varint,13,opt,name=retryable,proto3,oneof" json:"retryable,omitempty"`
+	// Только у FAILED: общая ошибка результата. Не меняет успешный транспорт ListMessages.
+	// Код причины открыт в ErrorInfo; RequestRetryInfo и RetryInfo здесь не передаются.
+	// Разрешение новой генерации остаётся в retryable, квоты и списание — вне общей ошибки.
+	// Пока обновляются потребители, прежние error_code/error_text заполняются параллельно (grpc-api.md 5.5).
+	Error         *status.Status `protobuf:"bytes,14,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1167,6 +1174,13 @@ func (x *Message) GetRetryable() bool {
 		return *x.Retryable
 	}
 	return false
+}
+
+func (x *Message) GetError() *status.Status {
+	if x != nil {
+		return x.Error
+	}
+	return nil
 }
 
 // Новый вопрос помощнику.
@@ -1582,10 +1596,16 @@ type AnswerError struct {
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	// Остаток после возврата попытки.
 	RemainingLimit int32 `protobuf:"varint,3,opt,name=remaining_limit,json=remainingLimit,proto3" json:"remaining_limit,omitempty"`
-	// Готовый текст для пользователя; заполнен всегда, пустая строка — ошибка сервиса (grpc-api.md 5.3).
+	// Прежняя строка ошибки; сохраняется для совместимости формата. Новый bank-bff её игнорирует.
+	// Прекращение заполнения — только после обновления bank-bff и фиксации границ отката (grpc-api.md 5.4).
 	Text string `protobuf:"bytes,4,opt,name=text,proto3" json:"text,omitempty"`
-	// Доступен ли повтор (RetryAnswer); сейчас true только у MODEL_ERROR.
-	Retryable     bool `protobuf:"varint,5,opt,name=retryable,proto3" json:"retryable,omitempty"`
+	// Доступен ли повтор (RetryAnswer); сейчас true только у MODEL_ERROR. Авторитетно, включая false,
+	// независимо от строки text. Новый bank-bff требует версию assistant с этим правилом (FIN-224).
+	Retryable bool `protobuf:"varint,5,opt,name=retryable,proto3" json:"retryable,omitempty"`
+	// Общая ошибка результата; внешний поток завершается OK. RequestRetryInfo/RetryInfo не передаются.
+	// remaining_limit и разрешение новой генерации retryable остаются свойствами результата.
+	// Прежние поля заполняются параллельно для старых потребителей (grpc-api.md 5.5).
+	Status        *status.Status `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1653,6 +1673,13 @@ func (x *AnswerError) GetRetryable() bool {
 		return x.Retryable
 	}
 	return false
+}
+
+func (x *AnswerError) GetStatus() *status.Status {
+	if x != nil {
+		return x.Status
+	}
+	return nil
 }
 
 // Событие потока ответа.
@@ -2158,7 +2185,7 @@ var File_finassist_assistant_v1_assistant_proto protoreflect.FileDescriptor
 
 const file_finassist_assistant_v1_assistant_proto_rawDesc = "" +
 	"\n" +
-	"&finassist/assistant/v1/assistant.proto\x12\x16finassist.assistant.v1\x1a finassist/common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa0\x01\n" +
+	"&finassist/assistant/v1/assistant.proto\x12\x16finassist.assistant.v1\x1a finassist/common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17google/rpc/status.proto\"\xa0\x01\n" +
 	"\n" +
 	"ChartPoint\x124\n" +
 	"\x05range\x18\x01 \x01(\v2\x1e.finassist.common.v1.TimeRangeR\x05range\x12\x19\n" +
@@ -2209,7 +2236,7 @@ const file_finassist_assistant_v1_assistant_proto_rawDesc = "" +
 	"data_range\x18\x02 \x01(\v2\x1e.finassist.common.v1.TimeRangeH\x00R\tdataRange\x88\x01\x01\x12F\n" +
 	"\rtransfer_mode\x18\x03 \x01(\x0e2!.finassist.common.v1.TransferModeR\ftransferMode\x12I\n" +
 	"\rchanged_since\x18\x04 \x03(\x0e2$.finassist.assistant.v1.ChangedSinceR\fchangedSinceB\r\n" +
-	"\v_data_range\"\x92\x05\n" +
+	"\v_data_range\"\xbc\x05\n" +
 	"\aMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x120\n" +
 	"\x04role\x18\x02 \x01(\x0e2\x1c.finassist.assistant.v1.RoleR\x04role\x129\n" +
@@ -2227,7 +2254,8 @@ const file_finassist_assistant_v1_assistant_proto_rawDesc = "" +
 	"\bcurrency\x18\v \x01(\tR\bcurrency\x12\"\n" +
 	"\n" +
 	"error_text\x18\f \x01(\tH\x03R\terrorText\x88\x01\x01\x12!\n" +
-	"\tretryable\x18\r \x01(\bH\x04R\tretryable\x88\x01\x01B\a\n" +
+	"\tretryable\x18\r \x01(\bH\x04R\tretryable\x88\x01\x01\x12(\n" +
+	"\x05error\x18\x0e \x01(\v2\x12.google.rpc.StatusR\x05errorB\a\n" +
 	"\x05_textB\n" +
 	"\n" +
 	"\b_chargedB\t\n" +
@@ -2260,13 +2288,14 @@ const file_finassist_assistant_v1_assistant_proto_rawDesc = "" +
 	"\n" +
 	"AnswerDone\x12\x18\n" +
 	"\acharged\x18\x01 \x01(\bR\acharged\x12'\n" +
-	"\x0fremaining_limit\x18\x02 \x01(\x05R\x0eremainingLimit\"\xbf\x01\n" +
+	"\x0fremaining_limit\x18\x02 \x01(\x05R\x0eremainingLimit\"\xeb\x01\n" +
 	"\vAnswerError\x12;\n" +
 	"\x04code\x18\x01 \x01(\x0e2'.finassist.assistant.v1.AnswerErrorCodeR\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12'\n" +
 	"\x0fremaining_limit\x18\x03 \x01(\x05R\x0eremainingLimit\x12\x12\n" +
 	"\x04text\x18\x04 \x01(\tR\x04text\x12\x1c\n" +
-	"\tretryable\x18\x05 \x01(\bR\tretryable\"\xe6\x03\n" +
+	"\tretryable\x18\x05 \x01(\bR\tretryable\x12*\n" +
+	"\x06status\x18\x06 \x01(\v2\x12.google.rpc.StatusR\x06status\"\xe6\x03\n" +
 	"\x13WatchAnswerResponse\x12D\n" +
 	"\bsnapshot\x18\x01 \x01(\v2&.finassist.assistant.v1.AnswerSnapshotH\x00R\bsnapshot\x12;\n" +
 	"\x05chunk\x18\x02 \x01(\v2#.finassist.assistant.v1.AnswerChunkH\x00R\x05chunk\x12;\n" +
@@ -2386,6 +2415,7 @@ var file_finassist_assistant_v1_assistant_proto_goTypes = []any{
 	(*v1.AnalyticsParams)(nil),    // 34: finassist.common.v1.AnalyticsParams
 	(*timestamppb.Timestamp)(nil), // 35: google.protobuf.Timestamp
 	(v1.TransferMode)(0),          // 36: finassist.common.v1.TransferMode
+	(*status.Status)(nil),         // 37: google.rpc.Status
 }
 var file_finassist_assistant_v1_assistant_proto_depIdxs = []int32{
 	31, // 0: finassist.assistant.v1.ChartPoint.range:type_name -> finassist.common.v1.TimeRange
@@ -2411,38 +2441,40 @@ var file_finassist_assistant_v1_assistant_proto_depIdxs = []int32{
 	12, // 20: finassist.assistant.v1.Message.blocks:type_name -> finassist.assistant.v1.Block
 	13, // 21: finassist.assistant.v1.Message.chips:type_name -> finassist.assistant.v1.Chip
 	14, // 22: finassist.assistant.v1.Message.source:type_name -> finassist.assistant.v1.AnswerSource
-	36, // 23: finassist.assistant.v1.AskQuestionRequest.transfer_mode:type_name -> finassist.common.v1.TransferMode
-	15, // 24: finassist.assistant.v1.AskQuestionResponse.question:type_name -> finassist.assistant.v1.Message
-	5,  // 25: finassist.assistant.v1.AnswerSnapshot.status:type_name -> finassist.assistant.v1.AnswerStatus
-	12, // 26: finassist.assistant.v1.AnswerSnapshot.blocks:type_name -> finassist.assistant.v1.Block
-	13, // 27: finassist.assistant.v1.AnswerSnapshot.chips:type_name -> finassist.assistant.v1.Chip
-	14, // 28: finassist.assistant.v1.AnswerSnapshot.source:type_name -> finassist.assistant.v1.AnswerSource
-	12, // 29: finassist.assistant.v1.AnswerBlock.block:type_name -> finassist.assistant.v1.Block
-	6,  // 30: finassist.assistant.v1.AnswerError.code:type_name -> finassist.assistant.v1.AnswerErrorCode
-	19, // 31: finassist.assistant.v1.WatchAnswerResponse.snapshot:type_name -> finassist.assistant.v1.AnswerSnapshot
-	20, // 32: finassist.assistant.v1.WatchAnswerResponse.chunk:type_name -> finassist.assistant.v1.AnswerChunk
-	21, // 33: finassist.assistant.v1.WatchAnswerResponse.block:type_name -> finassist.assistant.v1.AnswerBlock
-	14, // 34: finassist.assistant.v1.WatchAnswerResponse.source:type_name -> finassist.assistant.v1.AnswerSource
-	13, // 35: finassist.assistant.v1.WatchAnswerResponse.chip:type_name -> finassist.assistant.v1.Chip
-	22, // 36: finassist.assistant.v1.WatchAnswerResponse.done:type_name -> finassist.assistant.v1.AnswerDone
-	23, // 37: finassist.assistant.v1.WatchAnswerResponse.error:type_name -> finassist.assistant.v1.AnswerError
-	15, // 38: finassist.assistant.v1.ListMessagesResponse.messages:type_name -> finassist.assistant.v1.Message
-	35, // 39: finassist.assistant.v1.GetLimitResponse.resets_at:type_name -> google.protobuf.Timestamp
-	16, // 40: finassist.assistant.v1.AssistantService.AskQuestion:input_type -> finassist.assistant.v1.AskQuestionRequest
-	18, // 41: finassist.assistant.v1.AssistantService.WatchAnswer:input_type -> finassist.assistant.v1.WatchAnswerRequest
-	25, // 42: finassist.assistant.v1.AssistantService.ListMessages:input_type -> finassist.assistant.v1.ListMessagesRequest
-	27, // 43: finassist.assistant.v1.AssistantService.RetryAnswer:input_type -> finassist.assistant.v1.RetryAnswerRequest
-	29, // 44: finassist.assistant.v1.AssistantService.GetLimit:input_type -> finassist.assistant.v1.GetLimitRequest
-	17, // 45: finassist.assistant.v1.AssistantService.AskQuestion:output_type -> finassist.assistant.v1.AskQuestionResponse
-	24, // 46: finassist.assistant.v1.AssistantService.WatchAnswer:output_type -> finassist.assistant.v1.WatchAnswerResponse
-	26, // 47: finassist.assistant.v1.AssistantService.ListMessages:output_type -> finassist.assistant.v1.ListMessagesResponse
-	28, // 48: finassist.assistant.v1.AssistantService.RetryAnswer:output_type -> finassist.assistant.v1.RetryAnswerResponse
-	30, // 49: finassist.assistant.v1.AssistantService.GetLimit:output_type -> finassist.assistant.v1.GetLimitResponse
-	45, // [45:50] is the sub-list for method output_type
-	40, // [40:45] is the sub-list for method input_type
-	40, // [40:40] is the sub-list for extension type_name
-	40, // [40:40] is the sub-list for extension extendee
-	0,  // [0:40] is the sub-list for field type_name
+	37, // 23: finassist.assistant.v1.Message.error:type_name -> google.rpc.Status
+	36, // 24: finassist.assistant.v1.AskQuestionRequest.transfer_mode:type_name -> finassist.common.v1.TransferMode
+	15, // 25: finassist.assistant.v1.AskQuestionResponse.question:type_name -> finassist.assistant.v1.Message
+	5,  // 26: finassist.assistant.v1.AnswerSnapshot.status:type_name -> finassist.assistant.v1.AnswerStatus
+	12, // 27: finassist.assistant.v1.AnswerSnapshot.blocks:type_name -> finassist.assistant.v1.Block
+	13, // 28: finassist.assistant.v1.AnswerSnapshot.chips:type_name -> finassist.assistant.v1.Chip
+	14, // 29: finassist.assistant.v1.AnswerSnapshot.source:type_name -> finassist.assistant.v1.AnswerSource
+	12, // 30: finassist.assistant.v1.AnswerBlock.block:type_name -> finassist.assistant.v1.Block
+	6,  // 31: finassist.assistant.v1.AnswerError.code:type_name -> finassist.assistant.v1.AnswerErrorCode
+	37, // 32: finassist.assistant.v1.AnswerError.status:type_name -> google.rpc.Status
+	19, // 33: finassist.assistant.v1.WatchAnswerResponse.snapshot:type_name -> finassist.assistant.v1.AnswerSnapshot
+	20, // 34: finassist.assistant.v1.WatchAnswerResponse.chunk:type_name -> finassist.assistant.v1.AnswerChunk
+	21, // 35: finassist.assistant.v1.WatchAnswerResponse.block:type_name -> finassist.assistant.v1.AnswerBlock
+	14, // 36: finassist.assistant.v1.WatchAnswerResponse.source:type_name -> finassist.assistant.v1.AnswerSource
+	13, // 37: finassist.assistant.v1.WatchAnswerResponse.chip:type_name -> finassist.assistant.v1.Chip
+	22, // 38: finassist.assistant.v1.WatchAnswerResponse.done:type_name -> finassist.assistant.v1.AnswerDone
+	23, // 39: finassist.assistant.v1.WatchAnswerResponse.error:type_name -> finassist.assistant.v1.AnswerError
+	15, // 40: finassist.assistant.v1.ListMessagesResponse.messages:type_name -> finassist.assistant.v1.Message
+	35, // 41: finassist.assistant.v1.GetLimitResponse.resets_at:type_name -> google.protobuf.Timestamp
+	16, // 42: finassist.assistant.v1.AssistantService.AskQuestion:input_type -> finassist.assistant.v1.AskQuestionRequest
+	18, // 43: finassist.assistant.v1.AssistantService.WatchAnswer:input_type -> finassist.assistant.v1.WatchAnswerRequest
+	25, // 44: finassist.assistant.v1.AssistantService.ListMessages:input_type -> finassist.assistant.v1.ListMessagesRequest
+	27, // 45: finassist.assistant.v1.AssistantService.RetryAnswer:input_type -> finassist.assistant.v1.RetryAnswerRequest
+	29, // 46: finassist.assistant.v1.AssistantService.GetLimit:input_type -> finassist.assistant.v1.GetLimitRequest
+	17, // 47: finassist.assistant.v1.AssistantService.AskQuestion:output_type -> finassist.assistant.v1.AskQuestionResponse
+	24, // 48: finassist.assistant.v1.AssistantService.WatchAnswer:output_type -> finassist.assistant.v1.WatchAnswerResponse
+	26, // 49: finassist.assistant.v1.AssistantService.ListMessages:output_type -> finassist.assistant.v1.ListMessagesResponse
+	28, // 50: finassist.assistant.v1.AssistantService.RetryAnswer:output_type -> finassist.assistant.v1.RetryAnswerResponse
+	30, // 51: finassist.assistant.v1.AssistantService.GetLimit:output_type -> finassist.assistant.v1.GetLimitResponse
+	47, // [47:52] is the sub-list for method output_type
+	42, // [42:47] is the sub-list for method input_type
+	42, // [42:42] is the sub-list for extension type_name
+	42, // [42:42] is the sub-list for extension extendee
+	0,  // [0:42] is the sub-list for field type_name
 }
 
 func init() { file_finassist_assistant_v1_assistant_proto_init() }

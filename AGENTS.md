@@ -46,7 +46,9 @@ same PR.
 | Registry check | `proto/scripts/check_error_registry.py` |
 | Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
+| Actual Go OpenAPI engine compatibility, shared error fixtures, Unicode boundaries and optional/non-null fields | `tools/openapicheck/` — test-only `kin-openapi v0.133.0` dependency, run by the existing tools race-test job |
 | Calculation fixtures: statements, scenario, expected responses, comparison rules (FIN-107); the list of known bank categories (`categories.json`, FIN-200) | `fixtures/calc/` (format and rules — `fixtures/calc/README.md`) |
+| Error wire examples and OpenAPI boundaries (FIN-224): REST/SSE/history, old responses, open codes/severity, Unicode text, REST retryable boolean | `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` |
 | Reference calculation that produces the expected responses (`docs/calc.md`) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
 | Go coverage reports and regression tests | `scripts/coverage-diff.py`, `scripts/test_coverage_diff.py` |
 | PR review by Claude | `.github/workflows/claude.yml` |
@@ -71,6 +73,49 @@ responses changed. A rule that lives only in `tools/refcalc` or `fixtures/calc/R
 A breaking change fails `oasdiff` / `buf breaking`. In the alpha the owner may accept it with the PR label
 `breaking-accepted` — for REST (`oasdiff`) and for a changed `error_spec` of an existing code
 (`check_error_spec_stable.py`); `buf breaking` does not read labels. Never add that label yourself — ask in the PR.
+
+The calculation fixtures job also runs `python3 -m unittest discover -s scripts -p 'test_error_presentation.py'`
+with its existing PyYAML and OpenAPI validator dependencies. This validates the FIN-224 producer schema and
+compatibility examples; client display/fallback behavior belongs to FIN-223. BFF owns safe user text/severity,
+not internal services or generated `finerr`; existing assistant proto text fields are compatibility-only
+(`docs/grpc-api.md`, 5.4). The four new presentation fields are optional but non-null (`optional<T>` in
+`docs/api.md`); producers omit absent values, including both new error fields on non-failed history messages.
+Existing nullable fields keep their semantics. Presentation must not change special actions or retry metadata.
+
+REST `Error.retryable` is a separate optional/non-null boolean combining request-specific retry safety AND
+permission; it does not declare global endpoint idempotency or extend key validity. BFF computes it from the
+service-owned original-RPC permission (`common.v1.RequestRetryInfo`) AND verified safety of the WHOLE outer
+REST call; no proof/absent advice means false. Do not infer business permission by reason/code in the BFF. Existing assistant SSE/history retryable
+still authorizes RetryAnswer (new generation/key), not resending the original AskQuestion. Generic request advice
+never authorizes a new operation attempt. Preserve documented auth/maintenance recovery flows separately from
+unchanged-context direct retry, with the same original key and actual safety/TTL checks. Schema tests cover
+true/false/absence and malformed values locally; actual retry-policy/client behavior belongs to FIN-225/FIN-223.
+
+FIN-224 reuses google.rpc.Status and standard details for unary and nested result failures. New additive fields
+are AnswerError.status=6, Message.error=14 and ImportStreamError.status=3; old fields/events/types/numbers dual-write
+until decoder rollout and recorded rollback floors. Initial nested profile forbids RequestRetryInfo and RetryInfo:
+reading the failed resource succeeded; domain new-attempt permission/quotas remain outside the common error.
+Absent canonical payload uses the legacy adapter; valid open reason wins; present-invalid fails safely without
+consulting the legacy code: assistant terminal/history project INTERNAL_ERROR (history non-null), import projects
+PROCESSING_FAILED; explicit outer domain retryable stays service-owned. Actions are scoped by shape/endpoint:
+REST registry actions never activate just because a nested result reason has the same spelling. Keep the generic
+result decoder open; no unary registry lookup or namespace blacklist. ErrorEvent is the neutral external schema; keep SseError as a ref alias.
+Generator owns WithRequestRetryInfo, REST.RequestRetryable and NewResultStatus/DecodeResultStatus. Preserve recognized
+detail validation, unknown Any compatibility and wrapped-status diagnostics protection. This is a generated Go API
+addition: owner-created immutable gen/go tag after merge precedes dependent backend/library PRs. Existing error_spec
+and constructor signatures stay unchanged. The cached phone429 advice-loss path in go-idempotency needs a separate
+rollout prerequisite; do not claim that library/service change implemented here.
+
+Clock rules live in docs/api.md, “Время ожидания и часы”: fresh server duration plus sleep-aware monotonic elapsed;
+BFF Date on fresh responses including errors; same-response Date fallback is approximate UI, never authorization,
+permission or key-age proof. No new server_time fields, no wall-clock countdown or restart of stale duration after
+a lost anchor/reboot. Runtime behavior tests belong to consumers.
+
+`tools/openapicheck` validates the full specification and the shared error fixtures with the actual Go engine
+selected for REST (`kin-openapi`, pinned to v0.133.0 for this compatibility regression). Stdlib has no OpenAPI
+validator; this dependency is test-only in tools, not in generated/runtime APIs. Full-document validation skips
+embedded examples because the base branch has two unrelated incomplete response examples; patterns and schema
+validation stay enabled, and every shared new error fixture is explicitly validated with `VisitJSON`.
 
 ## Writing the contract
 
