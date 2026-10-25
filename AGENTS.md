@@ -46,6 +46,7 @@ same PR.
 | Registry check | `proto/scripts/check_error_registry.py` |
 | Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
+| Actual Go OpenAPI engine compatibility, shared error fixtures, Unicode boundaries and optional/non-null fields | `tools/openapicheck/` — test-only `kin-openapi v0.133.0` dependency, run by the existing tools race-test job |
 | Calculation fixtures: statements, scenario, expected responses, comparison rules (FIN-107); the list of known bank categories (`categories.json`, FIN-200) | `fixtures/calc/` (format and rules — `fixtures/calc/README.md`) |
 | Error presentation wire examples and OpenAPI boundaries (FIN-224): REST/SSE/history, old responses, open codes/severity, Unicode text | `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` |
 | Reference calculation that produces the expected responses (`docs/calc.md`) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
@@ -80,6 +81,12 @@ not internal services or generated `finerr`; existing assistant proto text field
 (`docs/grpc-api.md`, 5.4). The four new presentation fields are optional but non-null (`optional<T>` in
 `docs/api.md`); producers omit absent values, including both new error fields on non-failed history messages.
 Existing nullable fields keep their semantics. Presentation must not change special actions or retry metadata.
+
+`tools/openapicheck` validates the full specification and the shared error fixtures with the actual Go engine
+selected for REST (`kin-openapi`, pinned to v0.133.0 for this compatibility regression). Stdlib has no OpenAPI
+validator; this dependency is test-only in tools, not in generated/runtime APIs. Full-document validation skips
+embedded examples because the base branch has two unrelated incomplete response examples; patterns and schema
+validation stay enabled, and every shared new error fixture is explicitly validated with `VisitJSON`.
 
 ## Writing the contract
 

@@ -29,6 +29,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `proto/buf.gen.yaml` | Генерация Go-кода: `protoc-gen-go`, `protoc-gen-go-grpc`, `protoc-gen-finerr` |
 | `gen/go/` | Go-модуль `github.com/fin-assist/contracts/gen/go` (свой `go.mod`): `finassist/<сервис>/v1` — сообщения и gRPC, `finerr` — конструкторы ошибок и таблица перевода в REST. Сгенерирован, руками не правится (кроме `go.mod` и тестов) |
 | `tools/` | Модуль инструментов: версии `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` закреплены в `tools/go.mod` (`tool`); `tools/protoc-gen-finerr` — генератор `finerr` из опций `error_spec` |
+| `tools/openapicheck/` | Go-тесты совместимости OpenAPI с фактическим `kin-openapi v0.133.0`: валидация полной схемы, те же примеры `fixtures/errors`, Unicode-границы и необязательные non-null поля. Зависимость только для тестов tools; Go API и runtime `gen/go` не меняются |
 | `scripts/generate.sh` | Перегенерировать `gen/go` закреплёнными версиями |
 | `fixtures/calc/` | Эталонные данные расчёта (FIN-107): выписки, сценарий, ожидаемые ответы 3.3, 4.1, 4.3, 5.1, 6.1, 6.2 и правила сравнения — `fixtures/calc/README.md`. По ним тестируются фейковый бэкенд и Go-бэкенд. `categories.json` — ещё и список известных категорий банка, который берут сервисы (`docs/calc.md` 3.1, FIN-200) |
 | `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` | Примеры совместимого формата ошибок FIN-224 и проверки OpenAPI: неизвестный код/уровень, прежние REST/SSE/история, границы Unicode-текста. Поведение отображения клиента реализуется в FIN-223 |
@@ -61,7 +62,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `check_error_spec_stable.py` против базы PR | PR | изменение `error_spec` (`grpc_code`, `http_status`, `metadata_keys`, `details`) у существующего кода. Владелец принимает его меткой `breaking-accepted` — изменения перечисляются, проверка не падает |
 | Эталонные данные `fixtures/calc` | всегда | тесты референсного расчёта (примеры `docs/calc.md`) падают; `expected/` не совпадает с перегенерированным сценарием; ответ (или `data` блока) не проходит схему `openapi.yaml`; поле схемы ответов не встречается ни в одном ожидаемом ответе и не внесено в `coverage-exceptions.json` |
 | Примеры ошибок `fixtures/errors` (в job `calc-fixtures`) | всегда | прежний ответ перестал проходить схему; неизвестный открытый код/уровень не принимается; нарушены ограничения пользовательского текста; ошибки схемы при некорректном необязательном поле не локальны для этого поля. Сохранение кодов и метаданных при клиентском разборе проверяется в FIN-223 |
-| Go-модуль `gen/go` | всегда | `gen/go` не совпадает с тем, что генерирует `scripts/generate.sh` из `proto/`; модуль не собирается, `go vet`, race-тесты модулей `gen/go` / `tools` или тесты отчёта покрытия падают; версия `buf` в `tools/go.mod` расходится с `BUF_VERSION` в `ci.yml` |
+| Go-модуль `gen/go` и тесты tools | всегда | `gen/go` не совпадает с тем, что генерирует `scripts/generate.sh` из `proto/`; модуль не собирается, `go vet`, race-тесты модулей `gen/go` / `tools` (включая фактический kin-openapi в `tools/openapicheck`) или тесты отчёта покрытия падают; версия `buf` в `tools/go.mod` расходится с `BUF_VERSION` в `ci.yml` |
 
 Локально:
 
@@ -77,6 +78,9 @@ cd proto && buf build -o /tmp/fd.binpb && python3 scripts/check_error_registry.p
 
 # Error presentation examples and schema boundaries (same Python dependencies as calculation fixtures)
 python3 -m unittest discover -s scripts -p 'test_error_presentation.py'
+
+# Actual Go OpenAPI validator compatibility (also included in the tools race tests below)
+(cd tools && go test -race -count=1 -timeout=2m ./openapicheck)
 
 # Calculation fixtures: reference calculation tests, then regenerate fixtures/calc/expected and check the schema
 cd tools/refcalc && python3 -m unittest discover -s tests -t . && python3 -m refcalc.scenario ../../fixtures/calc --write --openapi ../../openapi/openapi.yaml
