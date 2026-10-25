@@ -43,6 +43,8 @@ const (
 	// этой метрики (новая в реестре, период ещё не пересчитан). Смена версии определения метрику не
 	// закрывает: до пересчёта отдаётся прежний снимок периода (FIN-6, FIN-196).
 	// В REST — открытый код `unavailable`; клиент трактует неизвестный статус как `locked`.
+	// От bank-statement-data в UpsertUserMetrics не принимается: вызов отклоняется голым
+	// INVALID_ARGUMENT (grpc-api.md 7.3, FIN-283).
 	MetricStatus_METRIC_STATUS_UNAVAILABLE MetricStatus = 5
 )
 
@@ -171,7 +173,8 @@ type MetricLock struct {
 	// Для TOO_EARLY_IN_MONTH: момент, с которого метрика откроется (10-е число в поясе профиля).
 	AvailableFrom *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=available_from,json=availableFrom,proto3,oneof" json:"available_from,omitempty"`
 	// Готовый текст блокировки: клиент показывает его для неизвестной reason (FIN-82). Заполняет analytics;
-	// пустая строка — ошибка сервиса (grpc-api.md 5.3).
+	// пустая строка — ошибка сервиса (grpc-api.md 5.3). Значение от bank-statement-data в
+	// UpsertUserMetrics игнорируется без отказа (FIN-283).
 	Text          string `protobuf:"bytes,5,opt,name=text,proto3" json:"text,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -301,6 +304,9 @@ func (x *MetricBasis) GetFullMonths() int32 {
 // Один показатель аналитики — число, список или график: общая часть (статус, причина блокировки,
 // база расчёта, значение, переход к операциям) плюс типизированные детали для составных
 // показателей. Какие поля заполнены, зависит от статуса и вида метрики.
+// Новое поле здесь, во вложенных сообщениях или новый вариант details в данных UpsertUserMetrics:
+// сначала выкатывается analytics, затем bank-statement-data начинает его присылать — иначе analytics
+// молча теряет значение до пересчёта периода (grpc-api.md 7.3, «Модель записи»; порядок как у enum, раздел 8).
 type Metric struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Состояние метрики: посчитана, предварительна, закрыта, пуста или недоступна.
@@ -2310,6 +2316,9 @@ func (x *MetricSnapshot) GetMetric() *Metric {
 
 // Полный снимок одного периода для одного режима переводов — всё, что GetAnalytics отдаст
 // для этого периода, кроме навигации и is_current/stale.
+// analytics сохраняет только известные его выпуску поля: новое поле снимка или вложенных сообщений
+// (Metric, MetricLock, MetricBasis, OperationsFilter, details) — сначала выкатывается analytics,
+// затем bank-statement-data начинает его присылать (grpc-api.md 7.3, «Модель записи»).
 type PeriodSnapshot struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Period v1.PeriodType          `protobuf:"varint,1,opt,name=period,proto3,enum=finassist.common.v1.PeriodType" json:"period,omitempty"`
@@ -2603,7 +2612,9 @@ type UpsertUserMetricsRequest struct {
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// Монотонная на пользователя (sequence в bank-statement-data). Снимок периода и состояние
 	// применяются, только если calc_version >= сохранённой версии для этого ключа; иначе
-	// пропускаются, но подтверждаются. Повторы — пустые операции. Применённый снимок периода
+	// пропускаются, но подтверждаются. Одна версия для одного ключа — одинаковое содержимое:
+	// производитель повышает версию при любом изменении содержимого, analytics содержимое повтора
+	// не сравнивает (FIN-283). Повторы — пустые операции. Применённый снимок периода
 	// заменяет прежний целиком: метрики разных версий реестра в одном периоде не смешиваются
 	// (FIN-196). int32: bank-statement-data и analytics хранят её в integer (FIN-207).
 	CalcVersion int32          `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
@@ -2615,6 +2626,8 @@ type UpsertUserMetricsRequest struct {
 	// finassist_incomplete_period_snapshots_total (grpc-api.md 9).
 	Periods []*PeriodSnapshot `protobuf:"bytes,4,rep,name=periods,proto3" json:"periods,omitempty"`
 	// Периоды, в которых данных больше нет (загрузка удалена). Удаляются для обоих режимов переводов.
+	// Пересчёт после смены пояса завершается вызовом со всеми ключами, которых в новом поясе нет:
+	// analytics сам периоды не удаляет (grpc-api.md 7.3, FIN-283).
 	RemovedPeriods []*PeriodRef `protobuf:"bytes,5,rep,name=removed_periods,json=removedPeriods,proto3" json:"removed_periods,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
