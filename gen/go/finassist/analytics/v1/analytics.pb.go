@@ -2634,8 +2634,11 @@ type UpsertUserMetricsRequest struct {
 	// Пересчёт после смены пояса завершается вызовом со всеми ключами, которых в новом поясе нет:
 	// analytics сам периоды не удаляет (grpc-api.md 7.3, FIN-283). Удаление — по тому же правилу
 	// calc_version для ключа (период, ключ), оба режима: версия удаления хранится как надгробие ключа,
-	// снимок с версией меньше надгробия пропускается, удаление с версией меньше сохранённого снимка —
-	// тоже.
+	// снимок с версией меньше надгробия пропускается, удаление с версией меньше сохранённого снимка
+	// (бо́льшей из версий двух режимов) — тоже. Надгробие живёт, пока его не заменит применённый снимок
+	// ключа с версией не меньше, или до PurgeUserData; по сроку не чистится (срок строки outbox не
+	// ограничен, grpc-api.md 6.1). Одна calc_version для (период, ключ) — снимок или удаление, не оба:
+	// ключ и в periods, и в removed_periods одного вызова — отказ голым INVALID_ARGUMENT.
 	RemovedPeriods []*PeriodRef `protobuf:"bytes,5,rep,name=removed_periods,json=removedPeriods,proto3" json:"removed_periods,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
