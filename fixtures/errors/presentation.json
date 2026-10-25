@@ -78,5 +78,71 @@
     "name": "corrected upload is a new logical action",
     "schema": "ErrorResponse",
     "value": {"error": {"code": "WRONG_BANK", "message": "Wrong bank", "user_message": "Выберите OFX-выписку Т-Банка.", "severity": "warning", "retryable": false}}
+  },
+  {
+    "name": "REST maintenance uses only its documented recovery context",
+    "schema": "ErrorResponse",
+    "value": {
+      "error": {
+        "code": "MAINTENANCE",
+        "message": "Maintenance",
+        "user_message": "Сервис временно недоступен.",
+        "severity": "warning",
+        "retryable": false
+      }
+    }
+  },
+  {
+    "name": "same MAINTENANCE reason in assistant result is not REST recovery",
+    "schema": "AnswerErrorEvent",
+    "value": {
+      "code": "MAINTENANCE",
+      "message": "Result failed",
+      "user_message": "Не получилось ответить.",
+      "severity": "error",
+      "text": "Не получилось ответить.",
+      "remaining_limit": 5,
+      "retryable": false
+    }
+  },
+  {
+    "name": "invalid nested assistant status projects INTERNAL_ERROR with independent retryable",
+    "schema": "AnswerErrorEvent",
+    "value": {
+      "code": "INTERNAL_ERROR",
+      "message": "Result failed",
+      "user_message": "Не получилось ответить.",
+      "severity": "error",
+      "text": "Не получилось ответить.",
+      "remaining_limit": 5,
+      "retryable": true
+    }
+  },
+  {
+    "name": "invalid nested history status projects nonnull INTERNAL_ERROR",
+    "schema": "Message",
+    "value": {
+      "id": "answer-invalid",
+      "role": "assistant",
+      "created_at": "2026-10-25T18:00:00+03:00",
+      "currency": "RUB",
+      "status": "failed",
+      "error_code": "INTERNAL_ERROR",
+      "error_user_message": "Не получилось ответить.",
+      "error_severity": "error",
+      "error_text": "Не получилось ответить.",
+      "retryable": true,
+      "blocks": []
+    }
+  },
+  {
+    "name": "invalid nested import status projects PROCESSING_FAILED without legacy cancellation",
+    "schema": "StreamError",
+    "value": {
+      "code": "PROCESSING_FAILED",
+      "message": "Import failed",
+      "user_message": "Не удалось разобрать файл",
+      "severity": "error"
+    }
   }
 ]

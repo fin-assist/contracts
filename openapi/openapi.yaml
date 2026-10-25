@@ -52,8 +52,11 @@ info:
     Новая попытка операции и доменные данные остаются во внешнем результате, не в общем механизме.
     Внутренние additive Status поля не добавляются в клиентский JSON: BFF переносит валидный открытый reason
     в code/error_code, даже если его нет в unary registry, и формирует безопасный текст. Нет Status — legacy
-    adapter; присутствующий невалидный Status — безопасный failed-result fallback/метрика, без восстановления
-    иного старого кода/действия. Порядок dual-write/нового gen/go тега/rollback — docs/grpc-api.md5.4–5.5.
+    adapter; присутствующий невалидный Status — безопасный failed-result fallback/метрика: assistant terminal
+    code=INTERNAL_ERROR, failed history error_code=INTERNAL_ERROR (не null), import code=PROCESSING_FAILED;
+    legacy-код не читается. Явный внешний domain retryable сохраняется от сервиса независимо от ошибки.
+    Действия REST-реестра относятся к REST Error и явно описанным контекстам общего ErrorEvent; совпадение
+    reason в AnswerErrorEvent/StreamError/истории не включает REST auth/maintenance/quota или resume исходного Ask. Порядок dual-write/нового gen/go тега/rollback — docs/grpc-api.md5.4–5.5.
 
     **Ошибки:** всегда один объект `error` (см. `ErrorResponse`). Порядок проверки:
     503 (`MAINTENANCE`) → 400 `CLIENT_VERSION_UNSUPPORTED` → 401 (заголовок `Authorization`) → 400/413 проверки
@@ -2305,7 +2308,8 @@ components:
         Ровно одна ошибка на ответ. Специальные действия — только по известному `code`; неизвестный код
         отображается по корректному `user_message`, без него — безопасная общая ошибка по HTTP-статусу.
         Дополнительные поля конкретного кода (`retry_at`, `resets_at`, `until`) описаны здесь; новые
-        поля могут появиться.
+        поля могут появиться. Действия раздела8 применяются к этой REST-форме и явно описанным контекстам ErrorEvent,
+        не к совпавшему коду AnswerErrorEvent/StreamError/истории.
         Корректный retryable=false имеет приоритет над прежним прямым/автоматическим повтором в неизменённом
         контексте по 429/409; отдельные известные auth/maintenance recovery flows — по info.description;
         true подчиняется ожиданию и условиям метода/ключа, отсутствие/некорректность — прежним безопасным правилам.
@@ -2449,7 +2453,9 @@ components:
         сообщение и поведение отмены, а не ошибка разбора. Неизвестный код — по корректному user_message;
         без него — как `PROCESSING_FAILED`: «Не удалось разобрать файл». Источник причины — валидный внутренний
         вложенный Status (его открытый reason не ограничен старым enum); отсутствующий Status использует legacy adapter,
-        невалидный присутствующий — безопасный terminal fallback без иного legacy-действия. При переподключении к неудачной
+        невалидный присутствующий — code=PROCESSING_FAILED, legacy-код (включая CANCELLED) не читается.
+        При absent Status legacy CANCELLED сохраняется. Совпадение с REST-кодом не запускает действия раздела8;
+        действуют правила импорта, не auth/maintenance/quota или возобновление исходного Ask. При переподключении к неудачной
         загрузке BFF формирует эти поля по сохранённому коду и параметрам; в истории загрузок ошибки нет.
       required:
       - code
@@ -3761,7 +3767,9 @@ components:
           type: string
           nullable: true
           description: 'Только у `failed`: коды `AnswerErrorEvent.code`. Клиент по коду не строит текст и не решает о повторе;
-            неизвестный — по общим правилам `error_user_message` и `retryable`, как известный.'
+            неизвестный — по общим правилам `error_user_message` и `retryable`, как известный. При present-invalid внутреннем
+            Status сервер отдаёт INTERNAL_ERROR (не null), без чтения legacy-кода. Совпадение с REST-кодом
+            не включает auth/maintenance/quota или возобновление исходного Ask; явный domain retryable от сервиса сохраняется.'
           x-extensible-enum:
           - MODEL_ERROR
           - CANNOT_ANSWER
@@ -4442,10 +4450,12 @@ components:
           description: |
             `MODEL_ERROR` — сбой или таймаут Alice AI; `CANNOT_ANSWER` — вопрос непонятен или на него нельзя ответить
             по данным; канонический открытый reason валидного внутреннего Status переносится как code без ограничения
-            старым enum/unary-реестром. Невалидный присутствующий Status не восстанавливает иной legacy-код/действие.
+            старым enum/unary-реестром. При present-invalid Status внешний code=INTERNAL_ERROR, legacy-код не читается.
+            Совпадение reason с REST-кодом не включает REST auth/maintenance/quota или resume исходного Ask;
+            permission новой попытки остаётся независимым внешним retryable от сервиса.
             `OFF_TOPIC` — вопрос не о данных пользователя и не о личных финансах (модель вызвала инструмент
             `off_topic`, FIN-159); `INTERNAL_ERROR` — консервативная прежняя причина при отсутствии канонического
-            Status/известного legacy-кода. Корректный открытый reason сохраняется, даже если его нет в каталоге;
+            Status/известного legacy-кода, а также при present-invalid Status. Корректный открытый reason сохраняется, даже если его нет в каталоге;
             `user_message` и прежний `text` — из каталога BFF, `retryable` — от сервиса помощника;
             сбой самого потока — не `error`, а закрытие без терминального события.
             Каждый терминальный OFF_TOPIC также учитывается в отдельном лимите `askAssistant` / `retryAnswer`;

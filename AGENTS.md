@@ -96,7 +96,10 @@ are AnswerError.status=6, Message.error=14 and ImportStreamError.status=3; old f
 until decoder rollout and recorded rollback floors. Initial nested profile forbids RequestRetryInfo and RetryInfo:
 reading the failed resource succeeded; domain new-attempt permission/quotas remain outside the common error.
 Absent canonical payload uses the legacy adapter; valid open reason wins; present-invalid fails safely without
-resurrecting a conflicting legacy action. ErrorEvent is the neutral external schema; keep SseError as a ref alias.
+consulting the legacy code: assistant terminal/history project INTERNAL_ERROR (history non-null), import projects
+PROCESSING_FAILED; explicit outer domain retryable stays service-owned. Actions are scoped by shape/endpoint:
+REST registry actions never activate just because a nested result reason has the same spelling. Keep the generic
+result decoder open; no unary registry lookup or namespace blacklist. ErrorEvent is the neutral external schema; keep SseError as a ref alias.
 Generator owns WithRequestRetryInfo, REST.RequestRetryable and NewResultStatus/DecodeResultStatus. Preserve recognized
 detail validation, unknown Any compatibility and wrapped-status diagnostics protection. This is a generated Go API
 addition: owner-created immutable gen/go tag after merge precedes dependent backend/library PRs. Existing error_spec

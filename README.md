@@ -38,7 +38,7 @@ FIN-224 теперь добавляет protobuf/API: `RequestRetryInfo`, вло
 | `tools/openapicheck/` | Go-тесты совместимости OpenAPI с фактическим `kin-openapi v0.133.0`: валидация полной схемы, те же примеры `fixtures/errors`, Unicode-границы и необязательные non-null поля. Зависимость только для тестов tools; Go API и runtime `gen/go` не меняются |
 | `scripts/generate.sh` | Перегенерировать `gen/go` закреплёнными версиями |
 | `fixtures/calc/` | Эталонные данные расчёта (FIN-107): выписки, сценарий, ожидаемые ответы 3.3, 4.1, 4.3, 5.1, 6.1, 6.2 и правила сравнения — `fixtures/calc/README.md`. По ним тестируются фейковый бэкенд и Go-бэкенд. `categories.json` — ещё и список известных категорий банка, который берут сервисы (`docs/calc.md` 3.1, FIN-200) |
-| `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` | Примеры совместимого формата ошибок FIN-224 и проверки OpenAPI: неизвестный код/уровень, прежние REST/SSE/история, границы Unicode-текста и тип REST `retryable`. Поведение клиента реализуется в FIN-223, политика BFF — FIN-225 |
+| `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` | Примеры совместимого формата ошибок FIN-224 и проверки OpenAPI: неизвестный код/уровень, прежние REST/SSE/история, границы Unicode-текста, тип REST `retryable`, совпадающий reason в разных контекстах и фиксированные внешние проекции present-invalid Status. Поведение клиента реализуется в FIN-223, политика BFF — FIN-225 |
 | `tools/refcalc/` | Референсный расчёт на Python по `docs/calc.md`: считает ожидаемые ответы `fixtures/calc/expected`, тесты — примеры раздела 9 |
 | `redocly.yaml` | Настройки линтера OpenAPI |
 | `AGENTS.md`, `CLAUDE.md` | Инструкции агентам: карта, правила контракта, процесс, `## Code Review Rules` |
