@@ -334,8 +334,8 @@ func (AnswerStatus) EnumDescriptor() ([]byte, []int) {
 	return file_finassist_assistant_v1_assistant_proto_rawDescGZIP(), []int{5}
 }
 
-// Почему ответ не получился. Набор растёт; текст и возможность повтора задают AnswerError.text и
-// AnswerError.retryable (Message.error_text, Message.retryable), а не код (FIN-159).
+// Почему ответ не получился. Набор растёт; возможность повтора задают AnswerError.retryable и
+// Message.retryable (FIN-159). Представление ошибки формирует bank-bff по коду (FIN-224).
 type AnswerErrorCode int32
 
 const (
@@ -1039,8 +1039,9 @@ type Message struct {
 	// Валюта сумм в blocks (ISO 4217), у каждого сообщения; сейчас RUB (FIN-82). У вопроса и у сообщений,
 	// сохранённых до поля, — RUB (валюты в профиле пока нет); пустая строка — ошибка сервиса (grpc-api.md 5.3).
 	Currency string `protobuf:"bytes,11,opt,name=currency,proto3" json:"currency,omitempty"`
-	// Только у FAILED, заполнено всегда: готовый текст для пользователя, как AnswerError.text. У ответов,
-	// сохранённых до поля, assistant заполняет его по error_code при чтении.
+	// Прежняя строка ошибки у FAILED; сохраняется для совместимости формата. Новый bank-bff её
+	// игнорирует и формирует представление по error_code. Сервис прекращает заполнение только после
+	// обновления всех bank-bff и фиксации границ отката (grpc-api.md 5.4, FIN-224).
 	ErrorText *string `protobuf:"bytes,12,opt,name=error_text,json=errorText,proto3,oneof" json:"error_text,omitempty"`
 	// Только у FAILED, заполнено всегда: доступен ли повтор (RetryAnswer), как AnswerError.retryable.
 	Retryable     *bool `protobuf:"varint,13,opt,name=retryable,proto3,oneof" json:"retryable,omitempty"`
@@ -1582,9 +1583,11 @@ type AnswerError struct {
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	// Остаток после возврата попытки.
 	RemainingLimit int32 `protobuf:"varint,3,opt,name=remaining_limit,json=remainingLimit,proto3" json:"remaining_limit,omitempty"`
-	// Готовый текст для пользователя; заполнен всегда, пустая строка — ошибка сервиса (grpc-api.md 5.3).
+	// Прежняя строка ошибки; сохраняется для совместимости формата. Новый bank-bff её игнорирует.
+	// Прекращение заполнения — только после обновления bank-bff и фиксации границ отката (grpc-api.md 5.4).
 	Text string `protobuf:"bytes,4,opt,name=text,proto3" json:"text,omitempty"`
-	// Доступен ли повтор (RetryAnswer); сейчас true только у MODEL_ERROR.
+	// Доступен ли повтор (RetryAnswer); сейчас true только у MODEL_ERROR. Авторитетно, включая false,
+	// независимо от строки text. Новый bank-bff требует версию assistant с этим правилом (FIN-224).
 	Retryable     bool `protobuf:"varint,5,opt,name=retryable,proto3" json:"retryable,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

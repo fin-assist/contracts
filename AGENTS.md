@@ -47,6 +47,7 @@ same PR.
 | Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
 | Calculation fixtures: statements, scenario, expected responses, comparison rules (FIN-107); the list of known bank categories (`categories.json`, FIN-200) | `fixtures/calc/` (format and rules — `fixtures/calc/README.md`) |
+| Error presentation wire examples and OpenAPI boundaries (FIN-224): REST/SSE/history, old responses, open codes/severity, Unicode text | `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` |
 | Reference calculation that produces the expected responses (`docs/calc.md`) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
 | Go coverage reports and regression tests | `scripts/coverage-diff.py`, `scripts/test_coverage_diff.py` |
 | PR review by Claude | `.github/workflows/claude.yml` |
@@ -71,6 +72,12 @@ responses changed. A rule that lives only in `tools/refcalc` or `fixtures/calc/R
 A breaking change fails `oasdiff` / `buf breaking`. In the alpha the owner may accept it with the PR label
 `breaking-accepted` — for REST (`oasdiff`) and for a changed `error_spec` of an existing code
 (`check_error_spec_stable.py`); `buf breaking` does not read labels. Never add that label yourself — ask in the PR.
+
+The calculation fixtures job also runs `python3 -m unittest discover -s scripts -p 'test_error_presentation.py'`
+with its existing PyYAML and OpenAPI validator dependencies. This validates the FIN-224 producer schema and
+compatibility examples; client display/fallback behavior belongs to FIN-223. BFF owns safe user text/severity,
+not internal services or generated `finerr`; existing assistant proto text fields are compatibility-only
+(`docs/grpc-api.md`, 5.4). Presentation fields remain optional and must not change special actions or retry metadata.
 
 ## Writing the contract
 

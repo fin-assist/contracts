@@ -29,6 +29,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `tools/` | Модуль инструментов: версии `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` закреплены в `tools/go.mod` (`tool`); `tools/protoc-gen-finerr` — генератор `finerr` из опций `error_spec` |
 | `scripts/generate.sh` | Перегенерировать `gen/go` закреплёнными версиями |
 | `fixtures/calc/` | Эталонные данные расчёта (FIN-107): выписки, сценарий, ожидаемые ответы 3.3, 4.1, 4.3, 5.1, 6.1, 6.2 и правила сравнения — `fixtures/calc/README.md`. По ним тестируются фейковый бэкенд и Go-бэкенд. `categories.json` — ещё и список известных категорий банка, который берут сервисы (`docs/calc.md` 3.1, FIN-200) |
+| `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` | Примеры совместимого формата ошибок FIN-224 и проверки OpenAPI: неизвестный код/уровень, прежние REST/SSE/история, границы Unicode-текста. Поведение отображения клиента реализуется в FIN-223 |
 | `tools/refcalc/` | Референсный расчёт на Python по `docs/calc.md`: считает ожидаемые ответы `fixtures/calc/expected`, тесты — примеры раздела 9 |
 | `redocly.yaml` | Настройки линтера OpenAPI |
 | `AGENTS.md`, `CLAUDE.md` | Инструкции агентам: карта, правила контракта, процесс, `## Code Review Rules` |
@@ -57,6 +58,7 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `check_error_registry.py` | всегда | расхождение `ErrorReason` с разделом 8 `docs/api.md`, неполный `error_spec`, `error_spec` вне реестра, больше 30 кодов |
 | `check_error_spec_stable.py` против базы PR | PR | изменение `error_spec` (`grpc_code`, `http_status`, `metadata_keys`, `details`) у существующего кода. Владелец принимает его меткой `breaking-accepted` — изменения перечисляются, проверка не падает |
 | Эталонные данные `fixtures/calc` | всегда | тесты референсного расчёта (примеры `docs/calc.md`) падают; `expected/` не совпадает с перегенерированным сценарием; ответ (или `data` блока) не проходит схему `openapi.yaml`; поле схемы ответов не встречается ни в одном ожидаемом ответе и не внесено в `coverage-exceptions.json` |
+| Примеры ошибок `fixtures/errors` (в job `calc-fixtures`) | всегда | прежний ответ перестал проходить схему; неизвестный открытый код/уровень не принимается; нарушены ограничения пользовательского текста; некорректное необязательное поле маскирует ошибку основного формата |
 | Go-модуль `gen/go` | всегда | `gen/go` не совпадает с тем, что генерирует `scripts/generate.sh` из `proto/`; модуль не собирается, `go vet`, race-тесты модулей `gen/go` / `tools` или тесты отчёта покрытия падают; версия `buf` в `tools/go.mod` расходится с `BUF_VERSION` в `ci.yml` |
 
 Локально:
@@ -70,6 +72,9 @@ cd proto && buf lint
 
 # Error registry check
 cd proto && buf build -o /tmp/fd.binpb && python3 scripts/check_error_registry.py /tmp/fd.binpb ../docs/api.md
+
+# Error presentation examples and schema boundaries (same Python dependencies as calculation fixtures)
+python3 -m unittest discover -s scripts -p 'test_error_presentation.py'
 
 # Calculation fixtures: reference calculation tests, then regenerate fixtures/calc/expected and check the schema
 cd tools/refcalc && python3 -m unittest discover -s tests -t . && python3 -m refcalc.scenario ../../fixtures/calc --write --openapi ../../openapi/openapi.yaml
