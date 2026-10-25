@@ -144,5 +144,16 @@
       "user_message": "Не удалось разобрать файл",
       "severity": "error"
     }
+  },
+  {
+    "name": "request_too_large",
+    "schema": "ErrorResponse",
+    "value": {
+      "error": {
+        "code": "REQUEST_TOO_LARGE",
+        "message": "JSON request body exceeds transport limit",
+        "retryable": false
+      }
+    }
   }
 ]

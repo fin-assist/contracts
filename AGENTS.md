@@ -46,7 +46,7 @@ same PR.
 | Registry check | `proto/scripts/check_error_registry.py` |
 | Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
-| Actual Go OpenAPI engine compatibility, shared error fixtures, Unicode boundaries and optional/non-null fields | `tools/openapicheck/` — test-only `kin-openapi v0.133.0` dependency, run by the existing tools race-test job |
+| Actual Go OpenAPI engine compatibility, shared error fixtures, Unicode boundaries and optional/non-null fields | `tools/openapicheck/` — test-only `kin-openapi` (version in `tools/go.mod`) dependency, run by the existing tools race-test job |
 | Calculation fixtures: statements, scenario, expected responses, comparison rules (FIN-107); the list of known bank categories (`categories.json`, FIN-200) | `fixtures/calc/` (format and rules — `fixtures/calc/README.md`) |
 | Error wire examples and OpenAPI boundaries (FIN-224): REST/SSE/history, old responses, open codes/severity, Unicode text, REST retryable boolean | `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` |
 | Reference calculation that produces the expected responses (`docs/calc.md`) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
@@ -112,10 +112,11 @@ permission or key-age proof. No new server_time fields, no wall-clock countdown 
 a lost anchor/reboot. Runtime behavior tests belong to consumers.
 
 `tools/openapicheck` validates the full specification and the shared error fixtures with the actual Go engine
-selected for REST (`kin-openapi`, pinned to v0.133.0 for this compatibility regression). Stdlib has no OpenAPI
-validator; this dependency is test-only in tools, not in generated/runtime APIs. Full-document validation skips
-embedded examples because the base branch has two unrelated incomplete response examples; patterns and schema
-validation stay enabled, and every shared new error fixture is explicitly validated with `VisitJSON`.
+selected for REST (`kin-openapi`, pinned in tools/go.mod). Stdlib has no OpenAPI
+validator; this dependency is test-only in tools, not in generated/runtime APIs. Full-document validation includes
+embedded examples, and every shared error fixture is also explicitly validated with `VisitJSON`. FIN-339 tests
+check the six JSON-body routes, their minimum supported 65536-byte transport budget and REQUEST_TOO_LARGE response.
+This BFF-only code is absent from ErrorReason/error_spec/gen/go; FILE_TOO_LARGE remains file-only.
 
 ## Writing the contract
 
@@ -135,7 +136,8 @@ The rules below are the ones the review checks (Code Review Rules); the full tex
   `deprecated` only by «Удаление устаревшего». A breaking change needs a new API version (`/v2`) or, in the alpha
   and for REST or a changed `error_spec` of an existing code only, the owner's `breaking-accepted`; `buf breaking`
   does not read labels, so any other breaking `.proto` change goes through `reserved` and a new field or method.
-- Errors: a new code goes into section 8 of `docs/api.md` and `ErrorReason` together, with HTTP status, `error_spec`
+- Errors: BFF-only transport codes (MAINTENANCE, CLIENT_VERSION_UNSUPPORTED, REQUEST_TOO_LARGE) live in section 8
+  and OpenAPI, with an explicit checker exception; service codes go into section 8 of `docs/api.md` and `ErrorReason` together, with HTTP status, `error_spec`
   and client behaviour; removed numbers and names go to `reserved`.
 - Idempotency: every new `POST` that creates a resource or has a side effect requires `Idempotency-Key`; say which
   responses are stored («Идемпотентность»).
@@ -298,7 +300,8 @@ The decision of 13.10.2026 («Расширяемость» and «Нотация�
 ### Checklist
 
 - Every new `POST` with a side effect requires `Idempotency-Key`.
-- Every new error code is in section 8, `ErrorReason` and `openapi.yaml`, with status and client behaviour.
+- Every new error code is in section 8 and `openapi.yaml`, with status and client behaviour; service codes also
+  enter `ErrorReason`. BFF-only transport exceptions are documented in grpc-api.md5.1 and the registry checker.
 - Every new `code` documents the behaviour for an unknown value; no new closed `enum` in a response for a set
   that can grow.
 - Every new endpoint documents auth, consent, limits and errors; every new gRPC method its callers and call model.

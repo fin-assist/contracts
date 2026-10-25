@@ -60,12 +60,22 @@ info:
 
     **Ошибки:** всегда один объект `error` (см. `ErrorResponse`). Порядок проверки:
     503 (`MAINTENANCE`) → 400 `CLIENT_VERSION_UNSUPPORTED` → 401 (заголовок `Authorization`) → 400/413 проверки
-    `bank-bff` (нет `Idempotency-Key`, тело не по схеме, `Content-Length`) → ключ идемпотентности (сохранённый ответ
+    `bank-bff` (нет `Idempotency-Key`, тело не по схеме, транспортный размер тела по правилам ниже) → ключ идемпотентности (сохранённый ответ
     или 409) → 429 → 401 (токены запроса, которые проверяет сервис: `registration_token`, `refresh_token` в теле,
     `X-Verification-Token` в заголовке; у потока статуса верификации ключа нет — шаг сразу после лимитов) → 400 →
     404 → 403 → 413/422. У `POST /v1/statements` 413 `FILE_TOO_LARGE` сервиса — до ключа (под ключом не
     сохраняется), остальные ответы сверяют ключ после приёма всего файла.
     503 и 400 `CLIENT_VERSION_UNSUPPORTED` возможны у любой операции.
+
+    **Размер JSON-запроса (FIN-339):** только startPhoneVerification, register, refreshTokens, logout,
+    grantAssistantConsent и askAssistant имеют x-min-request-body-bytes: 65536. Тело до 65 536 байт
+    включительно поддерживается всегда; предел развёртывания может быть выше, но не ниже. Считаются все
+    байты UTF-8 JSON, включая пробелы/escape, независимо от лимитов полей. Превышение фактического предела
+    по Content-Length или ограниченному чтению потока без него — 413 REQUEST_TOO_LARGE до сервиса/ключа,
+    без сохранения отказа и с retryable:false. Исправленное тело — новое действие (новый ключ, если операция требует Idempotency-Key), не автоматический retry.
+    Остальные восемь операций набора FIN-268 (включая retryAnswer) тела не принимают: неожиданное тело —
+    400 VALIDATION_ERROR с ограниченным чтением, не новый 413. Для прочих операций новый бюджет не вводится;
+    файловый FILE_TOO_LARGE и его лимит остаются прежними (docs/api.md, «Размер JSON-запроса»).
 
     **SSE:** первым событием — текущее состояние целиком; после терминального события поток закрывается;
     heartbeat `: ping` каждые 15 с; ошибки до начала потока — обычный HTTP-ответ с JSON. Неизвестный тип
@@ -125,6 +135,7 @@ paths:
       tags:
       - auth
       operationId: startPhoneVerification
+      x-min-request-body-bytes: 65536
       summary: Начать верификацию телефона
       description: |
         Создаёт заявку на подтверждение номера обратным звонком. До подтверждения API не сообщает,
@@ -184,6 +195,8 @@ paths:
                 callback_number: '+74951234567'
                 expires_at: '2026-10-04T22:17:00+03:00'
                 expires_in: 300
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
@@ -254,6 +267,7 @@ paths:
       tags:
       - auth
       operationId: register
+      x-min-request-body-bytes: 65536
       summary: Регистрация нового пользователя
       description: |
         Вызывается с экрана согласия на обработку ПДн после подтверждения нового номера.
@@ -288,6 +302,8 @@ paths:
                 access_token: eyJ...
                 refresh_token: rt_...
                 user_id: 01a107db-ae80-7b07-b8a1-a8c8486e2532
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -309,6 +325,7 @@ paths:
       tags:
       - auth
       operationId: refreshTokens
+      x-min-request-body-bytes: 65536
       summary: Обновить токены
       description: |
         Ротация refresh-токена. Повторное использование старого refresh отзывает всю цепочку сессии —
@@ -336,6 +353,8 @@ paths:
               example:
                 access_token: eyJ...
                 refresh_token: rt_new_...
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -353,6 +372,7 @@ paths:
       tags:
       - auth
       operationId: logout
+      x-min-request-body-bytes: 65536
       summary: Выход
       description: Завершает сессию. Повтор возвращает `204`.
       parameters:
@@ -367,6 +387,8 @@ paths:
       responses:
         '204':
           description: Сессия завершена
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -527,6 +549,7 @@ paths:
       tags:
       - profile
       operationId: grantAssistantConsent
+      x-min-request-body-bytes: 65536
       summary: Дать согласие помощнику
       description: Только с экрана согласия после галочки. Повтор с той же версией ничего не меняет.
       parameters:
@@ -547,6 +570,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Profile'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1671,6 +1696,7 @@ paths:
                       to: '2026-10-01T00:00:00+03:00'
                     transfer_mode: with
                     changed_since: []
+                    changed_since_text: null
                   created_at: '2026-10-04T22:10:05+03:00'
                 has_older: true
         '400':
@@ -1687,6 +1713,7 @@ paths:
       tags:
       - assistant
       operationId: askAssistant
+      x-min-request-body-bytes: 65536
       summary: Задать вопрос
       description: |
         Создаёт вопрос и запускает генерацию ответа на сервере; ответ читается потоком `streamAnswer`.
@@ -1730,10 +1757,13 @@ paths:
                 question:
                   id: 01a10852-b340-77c5-9ba3-bb9964a666d0
                   role: user
+                  currency: RUB
                   text: Сколько я трачу на Самокат?
                   created_at: '2026-10-04T22:10:00+03:00'
                 answer_id: 01a10852-b341-7a10-8f3e-6c2d9b4a1e07
                 remaining_limit: 4
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2060,6 +2090,26 @@ components:
             error:
               code: REQUEST_IN_PROGRESS
               message: Request with this Idempotency-Key is in progress
+    RequestTooLarge:
+      description: |
+        `REQUEST_TOO_LARGE` — JSON-тело больше фактического транспортного предела BFF у шести операций
+        с x-min-request-body-bytes. Минимальный поддерживаемый предел — 65 536 байт UTF-8 JSON целиком,
+        включая пробелы и escape-последовательности; развёртывание может принимать больше, но не меньше.
+        Проверка Content-Length и ограниченного чтения потока — до сервиса/ключа, отказ не сохраняется.
+        Неизменённый запрос не повторяют; исправленное тело — новое действие
+        (новый ключ у операций с Idempotency-Key). Не FILE_TOO_LARGE.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: REQUEST_TOO_LARGE
+              message: JSON request body exceeds transport limit
+              retryable: false
     PayloadTooLarge:
       description: '`FILE_TOO_LARGE` — файл больше `max_file_size_bytes`.'
       headers:
@@ -2328,6 +2378,7 @@ components:
           x-extensible-enum:
           - VALIDATION_ERROR
           - CLIENT_VERSION_UNSUPPORTED
+          - REQUEST_TOO_LARGE
           - INVALID_TOKEN
           - TOKEN_EXPIRED
           - TOKEN_REVOKED
