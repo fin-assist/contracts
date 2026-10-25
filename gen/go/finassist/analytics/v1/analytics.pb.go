@@ -2607,6 +2607,11 @@ func (x *UserDataState) GetCalculatedAt() *timestamppb.Timestamp {
 }
 
 // Пакет готовых метрик пользователя от bank-statement-data.
+// analytics сохраняет только известные его выпуску поля: новое поле запроса или вложенных сообщений
+// (UserDataState, PeriodSnapshot, PeriodRef, Metric и другие) или новый вариант details — сначала
+// выкатывается analytics, затем bank-statement-data начинает его присылать. Иначе значение теряется
+// до пересчёта, а новое поле-инструкция верхнего уровня (как removed_periods) — навсегда
+// (grpc-api.md 7.3, «Модель записи»; порядок как у enum, раздел 8).
 type UpsertUserMetricsRequest struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -2627,7 +2632,10 @@ type UpsertUserMetricsRequest struct {
 	Periods []*PeriodSnapshot `protobuf:"bytes,4,rep,name=periods,proto3" json:"periods,omitempty"`
 	// Периоды, в которых данных больше нет (загрузка удалена). Удаляются для обоих режимов переводов.
 	// Пересчёт после смены пояса завершается вызовом со всеми ключами, которых в новом поясе нет:
-	// analytics сам периоды не удаляет (grpc-api.md 7.3, FIN-283).
+	// analytics сам периоды не удаляет (grpc-api.md 7.3, FIN-283). Удаление — по тому же правилу
+	// calc_version для ключа (период, ключ), оба режима: версия удаления хранится как надгробие ключа,
+	// снимок с версией меньше надгробия пропускается, удаление с версией меньше сохранённого снимка —
+	// тоже.
 	RemovedPeriods []*PeriodRef `protobuf:"bytes,5,rep,name=removed_periods,json=removedPeriods,proto3" json:"removed_periods,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
