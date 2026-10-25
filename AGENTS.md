@@ -116,6 +116,10 @@ selected for REST (`kin-openapi`, pinned in tools/go.mod). Stdlib has no OpenAPI
 validator; this dependency is test-only in tools, not in generated/runtime APIs. Full-document validation includes
 embedded examples, and every shared error fixture is also explicitly validated with `VisitJSON`. FIN-339 tests
 check the six JSON-body routes, their minimum supported 65536-byte transport budget and REQUEST_TOO_LARGE response.
+Shared raw HTTP examples in `fixtures/requests/body-policy.json` cover actual zero-byte/chunked requests, unexpected
+nonempty bodies and supported/unsupported Content-Encoding. BFF FIN-268 tests enforce the bodyless policy;
+kin-openapi alone does not reject a body on an operation without requestBody. Existing protections of other
+body-bearing routes remain unchanged; the new code/minimum apply only to the six routes.
 This BFF-only code is absent from ErrorReason/error_spec/gen/go; FILE_TOO_LARGE remains file-only.
 
 ## Writing the contract

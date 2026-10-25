@@ -16,7 +16,7 @@ FIN-224 теперь добавляет protobuf/API: `RequestRetryInfo`, вло
 
 Время ожидания: свежие `Retry-After`/`expires_in` плюс монотонное elapsed time с учётом сна; BFF даёт свежий `Date`, включая ошибки. Fallback абсолютного datetime через Date того же ответа — приблизительный UI, не proof токена/ключа/permission. Потеря базы требует обновления состояния, не перезапуска старой duration (`docs/api.md`, «Время ожидания и часы»).
 
-FIN-339 задаёт минимальный транспортный бюджет JSON 65 536 байт для шести операций FIN-268 и BFF-only `REQUEST_TOO_LARGE` (413); область и порядок — `docs/api.md`, «Размер JSON-запроса». Неожиданное тело у восьми операций без тела — 400. `FILE_TOO_LARGE`, protobuf, все service `error_spec` и Go API не меняются; новый Go-тег для этого инкремента не нужен.
+FIN-339 задаёт минимальный транспортный бюджет JSON 65 536 байт для шести операций FIN-268 и BFF-only `REQUEST_TOO_LARGE` (413); область и порядок — `docs/api.md`, «Размер JSON-запроса». У восьми операций без тела фактические 0 байт допустимы независимо от заголовков, от 1 байта — 400. У шести JSON-операций сжатие не принимается (400 без распаковки), прежние защиты остальных операций сохраняются. `FILE_TOO_LARGE`, protobuf, все service `error_spec` и Go API не меняются; новый Go-тег для этого инкремента не нужен.
 
 ## Автоматизация обновлений зависимостей
 
@@ -37,6 +37,7 @@ FIN-339 задаёт минимальный транспортный бюдже�
 | `proto/buf.gen.yaml` | Генерация Go-кода: `protoc-gen-go`, `protoc-gen-go-grpc`, `protoc-gen-finerr` |
 | `gen/go/` | Go-модуль `github.com/fin-assist/contracts/gen/go` (свой `go.mod`): `finassist/<сервис>/v1` — сообщения и gRPC, `finerr` — конструкторы unary-ошибок/HTTP mapping, transport-only request advice и generic result Status helpers. Сгенерирован, руками не правится (кроме `go.mod` и тестов) |
 | `tools/` | Модуль инструментов: версии `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` закреплены в `tools/go.mod` (`tool`); `tools/protoc-gen-finerr` — генератор `finerr` из опций `error_spec` |
+| `fixtures/requests/body-policy.json` | HTTP-примеры пустого/неожиданного тела и Content-Encoding FIN-339 для контрактных и BFF-тестов FIN-268 |
 | `tools/openapicheck/` | Go-тесты совместимости OpenAPI с фактическим `kin-openapi` (версия в `tools/go.mod`): валидация полного документа включая встроенные примеры, шесть JSON-бюджетов/ответов 413 FIN-339, те же примеры `fixtures/errors`, Unicode-границы и необязательные non-null поля. Зависимость только для тестов tools; Go API и runtime `gen/go` не меняются |
 | `scripts/generate.sh` | Перегенерировать `gen/go` закреплёнными версиями |
 | `fixtures/calc/` | Эталонные данные расчёта (FIN-107): выписки, сценарий, ожидаемые ответы 3.3, 4.1, 4.3, 5.1, 6.1, 6.2 и правила сравнения — `fixtures/calc/README.md`. По ним тестируются фейковый бэкенд и Go-бэкенд. `categories.json` — ещё и список известных категорий банка, который берут сервисы (`docs/calc.md` 3.1, FIN-200) |
