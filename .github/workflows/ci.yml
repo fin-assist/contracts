@@ -197,6 +197,8 @@ jobs:
         with:
           python-version: '3.15'
       - run: pip install 'pyyaml>=6,<7' 'openapi-schema-validator>=0.6,<0.7' 'rfc3339-validator>=0.1,<0.2'
+      - name: Error presentation contract examples and schema boundaries
+        run: python3 -m unittest discover -s scripts -p 'test_error_presentation.py'
       # The reference calculation against the examples of the calculation spec (docs/calc.md, section 9).
       - name: Reference calculation tests
         working-directory: tools/refcalc

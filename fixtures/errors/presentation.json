@@ -1,0 +1,148 @@
+[
+  {
+    "name": "unknown ordinary REST code",
+    "schema": "ErrorResponse",
+    "value": {"error": {"code": "NEW_ORDINARY_ERROR", "message": "Request rejected", "user_message": "Сейчас выполнить действие не получилось. Попробуйте позже.", "severity": "warning", "retryable": false}}
+  },
+  {
+    "name": "rate limit keeps its retry time",
+    "schema": "ErrorResponse",
+    "value": {"error": {"code": "RATE_LIMITED", "message": "Rate limited", "user_message": "Слишком много попыток. Попробуйте позже.", "severity": "warning", "retry_at": "2026-10-25T20:00:00+03:00", "retryable": true}}
+  },
+  {
+    "name": "unknown severity retains valid text",
+    "schema": "ErrorResponse",
+    "value": {"error": {"code": "NEW_ORDINARY_ERROR", "message": "Request rejected", "user_message": "Попробуйте позже.", "severity": "future_level", "retryable": false}}
+  },
+  {
+    "name": "legacy REST response without presentation",
+    "schema": "ErrorResponse",
+    "value": {"error": {"code": "INTERNAL_ERROR", "message": "Internal error"}}
+  },
+  {
+    "name": "generic legacy SSE shape",
+    "schema": "SseError",
+    "value": {"code": "INTERNAL_ERROR", "message": "Stream failed"}
+  },
+  {
+    "name": "generic SSE presentation",
+    "schema": "ErrorEvent",
+    "value": {"code": "NEW_ORDINARY_ERROR", "message": "Domain failure", "user_message": "Сейчас выполнить действие не получилось.", "severity": "error"}
+  },
+  {
+    "name": "import failure including reconnection",
+    "schema": "StreamError",
+    "value": {"code": "PROCESSING_FAILED", "message": "Import failed", "user_message": "Не удалось разобрать файл", "severity": "error"}
+  },
+  {
+    "name": "legacy import failure",
+    "schema": "StreamError",
+    "value": {"code": "PROCESSING_FAILED", "message": "Import failed"}
+  },
+  {
+    "name": "assistant terminal error keeps aliases and retry permission",
+    "schema": "AnswerErrorEvent",
+    "value": {"code": "MODEL_ERROR", "message": "Answer failed", "user_message": "Не получилось ответить. Вопрос не потрачен", "severity": "error", "text": "Не получилось ответить. Вопрос не потрачен", "retryable": true, "remaining_limit": 5}
+  },
+  {
+    "name": "unknown assistant code with explicit no retry",
+    "schema": "AnswerErrorEvent",
+    "value": {"code": "FUTURE_ANSWER_ERROR", "message": "Answer failed", "user_message": "На этот вопрос сейчас нет ответа", "severity": "future_level", "text": "На этот вопрос сейчас нет ответа", "retryable": false, "remaining_limit": 5}
+  },
+  {
+    "name": "legacy assistant safe text",
+    "schema": "AnswerErrorEvent",
+    "value": {"code": "MODEL_ERROR", "message": "Answer failed", "text": "Не получилось ответить. Вопрос не потрачен", "retryable": true, "remaining_limit": 5}
+  },
+  {
+    "name": "assistant failed snapshot precedes terminal error",
+    "schema": "AnswerSnapshotEvent",
+    "value": {"status": "failed", "blocks": [], "chips": [], "currency": "RUB"}
+  },
+  {
+    "name": "durable failed assistant message",
+    "schema": "Message",
+    "value": {"id": "answer-1", "role": "assistant", "created_at": "2026-10-25T18:00:00+03:00", "currency": "RUB", "status": "failed", "error_code": "MODEL_ERROR", "error_user_message": "Не получилось ответить. Вопрос не потрачен", "error_severity": "error", "error_text": "Не получилось ответить. Вопрос не потрачен", "retryable": true, "blocks": []}
+  },
+  {
+    "name": "legacy durable failed assistant message",
+    "schema": "Message",
+    "value": {"id": "answer-1", "role": "assistant", "created_at": "2026-10-25T18:00:00+03:00", "currency": "RUB", "status": "failed", "error_code": "OFF_TOPIC", "error_text": "Помощник отвечает только на вопросы о ваших финансах", "retryable": false, "blocks": []}
+  },
+  {
+    "name": "safe GET still requires corrected input",
+    "schema": "ErrorResponse",
+    "value": {"error": {"code": "VALIDATION_ERROR", "message": "Request validation failed", "user_message": "Проверьте параметры запроса.", "severity": "warning", "retryable": false, "details": [{"field": "date", "code": "INVALID_FORMAT", "message": "Invalid date"}]}}
+  },
+  {
+    "name": "corrected upload is a new logical action",
+    "schema": "ErrorResponse",
+    "value": {"error": {"code": "WRONG_BANK", "message": "Wrong bank", "user_message": "Выберите OFX-выписку Т-Банка.", "severity": "warning", "retryable": false}}
+  },
+  {
+    "name": "REST maintenance uses only its documented recovery context",
+    "schema": "ErrorResponse",
+    "value": {
+      "error": {
+        "code": "MAINTENANCE",
+        "message": "Maintenance",
+        "user_message": "Сервис временно недоступен.",
+        "severity": "warning",
+        "retryable": false
+      }
+    }
+  },
+  {
+    "name": "same MAINTENANCE reason in assistant result is not REST recovery",
+    "schema": "AnswerErrorEvent",
+    "value": {
+      "code": "MAINTENANCE",
+      "message": "Result failed",
+      "user_message": "Не получилось ответить.",
+      "severity": "error",
+      "text": "Не получилось ответить.",
+      "remaining_limit": 5,
+      "retryable": false
+    }
+  },
+  {
+    "name": "invalid nested assistant status projects INTERNAL_ERROR with independent retryable",
+    "schema": "AnswerErrorEvent",
+    "value": {
+      "code": "INTERNAL_ERROR",
+      "message": "Result failed",
+      "user_message": "Не получилось ответить.",
+      "severity": "error",
+      "text": "Не получилось ответить.",
+      "remaining_limit": 5,
+      "retryable": true
+    }
+  },
+  {
+    "name": "invalid nested history status projects nonnull INTERNAL_ERROR",
+    "schema": "Message",
+    "value": {
+      "id": "answer-invalid",
+      "role": "assistant",
+      "created_at": "2026-10-25T18:00:00+03:00",
+      "currency": "RUB",
+      "status": "failed",
+      "error_code": "INTERNAL_ERROR",
+      "error_user_message": "Не получилось ответить.",
+      "error_severity": "error",
+      "error_text": "Не получилось ответить.",
+      "retryable": true,
+      "blocks": []
+    }
+  },
+  {
+    "name": "invalid nested import status projects PROCESSING_FAILED without legacy cancellation",
+    "schema": "StreamError",
+    "value": {
+      "code": "PROCESSING_FAILED",
+      "message": "Import failed",
+      "user_message": "Не удалось разобрать файл",
+      "severity": "error"
+    }
+  }
+]

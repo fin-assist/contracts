@@ -8,6 +8,14 @@
 
 Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только выжимка и ссылка сюда. Правится здесь.
 
+Формат пользовательских ошибок FIN-224 добавляет `user_message` / `severity` и `error_user_message` / `error_severity`: поля необязательны, но не принимают `null` (`optional<T>` в `docs/api.md`). Сервер опускает отсутствующие значения, в том числе оба новых поля истории у сообщений не `failed`. Прежние nullable-поля не меняются; отсутствие канонического текста и некорректный `null` обрабатываются по разным правилам.
+
+В REST `Error.retryable` (`optional<bool>`) отдельно выражает две гарантии вместе: безопасность и разрешение повторно отправить этот конкретный запрос с прежним телом и тем же ключом, пока действуют ограничения метода и окно ключа. Корректный `false` запрещает прямой повтор, включая автоматическое переоткрытие SSE после REST-отказа, и не отменяет корректирующие сценарии; отсутствующий или некорректный флаг не даёт новых разрешений и сохраняет прежнее безопасное поведение. Это не доменный `retryable` помощника в SSE/истории: там разрешается `RetryAnswer`, новая генерация с новым ключом. Каталог представления принадлежит BFF, permission исходного RPC — сервису/usecase в optional `common.v1.RequestRetryInfo`; BFF соединяет его с доказанной safety всего REST-запроса, без business-switch по причинам. Общая внутренняя ошибка — `google.rpc.Status` со стандартными details; nested Status в terminal/history не меняет успешный транспорт чтения и не содержит request-permission или относительного request-delay. Новая попытка остаётся отдельным свойством результата. Совместимость/dual-write/реальная оговорка replay телефонного429 — `docs/grpc-api.md`5.4–5.5.
+
+FIN-224 теперь добавляет protobuf/API: `RequestRetryInfo`, вложенные Status (`AnswerError.status`6, `Message.error`14, `ImportStreamError.status`3), `finerr.WithRequestRetryInfo`, `NewResultStatus`, `DecodeResultStatus` и `REST.RequestRetryable`. После merge владелец выпускает новый неизменяемый `gen/go` тег до зависимых backend/library PR. Старые поля/constructor/error_spec и внешняя JSON-форма не переопределяются. `ErrorEvent` — нейтральное имя общей внешней формы события, `SseError` сохраняется совместимым алиасом. Runtime/deploy/мониторинг — FIN-225/FIN-223; FIN-225 ждёт отдельную FIN-268.
+
+Время ожидания: свежие `Retry-After`/`expires_in` плюс монотонное elapsed time с учётом сна; BFF даёт свежий `Date`, включая ошибки. Fallback абсолютного datetime через Date того же ответа — приблизительный UI, не proof токена/ключа/permission. Потеря базы требует обновления состояния, не перезапуска старой duration (`docs/api.md`, «Время ожидания и часы»).
+
 ## Автоматизация обновлений зависимостей
 
 [Политика Renovate](docs/renovate-policy.md) (FIN-211): одна актуальная release/main, автомерж полностью ботских PR после обязательного CI, один повтор красного CI и закрытие с явным повтором через Dependency Dashboard. AndroidX/Compose остаются на ручной проверке. Исходные группировки, ограничения версий и расписания — `renovate-base.json`; generated target и quarantine — ветка `renovate-policy`. Активация требует отдельного токена и строгой защиты веток; по умолчанию выключена.
@@ -20,15 +28,17 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `docs/calc.md` | Расчёт метрик и правила учёта (FIN-106, FIN-158): пары, возвраты, покрытие, метрики «Аналитики», порядок и состав блоков |
 | `openapi/openapi.yaml` | OpenAPI 3.0.3 того же API |
 | `docs/grpc-api.md` | Внутренний gRPC API |
-| `proto/buf.yaml`, `proto/buf.lock` | Модуль `buf`: lint STANDARD; зависимость `buf.build/bufbuild/protovalidate` для аннотаций проверки полей (`docs/grpc-api.md`, раздел 8) — тот же коммит, из которого собран Go-модуль protovalidate у сервисов (FIN-202) |
+| `proto/buf.yaml`, `proto/buf.lock` | Модуль `buf`: lint STANDARD; зависимость `buf.build/bufbuild/protovalidate` для аннотаций проверки полей (`docs/grpc-api.md`, раздел 8) — тот же коммит, из которого собран Go-модуль protovalidate у сервисов (FIN-202); googleapis BSR-модуль закреплён для стандартного google.rpc.Status |
 | `proto/finassist/<сервис>/v1/*.proto` | Контракты сервисов и `common/v1` (типы, реестр ошибок `ErrorReason`) |
 | `proto/scripts/check_error_registry.py` | Сверка реестра ошибок с разделом 8 `docs/api.md` |
 | `proto/scripts/check_error_spec_stable.py` | `error_spec` существующих кодов не меняется относительно базы PR |
 | `proto/buf.gen.yaml` | Генерация Go-кода: `protoc-gen-go`, `protoc-gen-go-grpc`, `protoc-gen-finerr` |
-| `gen/go/` | Go-модуль `github.com/fin-assist/contracts/gen/go` (свой `go.mod`): `finassist/<сервис>/v1` — сообщения и gRPC, `finerr` — конструкторы ошибок и таблица перевода в REST. Сгенерирован, руками не правится (кроме `go.mod` и тестов) |
+| `gen/go/` | Go-модуль `github.com/fin-assist/contracts/gen/go` (свой `go.mod`): `finassist/<сервис>/v1` — сообщения и gRPC, `finerr` — конструкторы unary-ошибок/HTTP mapping, transport-only request advice и generic result Status helpers. Сгенерирован, руками не правится (кроме `go.mod` и тестов) |
 | `tools/` | Модуль инструментов: версии `buf`, `protoc-gen-go`, `protoc-gen-go-grpc` закреплены в `tools/go.mod` (`tool`); `tools/protoc-gen-finerr` — генератор `finerr` из опций `error_spec` |
+| `tools/openapicheck/` | Go-тесты совместимости OpenAPI с фактическим `kin-openapi v0.133.0`: валидация полной схемы, те же примеры `fixtures/errors`, Unicode-границы и необязательные non-null поля. Зависимость только для тестов tools; Go API и runtime `gen/go` не меняются |
 | `scripts/generate.sh` | Перегенерировать `gen/go` закреплёнными версиями |
 | `fixtures/calc/` | Эталонные данные расчёта (FIN-107): выписки, сценарий, ожидаемые ответы 3.3, 4.1, 4.3, 5.1, 6.1, 6.2 и правила сравнения — `fixtures/calc/README.md`. По ним тестируются фейковый бэкенд и Go-бэкенд. `categories.json` — ещё и список известных категорий банка, который берут сервисы (`docs/calc.md` 3.1, FIN-200) |
+| `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` | Примеры совместимого формата ошибок FIN-224 и проверки OpenAPI: неизвестный код/уровень, прежние REST/SSE/история, границы Unicode-текста, тип REST `retryable`, совпадающий reason в разных контекстах и фиксированные внешние проекции present-invalid Status. Поведение клиента реализуется в FIN-223, политика BFF — FIN-225 |
 | `tools/refcalc/` | Референсный расчёт на Python по `docs/calc.md`: считает ожидаемые ответы `fixtures/calc/expected`, тесты — примеры раздела 9 |
 | `redocly.yaml` | Настройки линтера OpenAPI |
 | `AGENTS.md`, `CLAUDE.md` | Инструкции агентам: карта, правила контракта, процесс, `## Code Review Rules` |
@@ -57,7 +67,8 @@ Confluence PF (https://finassist.atlassian.net/wiki/spaces/PF) — только 
 | `check_error_registry.py` | всегда | расхождение `ErrorReason` с разделом 8 `docs/api.md`, неполный `error_spec`, `error_spec` вне реестра, больше 30 кодов |
 | `check_error_spec_stable.py` против базы PR | PR | изменение `error_spec` (`grpc_code`, `http_status`, `metadata_keys`, `details`) у существующего кода. Владелец принимает его меткой `breaking-accepted` — изменения перечисляются, проверка не падает |
 | Эталонные данные `fixtures/calc` | всегда | тесты референсного расчёта (примеры `docs/calc.md`) падают; `expected/` не совпадает с перегенерированным сценарием; ответ (или `data` блока) не проходит схему `openapi.yaml`; поле схемы ответов не встречается ни в одном ожидаемом ответе и не внесено в `coverage-exceptions.json` |
-| Go-модуль `gen/go` | всегда | `gen/go` не совпадает с тем, что генерирует `scripts/generate.sh` из `proto/`; модуль не собирается, `go vet`, race-тесты модулей `gen/go` / `tools` или тесты отчёта покрытия падают; версия `buf` в `tools/go.mod` расходится с `BUF_VERSION` в `ci.yml` |
+| Примеры ошибок `fixtures/errors` (в job `calc-fixtures`) | всегда | прежний ответ перестал проходить схему; неизвестный открытый код/уровень не принимается; нарушены ограничения пользовательского текста; ошибки схемы при некорректном необязательном поле не локальны для этого поля. Сохранение кодов и метаданных при клиентском разборе проверяется в FIN-223 |
+| Go-модуль `gen/go` и тесты tools | всегда | `gen/go` не совпадает с тем, что генерирует `scripts/generate.sh` из `proto/`; модуль не собирается, `go vet`, race-тесты модулей `gen/go` / `tools` (включая фактический kin-openapi в `tools/openapicheck`) или тесты отчёта покрытия падают; версия `buf` в `tools/go.mod` расходится с `BUF_VERSION` в `ci.yml` |
 
 Локально:
 
@@ -70,6 +81,12 @@ cd proto && buf lint
 
 # Error registry check
 cd proto && buf build -o /tmp/fd.binpb && python3 scripts/check_error_registry.py /tmp/fd.binpb ../docs/api.md
+
+# Error presentation examples and schema boundaries (same Python dependencies as calculation fixtures)
+python3 -m unittest discover -s scripts -p 'test_error_presentation.py'
+
+# Actual Go OpenAPI validator compatibility (also included in the tools race tests below)
+(cd tools && go test -race -count=1 -timeout=2m ./openapicheck)
 
 # Calculation fixtures: reference calculation tests, then regenerate fixtures/calc/expected and check the schema
 cd tools/refcalc && python3 -m unittest discover -s tests -t . && python3 -m refcalc.scenario ../../fixtures/calc --write --openapi ../../openapi/openapi.yaml
