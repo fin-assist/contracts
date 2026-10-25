@@ -77,7 +77,9 @@ The calculation fixtures job also runs `python3 -m unittest discover -s scripts 
 with its existing PyYAML and OpenAPI validator dependencies. This validates the FIN-224 producer schema and
 compatibility examples; client display/fallback behavior belongs to FIN-223. BFF owns safe user text/severity,
 not internal services or generated `finerr`; existing assistant proto text fields are compatibility-only
-(`docs/grpc-api.md`, 5.4). Presentation fields remain optional and must not change special actions or retry metadata.
+(`docs/grpc-api.md`, 5.4). The four new presentation fields are optional but non-null (`optional<T>` in
+`docs/api.md`); producers omit absent values, including both new error fields on non-failed history messages.
+Existing nullable fields keep their semantics. Presentation must not change special actions or retry metadata.
 
 ## Writing the contract
 
