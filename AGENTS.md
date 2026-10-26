@@ -257,8 +257,13 @@ or a compromised service gets to it. Check the changed contract for:
   personal data consent; revoking a consent and deleting the account state what happens to stored data and in what
   time.
 - Trust boundaries in gRPC: each metadata key states where it comes from and how far it is trusted
-  (`docs/grpc-api.md`, «Metadata»). `x-client-ip` is computed by `bank-bff` from the TCP connection and never taken
-  from client headers; `x-client-version` is copied from a client header — spoofable, used for logs, metrics and
+  (`docs/grpc-api.md`, «Metadata»). `x-client-ip` is computed by `bank-bff` from the TCP peer, or, only when that peer
+  is in the explicitly configured `TRUSTED_PROXIES` CIDRs, from `X-Forwarded-For` appended by controlled proxies:
+  walk all header lines from right to left to the first untrusted address, never trust its client-supplied prefix.
+  Missing forwarding data keeps the TCP peer; malformed trusted suffixes or more than 16 examined elements keep
+  the last trusted hop. Trust only controlled proxy networks, never client networks or all addresses; services
+  accept this metadata only from `bank-bff`. Never copy HTTP `X-Client-IP`;
+  `x-client-version` is copied from a client header — spoofable, used for logs, metrics and
   the minimum supported version, never for authorization; a new method gets its row in the caller table; `PERMISSION_DENIED` to a foreign caller
   carries no details.
 - Client-visible limits are informational: the contract never relies on the client to enforce a limit, a quota or a
