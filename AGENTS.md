@@ -261,7 +261,11 @@ or a compromised service gets to it. Check the changed contract for:
   is in the explicitly configured `TRUSTED_PROXIES` CIDRs, from `X-Forwarded-For` appended by controlled proxies:
   walk all header lines from right to left to the first untrusted address, never trust its client-supplied prefix.
   Missing forwarding data keeps the TCP peer; malformed trusted suffixes or more than 16 examined elements keep
-  the last trusted hop. Trust only controlled proxy networks, never client networks or all addresses; services
+  the last trusted hop. A mandatory condition for every trusted CIDR is that it contains only controlled HTTP
+  proxies that themselves append their TCP peer IP to `X-Forwarded-For`. Never include L4 balancers, NAT/SNAT,
+  non-appending hops, client networks or all addresses: skipping such a hop can expose a spoofed client prefix.
+  If L4/NAT hides the client IP, recover it at the first HTTP proxy from a trusted infrastructure source
+  (e.g. PROXY protocol / `real_ip`), never by expanding the trusted list. Services
   accept this metadata only from `bank-bff`. Never copy HTTP `X-Client-IP`;
   `x-client-version` is copied from a client header — spoofable, used for logs, metrics and
   the minimum supported version, never for authorization; a new method gets its row in the caller table; `PERMISSION_DENIED` to a foreign caller
