@@ -1,0 +1,98 @@
+[
+  {
+    "name": "empty_content_length_zero",
+    "operation_id": "retryAnswer",
+    "wire": "POST /v1/assistant/messages/01a10852-b341-7a10-8f3e-6c2d9b4a1e07/retry HTTP/1.1\r\nHost: api.example.ru\r\nContent-Length: 0\r\n\r\n",
+    "body_bytes": 0,
+    "transport_error": null,
+    "validate_encoding_with_kin": false
+  },
+  {
+    "name": "empty_chunked_with_json_content_type",
+    "operation_id": "retryAnswer",
+    "wire": "POST /v1/assistant/messages/01a10852-b341-7a10-8f3e-6c2d9b4a1e07/retry HTTP/1.1\r\nHost: api.example.ru\r\nTransfer-Encoding: chunked\r\nContent-Type: application/json\r\n\r\n0\r\n\r\n",
+    "body_bytes": 0,
+    "transport_error": null,
+    "validate_encoding_with_kin": false
+  },
+  {
+    "name": "empty_json_content_type_without_length",
+    "operation_id": "retryAnswer",
+    "wire": "POST /v1/assistant/messages/01a10852-b341-7a10-8f3e-6c2d9b4a1e07/retry HTTP/1.1\r\nHost: api.example.ru\r\nContent-Type: application/json\r\n\r\n",
+    "body_bytes": 0,
+    "transport_error": null,
+    "validate_encoding_with_kin": false
+  },
+  {
+    "name": "empty_without_content_type",
+    "operation_id": "retryAnswer",
+    "wire": "POST /v1/assistant/messages/01a10852-b341-7a10-8f3e-6c2d9b4a1e07/retry HTTP/1.1\r\nHost: api.example.ru\r\n\r\n",
+    "body_bytes": 0,
+    "transport_error": null,
+    "validate_encoding_with_kin": false
+  },
+  {
+    "name": "unexpected_json_object",
+    "operation_id": "retryAnswer",
+    "wire": "POST /v1/assistant/messages/01a10852-b341-7a10-8f3e-6c2d9b4a1e07/retry HTTP/1.1\r\nHost: api.example.ru\r\nContent-Length: 2\r\nContent-Type: application/json\r\n\r\n{}",
+    "body_bytes": 2,
+    "transport_error": "VALIDATION_ERROR",
+    "validate_encoding_with_kin": false
+  },
+  {
+    "name": "unexpected_whitespace",
+    "operation_id": "retryAnswer",
+    "wire": "POST /v1/assistant/messages/01a10852-b341-7a10-8f3e-6c2d9b4a1e07/retry HTTP/1.1\r\nHost: api.example.ru\r\nContent-Length: 1\r\n\r\n ",
+    "body_bytes": 1,
+    "transport_error": "VALIDATION_ERROR",
+    "validate_encoding_with_kin": false
+  },
+  {
+    "name": "encoding_absent",
+    "operation_id": "startPhoneVerification",
+    "wire": "POST /v1/auth/phone HTTP/1.1\r\nHost: api.example.ru\r\nContent-Type: application/json\r\nContent-Length: 24\r\nIdempotency-Key: 4f9a2c1e-8b3d-4e7a-9c6f-2d1b0a8e5f37\r\nX-Client-Version: android/0.2.13+41\r\n\r\n{\"phone\":\"+79001234567\"}",
+    "body_bytes": 24,
+    "transport_error": null,
+    "validate_encoding_with_kin": true
+  },
+  {
+    "name": "encoding_identity",
+    "operation_id": "startPhoneVerification",
+    "wire": "POST /v1/auth/phone HTTP/1.1\r\nHost: api.example.ru\r\nContent-Type: application/json\r\nContent-Length: 24\r\nIdempotency-Key: 4f9a2c1e-8b3d-4e7a-9c6f-2d1b0a8e5f37\r\nX-Client-Version: android/0.2.13+41\r\nContent-Encoding: identity\r\n\r\n{\"phone\":\"+79001234567\"}",
+    "body_bytes": 24,
+    "transport_error": null,
+    "validate_encoding_with_kin": true
+  },
+  {
+    "name": "encoding_identity_mixed_case",
+    "operation_id": "startPhoneVerification",
+    "wire": "POST /v1/auth/phone HTTP/1.1\r\nHost: api.example.ru\r\nContent-Type: application/json\r\nContent-Length: 24\r\nIdempotency-Key: 4f9a2c1e-8b3d-4e7a-9c6f-2d1b0a8e5f37\r\nX-Client-Version: android/0.2.13+41\r\nContent-Encoding: IdEnTiTy\r\n\r\n{\"phone\":\"+79001234567\"}",
+    "body_bytes": 24,
+    "transport_error": null,
+    "validate_encoding_with_kin": true
+  },
+  {
+    "name": "encoding_gzip",
+    "operation_id": "startPhoneVerification",
+    "wire": "POST /v1/auth/phone HTTP/1.1\r\nHost: api.example.ru\r\nContent-Type: application/json\r\nContent-Length: 24\r\nIdempotency-Key: 4f9a2c1e-8b3d-4e7a-9c6f-2d1b0a8e5f37\r\nX-Client-Version: android/0.2.13+41\r\nContent-Encoding: gzip\r\n\r\n{\"phone\":\"+79001234567\"}",
+    "body_bytes": 24,
+    "transport_error": "VALIDATION_ERROR",
+    "validate_encoding_with_kin": true
+  },
+  {
+    "name": "encoding_list",
+    "operation_id": "startPhoneVerification",
+    "wire": "POST /v1/auth/phone HTTP/1.1\r\nHost: api.example.ru\r\nContent-Type: application/json\r\nContent-Length: 24\r\nIdempotency-Key: 4f9a2c1e-8b3d-4e7a-9c6f-2d1b0a8e5f37\r\nX-Client-Version: android/0.2.13+41\r\nContent-Encoding: identity, gzip\r\n\r\n{\"phone\":\"+79001234567\"}",
+    "body_bytes": 24,
+    "transport_error": "VALIDATION_ERROR",
+    "validate_encoding_with_kin": true
+  },
+  {
+    "name": "encoding_duplicate_hiding_gzip",
+    "operation_id": "startPhoneVerification",
+    "wire": "POST /v1/auth/phone HTTP/1.1\r\nHost: api.example.ru\r\nContent-Type: application/json\r\nContent-Length: 24\r\nIdempotency-Key: 4f9a2c1e-8b3d-4e7a-9c6f-2d1b0a8e5f37\r\nX-Client-Version: android/0.2.13+41\r\nContent-Encoding: identity\r\nContent-Encoding: gzip\r\n\r\n{\"phone\":\"+79001234567\"}",
+    "body_bytes": 24,
+    "transport_error": "VALIDATION_ERROR",
+    "validate_encoding_with_kin": false
+  }
+]

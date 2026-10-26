@@ -32,10 +32,7 @@ func schema(t *testing.T, doc *openapi3.T, name string) *openapi3.Schema {
 
 func TestContractValidatesWithKinOpenAPI(t *testing.T) {
 	doc := loadContract(t)
-	// Two unrelated response examples on the base branch omit required currency/changed_since_text fields.
-	// Skip only embedded example validation; patterns, schemas and the rest of the full document are validated.
-	// Every new error fixture is validated separately through VisitJSON below, without this exception.
-	if err := doc.Validate(context.Background(), openapi3.DisableExamplesValidation()); err != nil {
+	if err := doc.Validate(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 }
