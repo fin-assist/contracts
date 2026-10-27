@@ -141,6 +141,9 @@ type DataVersion struct {
 	// границ загрузки оставляет uploads неизвестным до её восстановления.
 	// Прежний производитель может не прислать список.
 	// Моменты 1–2 информативны и не определяют changed_since (FIN-367).
+	// Поле revisions служебное: не попадает в промпт, результаты инструментов
+	// для модели, тексты блоков и REST. Неверный список в ответе источника — ошибка
+	// этого чтения, не частично принятый baseline; пустой legacy-список — неизвестность.
 	Revisions     []*v1.DataRevision `protobuf:"bytes,3,rep,name=revisions,proto3" json:"revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

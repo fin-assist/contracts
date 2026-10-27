@@ -1939,7 +1939,8 @@ type GetAnalyticsResponse struct {
 	// Ревизии исходных данных фактически выбранного снимка, не текущего обзора.
 	// Если снимка нет или has_data=false — ревизии использованного UserDataState.
 	// Отсутствующий список у прежнего снимка означает неизвестную актуальность.
-	// Поле внутреннее: bank-bff не переносит его в REST.
+	// Поле внутреннее: bank-bff не переносит его в REST, assistant не передаёт
+	// его модели в промпте, результатах инструментов или текстах блоков.
 	DataRevisions []*v1.DataRevision `protobuf:"bytes,14,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2207,6 +2208,7 @@ type ListPeriodsResponse struct {
 	// только если оно одинаково у всех использованных снимков; при пустом наборе
 	// берётся из использованного UserDataState. Смешанные/прежние снимки не получают
 	// выдуманную текущую ревизию. Не более 32 уникальных code; в REST поле не идёт.
+	// В промпт, результаты инструментов для модели и тексты блоков также не входит.
 	DataRevisions []*v1.DataRevision `protobuf:"bytes,3,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2363,6 +2365,8 @@ type PeriodSnapshot struct {
 	// Ревизии исходного снимка, из которого посчитан этот период; до 32 записей
 	// с уникальными code. Хранятся вместе с calc_version; неизвестные code сохраняются.
 	// Прежний снимок без поля не получает ревизии из текущего состояния.
+	// После изменения глобальной ревизии производитель заменяет все периоды,
+	// включая незатронутые, чтобы их baseline не оставался устаревшим бессрочно.
 	DataRevisions []*v1.DataRevision `protobuf:"bytes,9,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
