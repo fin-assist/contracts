@@ -963,6 +963,9 @@ type AnswerSource struct {
 	TransferMode v1.TransferMode `protobuf:"varint,3,opt,name=transfer_mode,json=transferMode,proto3,enum=finassist.common.v1.TransferMode" json:"transfer_mode,omitempty"`
 	// Что изменилось после расчёта; сравнение сохранённых ревизий с primary
 	// statementdata.GetDataVersion. При неизвестной ревизии — UNVERIFIED, не пустой список.
+	// Только голый транспортный UNAVAILABLE/DEADLINE_EXCEEDED версии при живом
+	// родительском контексте допускает сохранённые данные с UNVERIFIED; остальные
+	// ошибки чтения не подавляются (docs/grpc-api.md, FIN-367).
 	ChangedSince  []ChangedSince `protobuf:"varint,4,rep,packed,name=changed_since,json=changedSince,proto3,enum=finassist.assistant.v1.ChangedSince" json:"changed_since,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

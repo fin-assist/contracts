@@ -40,6 +40,8 @@ service AssistantService {
   // переходы к данным, затем итог или ошибка. Работает и для уже готового ответа.
   // GET /v1/assistant/messages/{answer_id}/events (SSE). Первое сообщение — snapshot;
   // терминальные: done или error. Генерация от этого потока не зависит.
+  // changed_since проверяется перед snapshot с источником и последующими source;
+  // это не подписка на изменения финансовых данных (docs/grpc-api.md, FIN-367).
   // Заменённый повтором ответ -> NOT_FOUND.
   rpc WatchAnswer(WatchAnswerRequest) returns (stream WatchAnswerResponse);
 
@@ -183,6 +185,9 @@ message AnswerSource {
   finassist.common.v1.TransferMode transfer_mode = 3;
   // Что изменилось после расчёта; сравнение сохранённых ревизий с primary
   // statementdata.GetDataVersion. При неизвестной ревизии — UNVERIFIED, не пустой список.
+  // Только голый транспортный UNAVAILABLE/DEADLINE_EXCEEDED версии при живом
+  // родительском контексте допускает сохранённые данные с UNVERIFIED; остальные
+  // ошибки чтения не подавляются (docs/grpc-api.md, FIN-367).
   repeated ChangedSince changed_since = 4;
 }
 

@@ -1936,7 +1936,8 @@ type GetAnalyticsResponse struct {
 	// Валюта всех сумм ответа (ISO 4217), включая устаревшие поля 5–9; сейчас RUB (FIN-82). Обязательна при
 	// has_data: тогда пустая строка — ошибка сервиса; при has_data = false пусто (grpc-api.md 5.3).
 	Currency string `protobuf:"bytes,13,opt,name=currency,proto3" json:"currency,omitempty"`
-	// Ревизии исходных данных фактически выбранного снимка, не текущего обзора.
+	// Ревизия каждого code известна только при совпадении у выбранного снимка
+	// и использованного UserDataState: состояние/пояс также входят в ответ.
 	// Если снимка нет или has_data=false — ревизии использованного UserDataState.
 	// Отсутствующий список у прежнего снимка означает неизвестную актуальность.
 	// Поле внутреннее: bank-bff не переносит его в REST, assistant не передаёт
@@ -2205,7 +2206,8 @@ type ListPeriodsResponse struct {
 	Periods  []*PeriodItem `protobuf:"bytes,1,rep,name=periods,proto3" json:"periods,omitempty"`
 	TimeZone string        `protobuf:"bytes,2,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
 	// Ревизии возвращённого набора периодов. Для каждого code значение известно
-	// только если оно одинаково у всех использованных снимков; при пустом наборе
+	// только если оно одинаково у всех использованных снимков и UserDataState;
+	// при пустом наборе
 	// берётся из использованного UserDataState. Смешанные/прежние снимки не получают
 	// выдуманную текущую ревизию. Не более 32 уникальных code; в REST поле не идёт.
 	// В промпт, результаты инструментов для модели и тексты блоков также не входит.
