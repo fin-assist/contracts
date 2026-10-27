@@ -40,6 +40,8 @@ service AssistantService {
   // переходы к данным, затем итог или ошибка. Работает и для уже готового ответа.
   // GET /v1/assistant/messages/{answer_id}/events (SSE). Первое сообщение — snapshot;
   // терминальные: done или error. Генерация от этого потока не зависит.
+  // changed_since проверяется перед snapshot с источником и последующими source;
+  // это не подписка на изменения финансовых данных (docs/grpc-api.md, FIN-367).
   // Заменённый повтором ответ -> NOT_FOUND.
   rpc WatchAnswer(WatchAnswerRequest) returns (stream WatchAnswerResponse);
 
@@ -167,6 +169,11 @@ enum ChangedSince {
   CHANGED_SINCE_CATEGORIES = 1;
   // Загружали или удаляли выписки.
   CHANGED_SINCE_UPLOADS = 2;
+  // Для прежнего или неполного источника нет доказуемой ревизии. Это не
+  // утверждение, что категории или выписки действительно менялись.
+  CHANGED_SINCE_UNVERIFIED = 3;
+  // Обновились настройки часового пояса, влияющие на календарные выборки.
+  CHANGED_SINCE_TIME_ZONE = 4;
 }
 
 // Источник ответа: на каких данных и когда он построен.
@@ -176,7 +183,11 @@ message AnswerSource {
   // Период данных, по которым ответил помощник.
   optional finassist.common.v1.TimeRange data_range = 2;
   finassist.common.v1.TransferMode transfer_mode = 3;
-  // Что изменилось после расчёта; вычисляется при чтении по statementdata.GetDataVersion.
+  // Что изменилось после расчёта; сравнение сохранённых ревизий с primary
+  // statementdata.GetDataVersion. При неизвестной ревизии — UNVERIFIED, не пустой список.
+  // Только голый транспортный UNAVAILABLE/DEADLINE_EXCEEDED версии при живом
+  // родительском контексте допускает сохранённые данные с UNVERIFIED; остальные
+  // ошибки чтения не подавляются (docs/grpc-api.md, FIN-367).
   repeated ChangedSince changed_since = 4;
 }
 

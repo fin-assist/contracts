@@ -56,6 +56,8 @@ type AssistantServiceClient interface {
 	// переходы к данным, затем итог или ошибка. Работает и для уже готового ответа.
 	// GET /v1/assistant/messages/{answer_id}/events (SSE). Первое сообщение — snapshot;
 	// терминальные: done или error. Генерация от этого потока не зависит.
+	// changed_since проверяется перед snapshot с источником и последующими source;
+	// это не подписка на изменения финансовых данных (docs/grpc-api.md, FIN-367).
 	// Заменённый повтором ответ -> NOT_FOUND.
 	WatchAnswer(ctx context.Context, in *WatchAnswerRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchAnswerResponse], error)
 	// Вернуть историю диалога постранично, старые первыми: вопросы и ответы с блоками, переходами
@@ -172,6 +174,8 @@ type AssistantServiceServer interface {
 	// переходы к данным, затем итог или ошибка. Работает и для уже готового ответа.
 	// GET /v1/assistant/messages/{answer_id}/events (SSE). Первое сообщение — snapshot;
 	// терминальные: done или error. Генерация от этого потока не зависит.
+	// changed_since проверяется перед snapshot с источником и последующими source;
+	// это не подписка на изменения финансовых данных (docs/grpc-api.md, FIN-367).
 	// Заменённый повтором ответ -> NOT_FOUND.
 	WatchAnswer(*WatchAnswerRequest, grpc.ServerStreamingServer[WatchAnswerResponse]) error
 	// Вернуть историю диалога постранично, старые первыми: вопросы и ответы с блоками, переходами

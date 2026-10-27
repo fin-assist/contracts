@@ -34,6 +34,7 @@ const (
 // 3 минут) и может пережить access-токен; assistant передаёт user_id, взятый из проверенного
 // токена при создании вопроса. Побочных эффектов нет ни у одного метода. Чтение — с реплик,
 // если вызывающий не поставил `x-read-primary: 1` (assistant не ставит).
+// Исключение — GetDataVersion: всегда primary, чтобы отставание реплики не скрывало изменения.
 type AssistantToolsServiceClient interface {
 	// Вернуть обзор данных пользователя: границы данных, покрытие по месяцам, какие поля
 	// поставляют источники, версия данных. Идёт в системный промпт, чтобы модель не делала
@@ -47,8 +48,8 @@ type AssistantToolsServiceClient interface {
 	// Найти операции по фильтрам и вернуть ограниченный список («покажи самые крупные», «что было
 	// 12 июля») с общим числом совпадений.
 	FindOperations(ctx context.Context, in *FindOperationsRequest, opts ...grpc.CallOption) (*FindOperationsResponse, error)
-	// Вернуть версию данных пользователя (моменты последних изменений категорий и загрузок).
-	// Дёшево; assistant вычисляет по нему `changed_since` при выдаче истории.
+	// Вернуть текущие ревизии исходных данных с primary. assistant сравнивает их
+	// с сохранённым снимком источников ответа при выдаче истории.
 	GetDataVersion(ctx context.Context, in *GetDataVersionRequest, opts ...grpc.CallOption) (*GetDataVersionResponse, error)
 }
 
@@ -109,6 +110,7 @@ func (c *assistantToolsServiceClient) GetDataVersion(ctx context.Context, in *Ge
 // 3 минут) и может пережить access-токен; assistant передаёт user_id, взятый из проверенного
 // токена при создании вопроса. Побочных эффектов нет ни у одного метода. Чтение — с реплик,
 // если вызывающий не поставил `x-read-primary: 1` (assistant не ставит).
+// Исключение — GetDataVersion: всегда primary, чтобы отставание реплики не скрывало изменения.
 type AssistantToolsServiceServer interface {
 	// Вернуть обзор данных пользователя: границы данных, покрытие по месяцам, какие поля
 	// поставляют источники, версия данных. Идёт в системный промпт, чтобы модель не делала
@@ -122,8 +124,8 @@ type AssistantToolsServiceServer interface {
 	// Найти операции по фильтрам и вернуть ограниченный список («покажи самые крупные», «что было
 	// 12 июля») с общим числом совпадений.
 	FindOperations(context.Context, *FindOperationsRequest) (*FindOperationsResponse, error)
-	// Вернуть версию данных пользователя (моменты последних изменений категорий и загрузок).
-	// Дёшево; assistant вычисляет по нему `changed_since` при выдаче истории.
+	// Вернуть текущие ревизии исходных данных с primary. assistant сравнивает их
+	// с сохранённым снимком источников ответа при выдаче истории.
 	GetDataVersion(context.Context, *GetDataVersionRequest) (*GetDataVersionResponse, error)
 	mustEmbedUnimplementedAssistantToolsServiceServer()
 }

@@ -185,6 +185,11 @@ const (
 	ChangedSince_CHANGED_SINCE_CATEGORIES ChangedSince = 1
 	// Загружали или удаляли выписки.
 	ChangedSince_CHANGED_SINCE_UPLOADS ChangedSince = 2
+	// Для прежнего или неполного источника нет доказуемой ревизии. Это не
+	// утверждение, что категории или выписки действительно менялись.
+	ChangedSince_CHANGED_SINCE_UNVERIFIED ChangedSince = 3
+	// Обновились настройки часового пояса, влияющие на календарные выборки.
+	ChangedSince_CHANGED_SINCE_TIME_ZONE ChangedSince = 4
 )
 
 // Enum value maps for ChangedSince.
@@ -193,11 +198,15 @@ var (
 		0: "CHANGED_SINCE_UNSPECIFIED",
 		1: "CHANGED_SINCE_CATEGORIES",
 		2: "CHANGED_SINCE_UPLOADS",
+		3: "CHANGED_SINCE_UNVERIFIED",
+		4: "CHANGED_SINCE_TIME_ZONE",
 	}
 	ChangedSince_value = map[string]int32{
 		"CHANGED_SINCE_UNSPECIFIED": 0,
 		"CHANGED_SINCE_CATEGORIES":  1,
 		"CHANGED_SINCE_UPLOADS":     2,
+		"CHANGED_SINCE_UNVERIFIED":  3,
+		"CHANGED_SINCE_TIME_ZONE":   4,
 	}
 )
 
@@ -952,7 +961,11 @@ type AnswerSource struct {
 	// Период данных, по которым ответил помощник.
 	DataRange    *v1.TimeRange   `protobuf:"bytes,2,opt,name=data_range,json=dataRange,proto3,oneof" json:"data_range,omitempty"`
 	TransferMode v1.TransferMode `protobuf:"varint,3,opt,name=transfer_mode,json=transferMode,proto3,enum=finassist.common.v1.TransferMode" json:"transfer_mode,omitempty"`
-	// Что изменилось после расчёта; вычисляется при чтении по statementdata.GetDataVersion.
+	// Что изменилось после расчёта; сравнение сохранённых ревизий с primary
+	// statementdata.GetDataVersion. При неизвестной ревизии — UNVERIFIED, не пустой список.
+	// Только голый транспортный UNAVAILABLE/DEADLINE_EXCEEDED версии при живом
+	// родительском контексте допускает сохранённые данные с UNVERIFIED; остальные
+	// ошибки чтения не подавляются (docs/grpc-api.md, FIN-367).
 	ChangedSince  []ChangedSince `protobuf:"varint,4,rep,packed,name=changed_since,json=changedSince,proto3,enum=finassist.assistant.v1.ChangedSince" json:"changed_since,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2337,11 +2350,13 @@ const file_finassist_assistant_v1_assistant_proto_rawDesc = "" +
 	"ChipScreen\x12\x1b\n" +
 	"\x17CHIP_SCREEN_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16CHIP_SCREEN_OPERATIONS\x10\x01\x12\x19\n" +
-	"\x15CHIP_SCREEN_ANALYTICS\x10\x02*f\n" +
+	"\x15CHIP_SCREEN_ANALYTICS\x10\x02*\xa1\x01\n" +
 	"\fChangedSince\x12\x1d\n" +
 	"\x19CHANGED_SINCE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18CHANGED_SINCE_CATEGORIES\x10\x01\x12\x19\n" +
-	"\x15CHANGED_SINCE_UPLOADS\x10\x02*?\n" +
+	"\x15CHANGED_SINCE_UPLOADS\x10\x02\x12\x1c\n" +
+	"\x18CHANGED_SINCE_UNVERIFIED\x10\x03\x12\x1b\n" +
+	"\x17CHANGED_SINCE_TIME_ZONE\x10\x04*?\n" +
 	"\x04Role\x12\x14\n" +
 	"\x10ROLE_UNSPECIFIED\x10\x00\x12\r\n" +
 	"\tROLE_USER\x10\x01\x12\x12\n" +

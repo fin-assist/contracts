@@ -1897,7 +1897,7 @@ func (x *ScreenState) GetRecalculating() bool {
 type GetAnalyticsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Есть ли у пользователя хоть одна операция и хоть один покрытый выпиской день. false — остальных
-	// полей нет, аналитики пока нет.
+	// финансовых полей нет, аналитики пока нет; внутренние data_revisions допустимы.
 	HasData bool `protobuf:"varint,1,opt,name=has_data,json=hasData,proto3" json:"has_data,omitempty"`
 	// Фактические параметры ответа: тип периода, точный ключ периода, режим переводов.
 	Params *v1.AnalyticsParams `protobuf:"bytes,2,opt,name=params,proto3" json:"params,omitempty"`
@@ -1935,7 +1935,16 @@ type GetAnalyticsResponse struct {
 	Blocks []*v1.Block `protobuf:"bytes,12,rep,name=blocks,proto3" json:"blocks,omitempty"`
 	// Валюта всех сумм ответа (ISO 4217), включая устаревшие поля 5–9; сейчас RUB (FIN-82). Обязательна при
 	// has_data: тогда пустая строка — ошибка сервиса; при has_data = false пусто (grpc-api.md 5.3).
-	Currency      string `protobuf:"bytes,13,opt,name=currency,proto3" json:"currency,omitempty"`
+	Currency string `protobuf:"bytes,13,opt,name=currency,proto3" json:"currency,omitempty"`
+	// Ревизия каждого code известна только при совпадении у выбранного снимка
+	// и использованного UserDataState: состояние/пояс также входят в ответ.
+	// Если снимка нет или has_data=false — ревизии использованного UserDataState.
+	// Отсутствующий список у прежнего снимка означает неизвестную актуальность.
+	// Пока полнота доставки набора не подтверждена ревизиями UserDataState,
+	// весь список неизвестен, в том числе при отсутствии выбранного снимка.
+	// Поле внутреннее: bank-bff не переносит его в REST, assistant не передаёт
+	// его модели в промпте, результатах инструментов или текстах блоков.
+	DataRevisions []*v1.DataRevision `protobuf:"bytes,14,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2066,6 +2075,13 @@ func (x *GetAnalyticsResponse) GetCurrency() string {
 	return ""
 }
 
+func (x *GetAnalyticsResponse) GetDataRevisions() []*v1.DataRevision {
+	if x != nil {
+		return x.DataRevisions
+	}
+	return nil
+}
+
 // Запрос списка периодов с данными.
 type ListPeriodsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2189,8 +2205,17 @@ func (x *PeriodItem) GetCoverage() v1.Coverage {
 type ListPeriodsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Периоды с покрытыми выпиской днями, новые первыми; пустой список — данных нет. Без пагинации.
-	Periods       []*PeriodItem `protobuf:"bytes,1,rep,name=periods,proto3" json:"periods,omitempty"`
-	TimeZone      string        `protobuf:"bytes,2,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
+	Periods  []*PeriodItem `protobuf:"bytes,1,rep,name=periods,proto3" json:"periods,omitempty"`
+	TimeZone string        `protobuf:"bytes,2,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
+	// Ревизии возвращённого набора периодов. Для каждого code значение известно
+	// только если оно одинаково у всех использованных снимков и UserDataState;
+	// при пустом наборе
+	// берётся из использованного UserDataState. Смешанные/прежние снимки не получают
+	// выдуманную текущую ревизию. Не более 32 уникальных code; в REST поле не идёт.
+	// В промпт, результаты инструментов для модели и тексты блоков также не входит.
+	// Ревизии UserDataState подтверждают полноту доставки; до финального ACK
+	// всех частей список неизвестен, даже если все имеющиеся заголовки совпадают.
+	DataRevisions []*v1.DataRevision `protobuf:"bytes,3,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2237,6 +2262,13 @@ func (x *ListPeriodsResponse) GetTimeZone() string {
 		return x.TimeZone
 	}
 	return ""
+}
+
+func (x *ListPeriodsResponse) GetDataRevisions() []*v1.DataRevision {
+	if x != nil {
+		return x.DataRevisions
+	}
+	return nil
 }
 
 // ID метрик (реестр живёт в bank-statement-data, FIN-6):
@@ -2335,7 +2367,17 @@ type PeriodSnapshot struct {
 	// Полный набор метрик периода: метрики, которых здесь нет, удаляются из хранилища.
 	Metrics []*MetricSnapshot `protobuf:"bytes,7,rep,name=metrics,proto3" json:"metrics,omitempty"`
 	// Когда посчитан снимок.
-	CalculatedAt  *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=calculated_at,json=calculatedAt,proto3" json:"calculated_at,omitempty"`
+	CalculatedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=calculated_at,json=calculatedAt,proto3" json:"calculated_at,omitempty"`
+	// Ревизии исходного снимка, из которого посчитан этот период; до 32 записей
+	// с уникальными code. Хранятся вместе с calc_version; неизвестные code сохраняются.
+	// Прежний снимок без поля не получает ревизии из текущего состояния.
+	// Если первичные границы используемой legacy-загрузки неизвестны (FIN-357),
+	// производитель опускает uploads до восстановления metadata, как и DataVersion.
+	// После изменения глобальной ревизии производитель заменяет все периоды,
+	// включая незатронутые, чтобы их baseline не оставался устаревшим бессрочно.
+	// Восстановление legacy metadata, делающее uploads известным без роста счётчика,
+	// также полностью заменяет все периоды с протоколом подтверждения доставки.
+	DataRevisions []*v1.DataRevision `protobuf:"bytes,9,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2426,6 +2468,13 @@ func (x *PeriodSnapshot) GetCalculatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *PeriodSnapshot) GetDataRevisions() []*v1.DataRevision {
+	if x != nil {
+		return x.DataRevisions
+	}
+	return nil
+}
+
 // Ссылка на период в removed_periods: какой период удалить из хранилища, когда данных за него
 // больше нет (загрузка удалена). Удаляются снимки обоих режимов переводов.
 type PeriodRef struct {
@@ -2507,8 +2556,17 @@ type UserDataState struct {
 	// определений), признак не ставит: снимки заменяются молча, по периодам (FIN-196).
 	Recalculating bool `protobuf:"varint,7,opt,name=recalculating,proto3" json:"recalculating,omitempty"`
 	// Пояс профиля (IANA), в котором посчитаны периоды.
-	TimeZone      string                 `protobuf:"bytes,8,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
-	CalculatedAt  *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=calculated_at,json=calculatedAt,proto3" json:"calculated_at,omitempty"`
+	TimeZone     string                 `protobuf:"bytes,8,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
+	CalculatedAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=calculated_at,json=calculatedAt,proto3" json:"calculated_at,omitempty"`
+	// Ревизии того же исходного снимка; до 32 записей с уникальными code.
+	// Допустимы и при has_data=false, чтобы последующий импорт был виден в истории.
+	// Наличие дополнительно подтверждает полную доставку всех периодов/удалений.
+	// Перед любыми частями производитель очищает список и дожидается ACK;
+	// в частях список пуст, финальное состояние заполняет его после ACK всех частей.
+	// Протокол действует и без пользовательского recalculating (daily/релиз реестра).
+	// uploads также опускается до восстановления неизвестных первичных границ
+	// используемых legacy-загрузок (FIN-357); текущий счётчик их не подтверждает.
+	DataRevisions []*v1.DataRevision `protobuf:"bytes,10,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2602,6 +2660,13 @@ func (x *UserDataState) GetTimeZone() string {
 func (x *UserDataState) GetCalculatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CalculatedAt
+	}
+	return nil
+}
+
+func (x *UserDataState) GetDataRevisions() []*v1.DataRevision {
+	if x != nil {
+		return x.DataRevisions
 	}
 	return nil
 }
@@ -2768,7 +2833,7 @@ var File_finassist_analytics_v1_analytics_proto protoreflect.FileDescriptor
 
 const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\n" +
-	"&finassist/analytics/v1/analytics.proto\x12\x16finassist.analytics.v1\x1a finassist/common/v1/blocks.proto\x1a finassist/common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x96\x02\n" +
+	"&finassist/analytics/v1/analytics.proto\x12\x16finassist.analytics.v1\x1a finassist/common/v1/blocks.proto\x1a finassist/common/v1/common.proto\x1a'finassist/common/v1/data_revision.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x96\x02\n" +
 	"\n" +
 	"MetricLock\x12:\n" +
 	"\x06reason\x18\x01 \x01(\x0e2\".finassist.analytics.v1.LockReasonR\x06reason\x12\x1f\n" +
@@ -2927,7 +2992,7 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\x12unread_lines_count\x18\x06 \x01(\x05R\x10unreadLinesCount\x12?\n" +
 	"\rcalculated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\fcalculatedAt\x12$\n" +
 	"\rrecalculating\x18\b \x01(\bR\rrecalculatingB\x14\n" +
-	"\x12_last_operation_at\"\x91\x06\n" +
+	"\x12_last_operation_at\"\xdb\x06\n" +
 	"\x14GetAnalyticsResponse\x12\x19\n" +
 	"\bhas_data\x18\x01 \x01(\bR\ahasData\x12<\n" +
 	"\x06params\x18\x02 \x01(\v2$.finassist.common.v1.AnalyticsParamsR\x06params\x12:\n" +
@@ -2944,7 +3009,8 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	" \x01(\v2#.finassist.analytics.v1.ScreenStateR\x05state\x12\x1b\n" +
 	"\ttime_zone\x18\v \x01(\tR\btimeZone\x122\n" +
 	"\x06blocks\x18\f \x03(\v2\x1a.finassist.common.v1.BlockR\x06blocks\x12\x1a\n" +
-	"\bcurrency\x18\r \x01(\tR\bcurrencyB\v\n" +
+	"\bcurrency\x18\r \x01(\tR\bcurrency\x12H\n" +
+	"\x0edata_revisions\x18\x0e \x03(\v2!.finassist.common.v1.DataRevisionR\rdataRevisionsB\v\n" +
 	"\t_insights\"w\n" +
 	"\x12ListPeriodsRequest\x127\n" +
 	"\x06period\x18\x01 \x01(\x0e2\x1f.finassist.common.v1.PeriodTypeR\x06period\x12\x1c\n" +
@@ -2955,14 +3021,15 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"PeriodItem\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x124\n" +
 	"\x05range\x18\x02 \x01(\v2\x1e.finassist.common.v1.TimeRangeR\x05range\x129\n" +
-	"\bcoverage\x18\x03 \x01(\x0e2\x1d.finassist.common.v1.CoverageR\bcoverage\"p\n" +
+	"\bcoverage\x18\x03 \x01(\x0e2\x1d.finassist.common.v1.CoverageR\bcoverage\"\xba\x01\n" +
 	"\x13ListPeriodsResponse\x12<\n" +
 	"\aperiods\x18\x01 \x03(\v2\".finassist.analytics.v1.PeriodItemR\aperiods\x12\x1b\n" +
-	"\ttime_zone\x18\x02 \x01(\tR\btimeZone\"\x94\x01\n" +
+	"\ttime_zone\x18\x02 \x01(\tR\btimeZone\x12H\n" +
+	"\x0edata_revisions\x18\x03 \x03(\v2!.finassist.common.v1.DataRevisionR\rdataRevisions\"\x94\x01\n" +
 	"\x0eMetricSnapshot\x12\x1b\n" +
 	"\tmetric_id\x18\x01 \x01(\tR\bmetricId\x12-\n" +
 	"\x12definition_version\x18\x02 \x01(\x05R\x11definitionVersion\x126\n" +
-	"\x06metric\x18\x03 \x01(\v2\x1e.finassist.analytics.v1.MetricR\x06metric\"\xd0\x03\n" +
+	"\x06metric\x18\x03 \x01(\v2\x1e.finassist.analytics.v1.MetricR\x06metric\"\x9a\x04\n" +
 	"\x0ePeriodSnapshot\x127\n" +
 	"\x06period\x18\x01 \x01(\x0e2\x1f.finassist.common.v1.PeriodTypeR\x06period\x12\x1d\n" +
 	"\n" +
@@ -2972,11 +3039,12 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\x06bounds\x18\x05 \x01(\v2\x1f.finassist.common.v1.DataBoundsR\x06bounds\x12,\n" +
 	"\x12unread_lines_count\x18\x06 \x01(\x05R\x10unreadLinesCount\x12@\n" +
 	"\ametrics\x18\a \x03(\v2&.finassist.analytics.v1.MetricSnapshotR\ametrics\x12?\n" +
-	"\rcalculated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\fcalculatedAt\"c\n" +
+	"\rcalculated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\fcalculatedAt\x12H\n" +
+	"\x0edata_revisions\x18\t \x03(\v2!.finassist.common.v1.DataRevisionR\rdataRevisions\"c\n" +
 	"\tPeriodRef\x127\n" +
 	"\x06period\x18\x01 \x01(\x0e2\x1f.finassist.common.v1.PeriodTypeR\x06period\x12\x1d\n" +
 	"\n" +
-	"period_key\x18\x02 \x01(\tR\tperiodKey\"\x96\x04\n" +
+	"period_key\x18\x02 \x01(\tR\tperiodKey\"\xe0\x04\n" +
 	"\rUserDataState\x12\x19\n" +
 	"\bhas_data\x18\x01 \x01(\bR\ahasData\x12<\n" +
 	"\tdata_from\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\bdataFrom\x88\x01\x01\x128\n" +
@@ -2988,7 +3056,9 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"fullMonths\x12$\n" +
 	"\rrecalculating\x18\a \x01(\bR\rrecalculating\x12\x1b\n" +
 	"\ttime_zone\x18\b \x01(\tR\btimeZone\x12?\n" +
-	"\rcalculated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\fcalculatedAtB\f\n" +
+	"\rcalculated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\fcalculatedAt\x12H\n" +
+	"\x0edata_revisions\x18\n" +
+	" \x03(\v2!.finassist.common.v1.DataRevisionR\rdataRevisionsB\f\n" +
 	"\n" +
 	"_data_fromB\n" +
 	"\n" +
@@ -3083,7 +3153,8 @@ var file_finassist_analytics_v1_analytics_proto_goTypes = []any{
 	(*v1.BlockSupport)(nil),           // 40: finassist.common.v1.BlockSupport
 	(*v1.AnalyticsParams)(nil),        // 41: finassist.common.v1.AnalyticsParams
 	(*v1.Block)(nil),                  // 42: finassist.common.v1.Block
-	(v1.Coverage)(0),                  // 43: finassist.common.v1.Coverage
+	(*v1.DataRevision)(nil),           // 43: finassist.common.v1.DataRevision
+	(v1.Coverage)(0),                  // 44: finassist.common.v1.Coverage
 }
 var file_finassist_analytics_v1_analytics_proto_depIdxs = []int32{
 	1,  // 0: finassist.analytics.v1.MetricLock.reason:type_name -> finassist.analytics.v1.LockReason
@@ -3144,37 +3215,41 @@ var file_finassist_analytics_v1_analytics_proto_depIdxs = []int32{
 	21, // 55: finassist.analytics.v1.GetAnalyticsResponse.insights:type_name -> finassist.analytics.v1.Insights
 	22, // 56: finassist.analytics.v1.GetAnalyticsResponse.state:type_name -> finassist.analytics.v1.ScreenState
 	42, // 57: finassist.analytics.v1.GetAnalyticsResponse.blocks:type_name -> finassist.common.v1.Block
-	38, // 58: finassist.analytics.v1.ListPeriodsRequest.period:type_name -> finassist.common.v1.PeriodType
-	35, // 59: finassist.analytics.v1.PeriodItem.range:type_name -> finassist.common.v1.TimeRange
-	43, // 60: finassist.analytics.v1.PeriodItem.coverage:type_name -> finassist.common.v1.Coverage
-	25, // 61: finassist.analytics.v1.ListPeriodsResponse.periods:type_name -> finassist.analytics.v1.PeriodItem
-	4,  // 62: finassist.analytics.v1.MetricSnapshot.metric:type_name -> finassist.analytics.v1.Metric
-	38, // 63: finassist.analytics.v1.PeriodSnapshot.period:type_name -> finassist.common.v1.PeriodType
-	39, // 64: finassist.analytics.v1.PeriodSnapshot.transfer_mode:type_name -> finassist.common.v1.TransferMode
-	35, // 65: finassist.analytics.v1.PeriodSnapshot.range:type_name -> finassist.common.v1.TimeRange
-	37, // 66: finassist.analytics.v1.PeriodSnapshot.bounds:type_name -> finassist.common.v1.DataBounds
-	27, // 67: finassist.analytics.v1.PeriodSnapshot.metrics:type_name -> finassist.analytics.v1.MetricSnapshot
-	34, // 68: finassist.analytics.v1.PeriodSnapshot.calculated_at:type_name -> google.protobuf.Timestamp
-	38, // 69: finassist.analytics.v1.PeriodRef.period:type_name -> finassist.common.v1.PeriodType
-	34, // 70: finassist.analytics.v1.UserDataState.data_from:type_name -> google.protobuf.Timestamp
-	34, // 71: finassist.analytics.v1.UserDataState.data_to:type_name -> google.protobuf.Timestamp
-	34, // 72: finassist.analytics.v1.UserDataState.last_operation_at:type_name -> google.protobuf.Timestamp
-	34, // 73: finassist.analytics.v1.UserDataState.stale_after:type_name -> google.protobuf.Timestamp
-	34, // 74: finassist.analytics.v1.UserDataState.calculated_at:type_name -> google.protobuf.Timestamp
-	30, // 75: finassist.analytics.v1.UpsertUserMetricsRequest.state:type_name -> finassist.analytics.v1.UserDataState
-	28, // 76: finassist.analytics.v1.UpsertUserMetricsRequest.periods:type_name -> finassist.analytics.v1.PeriodSnapshot
-	29, // 77: finassist.analytics.v1.UpsertUserMetricsRequest.removed_periods:type_name -> finassist.analytics.v1.PeriodRef
-	17, // 78: finassist.analytics.v1.AnalyticsService.GetAnalytics:input_type -> finassist.analytics.v1.GetAnalyticsRequest
-	24, // 79: finassist.analytics.v1.AnalyticsService.ListPeriods:input_type -> finassist.analytics.v1.ListPeriodsRequest
-	31, // 80: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:input_type -> finassist.analytics.v1.UpsertUserMetricsRequest
-	23, // 81: finassist.analytics.v1.AnalyticsService.GetAnalytics:output_type -> finassist.analytics.v1.GetAnalyticsResponse
-	26, // 82: finassist.analytics.v1.AnalyticsService.ListPeriods:output_type -> finassist.analytics.v1.ListPeriodsResponse
-	32, // 83: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:output_type -> finassist.analytics.v1.UpsertUserMetricsResponse
-	81, // [81:84] is the sub-list for method output_type
-	78, // [78:81] is the sub-list for method input_type
-	78, // [78:78] is the sub-list for extension type_name
-	78, // [78:78] is the sub-list for extension extendee
-	0,  // [0:78] is the sub-list for field type_name
+	43, // 58: finassist.analytics.v1.GetAnalyticsResponse.data_revisions:type_name -> finassist.common.v1.DataRevision
+	38, // 59: finassist.analytics.v1.ListPeriodsRequest.period:type_name -> finassist.common.v1.PeriodType
+	35, // 60: finassist.analytics.v1.PeriodItem.range:type_name -> finassist.common.v1.TimeRange
+	44, // 61: finassist.analytics.v1.PeriodItem.coverage:type_name -> finassist.common.v1.Coverage
+	25, // 62: finassist.analytics.v1.ListPeriodsResponse.periods:type_name -> finassist.analytics.v1.PeriodItem
+	43, // 63: finassist.analytics.v1.ListPeriodsResponse.data_revisions:type_name -> finassist.common.v1.DataRevision
+	4,  // 64: finassist.analytics.v1.MetricSnapshot.metric:type_name -> finassist.analytics.v1.Metric
+	38, // 65: finassist.analytics.v1.PeriodSnapshot.period:type_name -> finassist.common.v1.PeriodType
+	39, // 66: finassist.analytics.v1.PeriodSnapshot.transfer_mode:type_name -> finassist.common.v1.TransferMode
+	35, // 67: finassist.analytics.v1.PeriodSnapshot.range:type_name -> finassist.common.v1.TimeRange
+	37, // 68: finassist.analytics.v1.PeriodSnapshot.bounds:type_name -> finassist.common.v1.DataBounds
+	27, // 69: finassist.analytics.v1.PeriodSnapshot.metrics:type_name -> finassist.analytics.v1.MetricSnapshot
+	34, // 70: finassist.analytics.v1.PeriodSnapshot.calculated_at:type_name -> google.protobuf.Timestamp
+	43, // 71: finassist.analytics.v1.PeriodSnapshot.data_revisions:type_name -> finassist.common.v1.DataRevision
+	38, // 72: finassist.analytics.v1.PeriodRef.period:type_name -> finassist.common.v1.PeriodType
+	34, // 73: finassist.analytics.v1.UserDataState.data_from:type_name -> google.protobuf.Timestamp
+	34, // 74: finassist.analytics.v1.UserDataState.data_to:type_name -> google.protobuf.Timestamp
+	34, // 75: finassist.analytics.v1.UserDataState.last_operation_at:type_name -> google.protobuf.Timestamp
+	34, // 76: finassist.analytics.v1.UserDataState.stale_after:type_name -> google.protobuf.Timestamp
+	34, // 77: finassist.analytics.v1.UserDataState.calculated_at:type_name -> google.protobuf.Timestamp
+	43, // 78: finassist.analytics.v1.UserDataState.data_revisions:type_name -> finassist.common.v1.DataRevision
+	30, // 79: finassist.analytics.v1.UpsertUserMetricsRequest.state:type_name -> finassist.analytics.v1.UserDataState
+	28, // 80: finassist.analytics.v1.UpsertUserMetricsRequest.periods:type_name -> finassist.analytics.v1.PeriodSnapshot
+	29, // 81: finassist.analytics.v1.UpsertUserMetricsRequest.removed_periods:type_name -> finassist.analytics.v1.PeriodRef
+	17, // 82: finassist.analytics.v1.AnalyticsService.GetAnalytics:input_type -> finassist.analytics.v1.GetAnalyticsRequest
+	24, // 83: finassist.analytics.v1.AnalyticsService.ListPeriods:input_type -> finassist.analytics.v1.ListPeriodsRequest
+	31, // 84: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:input_type -> finassist.analytics.v1.UpsertUserMetricsRequest
+	23, // 85: finassist.analytics.v1.AnalyticsService.GetAnalytics:output_type -> finassist.analytics.v1.GetAnalyticsResponse
+	26, // 86: finassist.analytics.v1.AnalyticsService.ListPeriods:output_type -> finassist.analytics.v1.ListPeriodsResponse
+	32, // 87: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:output_type -> finassist.analytics.v1.UpsertUserMetricsResponse
+	85, // [85:88] is the sub-list for method output_type
+	82, // [82:85] is the sub-list for method input_type
+	82, // [82:82] is the sub-list for extension type_name
+	82, // [82:82] is the sub-list for extension extendee
+	0,  // [0:82] is the sub-list for field type_name
 }
 
 func init() { file_finassist_analytics_v1_analytics_proto_init() }
