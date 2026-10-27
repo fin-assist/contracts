@@ -4407,6 +4407,11 @@ components:
     AnswerSource:
       type: object
       description: Строка источника под ответом (и событие `source`).
+      example:
+        calculated_at: '2026-09-25T19:11:00+03:00'
+        transfer_mode: with
+        changed_since: [unverified]
+        changed_since_text: Актуальность данных этого ответа не подтверждена
       required:
       - calculated_at
       - transfer_mode
@@ -4426,19 +4431,25 @@ components:
         changed_since:
           type: array
           description: |
-            Что изменилось после расчёта: `categories` — «с тех пор категории менялись»; `uploads` — загружали или
-            удаляли выписки. Пустой — ничего. Неизвестное — общий текст «с тех пор данные менялись».
+            Отличия ревизий исходных данных ответа: categories — категории или учётные правила,
+            uploads — загрузки/удаления выписок, time_zone — настройки часового пояса.
+            unverified — актуальность нельзя подтвердить, например у прежнего ответа без ревизий;
+            этот код не утверждает, что данные фактически менялись. Пустой список подтверждает совпадение
+            всех использованных ревизий с текущими primary-данными. Неизвестный код — показать changed_since_text.
           items:
             type: string
             x-extensible-enum:
             - categories
             - uploads
+            - unverified
+            - time_zone
         changed_since_text:
           type: string
           nullable: true
           description: |
-            Готовый текст о том же («с тех пор категории менялись»); нет — ничего не менялось. Для неизвестного кода
-            клиент показывает его (FIN-82).
+            Готовый текст об отличиях или неподтверждённой актуальности. Для unverified —
+            «Актуальность данных этого ответа не подтверждена». Нет — актуальность подтверждена.
+            Для неизвестного кода клиент показывает этот текст (FIN-82).
     AnswerSnapshotEvent:
       type: object
       description: Событие `snapshot` — всегда первое; клиент заменяет им показанное. При status failed сразу

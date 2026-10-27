@@ -167,6 +167,11 @@ enum ChangedSince {
   CHANGED_SINCE_CATEGORIES = 1;
   // Загружали или удаляли выписки.
   CHANGED_SINCE_UPLOADS = 2;
+  // Для прежнего или неполного источника нет доказуемой ревизии. Это не
+  // утверждение, что категории или выписки действительно менялись.
+  CHANGED_SINCE_UNVERIFIED = 3;
+  // Обновились настройки часового пояса, влияющие на календарные выборки.
+  CHANGED_SINCE_TIME_ZONE = 4;
 }
 
 // Источник ответа: на каких данных и когда он построен.
@@ -176,7 +181,8 @@ message AnswerSource {
   // Период данных, по которым ответил помощник.
   optional finassist.common.v1.TimeRange data_range = 2;
   finassist.common.v1.TransferMode transfer_mode = 3;
-  // Что изменилось после расчёта; вычисляется при чтении по statementdata.GetDataVersion.
+  // Что изменилось после расчёта; сравнение сохранённых ревизий с primary
+  // statementdata.GetDataVersion. При неизвестной ревизии — UNVERIFIED, не пустой список.
   repeated ChangedSince changed_since = 4;
 }
 

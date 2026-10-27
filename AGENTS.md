@@ -43,6 +43,7 @@ same PR.
 | Calculation rules: transfer pairs, refunds, coverage and gaps, Analytics metrics, thresholds, order and composition of blocks | `docs/calc.md` |
 | Services, call models (user / system), service identity, metadata, errors, idempotency, outbox | `docs/grpc-api.md` |
 | Service contracts | `proto/finassist/<service>/v1/*.proto`, shared types `proto/finassist/common/v1/` |
+| Source revisions and assistant answer freshness (FIN-367) | `common/v1/data_revision.proto`, `statementdata/v1/internal.proto`, analytics snapshot/state/read provenance; policy and rollout — `docs/grpc-api.md`, «Ревизии исходных данных ответа помощника»; clients FIN-358/368/369/370 |
 | Registry check | `proto/scripts/check_error_registry.py` |
 | Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |

@@ -4,6 +4,7 @@ package finassist.analytics.v1;
 
 import "finassist/common/v1/blocks.proto";
 import "finassist/common/v1/common.proto";
+import "finassist/common/v1/data_revision.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/fin-assist/contracts/gen/go/finassist/analytics/v1;analyticsv1";
@@ -417,7 +418,7 @@ message ScreenState {
 // Аналитика за период целиком.
 message GetAnalyticsResponse {
   // Есть ли у пользователя хоть одна операция и хоть один покрытый выпиской день. false — остальных
-  // полей нет, аналитики пока нет.
+  // финансовых полей нет, аналитики пока нет; внутренние data_revisions допустимы.
   bool has_data = 1;
   // Фактические параметры ответа: тип периода, точный ключ периода, режим переводов.
   finassist.common.v1.AnalyticsParams params = 2;
@@ -446,6 +447,11 @@ message GetAnalyticsResponse {
   // Валюта всех сумм ответа (ISO 4217), включая устаревшие поля 5–9; сейчас RUB (FIN-82). Обязательна при
   // has_data: тогда пустая строка — ошибка сервиса; при has_data = false пусто (grpc-api.md 5.3).
   string currency = 13;
+  // Ревизии исходных данных фактически выбранного снимка, не текущего обзора.
+  // Если снимка нет или has_data=false — ревизии использованного UserDataState.
+  // Отсутствующий список у прежнего снимка означает неизвестную актуальность.
+  // Поле внутреннее: bank-bff не переносит его в REST.
+  repeated finassist.common.v1.DataRevision data_revisions = 14;
 }
 
 // Запрос списка периодов с данными.
@@ -471,6 +477,11 @@ message ListPeriodsResponse {
   // Периоды с покрытыми выпиской днями, новые первыми; пустой список — данных нет. Без пагинации.
   repeated PeriodItem periods = 1;
   string time_zone = 2;
+  // Ревизии возвращённого набора периодов. Для каждого code значение известно
+  // только если оно одинаково у всех использованных снимков; при пустом наборе
+  // берётся из использованного UserDataState. Смешанные/прежние снимки не получают
+  // выдуманную текущую ревизию. Не более 32 уникальных code; в REST поле не идёт.
+  repeated finassist.common.v1.DataRevision data_revisions = 3;
 }
 
 // ---------------------------------------------------------------- Запись метрик
@@ -515,6 +526,10 @@ message PeriodSnapshot {
   repeated MetricSnapshot metrics = 7;
   // Когда посчитан снимок.
   google.protobuf.Timestamp calculated_at = 8;
+  // Ревизии исходного снимка, из которого посчитан этот период; до 32 записей
+  // с уникальными code. Хранятся вместе с calc_version; неизвестные code сохраняются.
+  // Прежний снимок без поля не получает ревизии из текущего состояния.
+  repeated finassist.common.v1.DataRevision data_revisions = 9;
 }
 
 // Ссылка на период в removed_periods: какой период удалить из хранилища, когда данных за него
@@ -552,6 +567,9 @@ message UserDataState {
   // Пояс профиля (IANA), в котором посчитаны периоды.
   string time_zone = 8;
   google.protobuf.Timestamp calculated_at = 9;
+  // Ревизии того же исходного снимка; до 32 записей с уникальными code.
+  // Допустимы и при has_data=false, чтобы последующий импорт был виден в истории.
+  repeated finassist.common.v1.DataRevision data_revisions = 10;
 }
 
 // Пакет готовых метрик пользователя от bank-statement-data.

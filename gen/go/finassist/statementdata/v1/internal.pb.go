@@ -135,8 +135,15 @@ type DataVersion struct {
 	CategoriesChangedAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=categories_changed_at,json=categoriesChangedAt,proto3,oneof" json:"categories_changed_at,omitempty"`
 	// Последнее завершение или удаление загрузки.
 	UploadsChangedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=uploads_changed_at,json=uploadsChangedAt,proto3,oneof" json:"uploads_changed_at,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Ревизии того же согласованного снимка, что и данные ответа. Не более 32 записей,
+	// code уникален. Новый производитель присылает известные categories, uploads и
+	// time_zone, включая известный 0. Неустановленная provenance прежних первичных
+	// границ загрузки оставляет uploads неизвестным до её восстановления.
+	// Прежний производитель может не прислать список.
+	// Моменты 1–2 информативны и не определяют changed_since (FIN-367).
+	Revisions     []*v1.DataRevision `protobuf:"bytes,3,rep,name=revisions,proto3" json:"revisions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DataVersion) Reset() {
@@ -179,6 +186,13 @@ func (x *DataVersion) GetCategoriesChangedAt() *timestamppb.Timestamp {
 func (x *DataVersion) GetUploadsChangedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UploadsChangedAt
+	}
+	return nil
+}
+
+func (x *DataVersion) GetRevisions() []*v1.DataRevision {
+	if x != nil {
+		return x.Revisions
 	}
 	return nil
 }
@@ -1061,10 +1075,11 @@ var File_finassist_statementdata_v1_internal_proto protoreflect.FileDescriptor
 
 const file_finassist_statementdata_v1_internal_proto_rawDesc = "" +
 	"\n" +
-	")finassist/statementdata/v1/internal.proto\x12\x1afinassist.statementdata.v1\x1a finassist/common/v1/common.proto\x1a+finassist/statementdata/v1/operations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe2\x01\n" +
+	")finassist/statementdata/v1/internal.proto\x12\x1afinassist.statementdata.v1\x1a finassist/common/v1/common.proto\x1a'finassist/common/v1/data_revision.proto\x1a+finassist/statementdata/v1/operations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa3\x02\n" +
 	"\vDataVersion\x12S\n" +
 	"\x15categories_changed_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x13categoriesChangedAt\x88\x01\x01\x12M\n" +
-	"\x12uploads_changed_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampH\x01R\x10uploadsChangedAt\x88\x01\x01B\x18\n" +
+	"\x12uploads_changed_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampH\x01R\x10uploadsChangedAt\x88\x01\x01\x12?\n" +
+	"\trevisions\x18\x03 \x03(\v2!.finassist.common.v1.DataRevisionR\trevisionsB\x18\n" +
 	"\x16_categories_changed_atB\x15\n" +
 	"\x13_uploads_changed_at\"1\n" +
 	"\x16GetDataOverviewRequest\x12\x17\n" +
@@ -1188,53 +1203,55 @@ var file_finassist_statementdata_v1_internal_proto_goTypes = []any{
 	(*GetDataVersionRequest)(nil),       // 13: finassist.statementdata.v1.GetDataVersionRequest
 	(*GetDataVersionResponse)(nil),      // 14: finassist.statementdata.v1.GetDataVersionResponse
 	(*timestamppb.Timestamp)(nil),       // 15: google.protobuf.Timestamp
-	(*v1.TimeRange)(nil),                // 16: finassist.common.v1.TimeRange
-	(*v1.DataBounds)(nil),               // 17: finassist.common.v1.DataBounds
-	(*v1.OperationsFilter)(nil),         // 18: finassist.common.v1.OperationsFilter
-	(*CategoryRef)(nil),                 // 19: finassist.statementdata.v1.CategoryRef
-	(*Operation)(nil),                   // 20: finassist.statementdata.v1.Operation
+	(*v1.DataRevision)(nil),             // 16: finassist.common.v1.DataRevision
+	(*v1.TimeRange)(nil),                // 17: finassist.common.v1.TimeRange
+	(*v1.DataBounds)(nil),               // 18: finassist.common.v1.DataBounds
+	(*v1.OperationsFilter)(nil),         // 19: finassist.common.v1.OperationsFilter
+	(*CategoryRef)(nil),                 // 20: finassist.statementdata.v1.CategoryRef
+	(*Operation)(nil),                   // 21: finassist.statementdata.v1.Operation
 }
 var file_finassist_statementdata_v1_internal_proto_depIdxs = []int32{
 	15, // 0: finassist.statementdata.v1.DataVersion.categories_changed_at:type_name -> google.protobuf.Timestamp
 	15, // 1: finassist.statementdata.v1.DataVersion.uploads_changed_at:type_name -> google.protobuf.Timestamp
-	16, // 2: finassist.statementdata.v1.MonthCoverage.range:type_name -> finassist.common.v1.TimeRange
-	17, // 3: finassist.statementdata.v1.MonthCoverage.bounds:type_name -> finassist.common.v1.DataBounds
-	15, // 4: finassist.statementdata.v1.GetDataOverviewResponse.data_from:type_name -> google.protobuf.Timestamp
-	15, // 5: finassist.statementdata.v1.GetDataOverviewResponse.data_to:type_name -> google.protobuf.Timestamp
-	4,  // 6: finassist.statementdata.v1.GetDataOverviewResponse.months:type_name -> finassist.statementdata.v1.MonthCoverage
-	2,  // 7: finassist.statementdata.v1.GetDataOverviewResponse.version:type_name -> finassist.statementdata.v1.DataVersion
-	15, // 8: finassist.statementdata.v1.GetDataOverviewResponse.calculated_at:type_name -> google.protobuf.Timestamp
-	18, // 9: finassist.statementdata.v1.AggregateOperationsRequest.filter:type_name -> finassist.common.v1.OperationsFilter
-	0,  // 10: finassist.statementdata.v1.AggregateOperationsRequest.group_by:type_name -> finassist.statementdata.v1.GroupBy
-	19, // 11: finassist.statementdata.v1.GroupKey.category:type_name -> finassist.statementdata.v1.CategoryRef
-	7,  // 12: finassist.statementdata.v1.GroupKey.merchant:type_name -> finassist.statementdata.v1.MerchantRef
-	8,  // 13: finassist.statementdata.v1.AggregateGroup.keys:type_name -> finassist.statementdata.v1.GroupKey
-	18, // 14: finassist.statementdata.v1.AggregateGroup.filters:type_name -> finassist.common.v1.OperationsFilter
-	9,  // 15: finassist.statementdata.v1.AggregateOperationsResponse.groups:type_name -> finassist.statementdata.v1.AggregateGroup
-	16, // 16: finassist.statementdata.v1.AggregateOperationsResponse.range:type_name -> finassist.common.v1.TimeRange
-	17, // 17: finassist.statementdata.v1.AggregateOperationsResponse.bounds:type_name -> finassist.common.v1.DataBounds
-	2,  // 18: finassist.statementdata.v1.AggregateOperationsResponse.version:type_name -> finassist.statementdata.v1.DataVersion
-	15, // 19: finassist.statementdata.v1.AggregateOperationsResponse.calculated_at:type_name -> google.protobuf.Timestamp
-	18, // 20: finassist.statementdata.v1.FindOperationsRequest.filter:type_name -> finassist.common.v1.OperationsFilter
-	1,  // 21: finassist.statementdata.v1.FindOperationsRequest.order:type_name -> finassist.statementdata.v1.ToolSortOrder
-	20, // 22: finassist.statementdata.v1.FindOperationsResponse.items:type_name -> finassist.statementdata.v1.Operation
-	16, // 23: finassist.statementdata.v1.FindOperationsResponse.range:type_name -> finassist.common.v1.TimeRange
-	17, // 24: finassist.statementdata.v1.FindOperationsResponse.bounds:type_name -> finassist.common.v1.DataBounds
-	2,  // 25: finassist.statementdata.v1.FindOperationsResponse.version:type_name -> finassist.statementdata.v1.DataVersion
-	2,  // 26: finassist.statementdata.v1.GetDataVersionResponse.version:type_name -> finassist.statementdata.v1.DataVersion
-	3,  // 27: finassist.statementdata.v1.AssistantToolsService.GetDataOverview:input_type -> finassist.statementdata.v1.GetDataOverviewRequest
-	6,  // 28: finassist.statementdata.v1.AssistantToolsService.AggregateOperations:input_type -> finassist.statementdata.v1.AggregateOperationsRequest
-	11, // 29: finassist.statementdata.v1.AssistantToolsService.FindOperations:input_type -> finassist.statementdata.v1.FindOperationsRequest
-	13, // 30: finassist.statementdata.v1.AssistantToolsService.GetDataVersion:input_type -> finassist.statementdata.v1.GetDataVersionRequest
-	5,  // 31: finassist.statementdata.v1.AssistantToolsService.GetDataOverview:output_type -> finassist.statementdata.v1.GetDataOverviewResponse
-	10, // 32: finassist.statementdata.v1.AssistantToolsService.AggregateOperations:output_type -> finassist.statementdata.v1.AggregateOperationsResponse
-	12, // 33: finassist.statementdata.v1.AssistantToolsService.FindOperations:output_type -> finassist.statementdata.v1.FindOperationsResponse
-	14, // 34: finassist.statementdata.v1.AssistantToolsService.GetDataVersion:output_type -> finassist.statementdata.v1.GetDataVersionResponse
-	31, // [31:35] is the sub-list for method output_type
-	27, // [27:31] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	16, // 2: finassist.statementdata.v1.DataVersion.revisions:type_name -> finassist.common.v1.DataRevision
+	17, // 3: finassist.statementdata.v1.MonthCoverage.range:type_name -> finassist.common.v1.TimeRange
+	18, // 4: finassist.statementdata.v1.MonthCoverage.bounds:type_name -> finassist.common.v1.DataBounds
+	15, // 5: finassist.statementdata.v1.GetDataOverviewResponse.data_from:type_name -> google.protobuf.Timestamp
+	15, // 6: finassist.statementdata.v1.GetDataOverviewResponse.data_to:type_name -> google.protobuf.Timestamp
+	4,  // 7: finassist.statementdata.v1.GetDataOverviewResponse.months:type_name -> finassist.statementdata.v1.MonthCoverage
+	2,  // 8: finassist.statementdata.v1.GetDataOverviewResponse.version:type_name -> finassist.statementdata.v1.DataVersion
+	15, // 9: finassist.statementdata.v1.GetDataOverviewResponse.calculated_at:type_name -> google.protobuf.Timestamp
+	19, // 10: finassist.statementdata.v1.AggregateOperationsRequest.filter:type_name -> finassist.common.v1.OperationsFilter
+	0,  // 11: finassist.statementdata.v1.AggregateOperationsRequest.group_by:type_name -> finassist.statementdata.v1.GroupBy
+	20, // 12: finassist.statementdata.v1.GroupKey.category:type_name -> finassist.statementdata.v1.CategoryRef
+	7,  // 13: finassist.statementdata.v1.GroupKey.merchant:type_name -> finassist.statementdata.v1.MerchantRef
+	8,  // 14: finassist.statementdata.v1.AggregateGroup.keys:type_name -> finassist.statementdata.v1.GroupKey
+	19, // 15: finassist.statementdata.v1.AggregateGroup.filters:type_name -> finassist.common.v1.OperationsFilter
+	9,  // 16: finassist.statementdata.v1.AggregateOperationsResponse.groups:type_name -> finassist.statementdata.v1.AggregateGroup
+	17, // 17: finassist.statementdata.v1.AggregateOperationsResponse.range:type_name -> finassist.common.v1.TimeRange
+	18, // 18: finassist.statementdata.v1.AggregateOperationsResponse.bounds:type_name -> finassist.common.v1.DataBounds
+	2,  // 19: finassist.statementdata.v1.AggregateOperationsResponse.version:type_name -> finassist.statementdata.v1.DataVersion
+	15, // 20: finassist.statementdata.v1.AggregateOperationsResponse.calculated_at:type_name -> google.protobuf.Timestamp
+	19, // 21: finassist.statementdata.v1.FindOperationsRequest.filter:type_name -> finassist.common.v1.OperationsFilter
+	1,  // 22: finassist.statementdata.v1.FindOperationsRequest.order:type_name -> finassist.statementdata.v1.ToolSortOrder
+	21, // 23: finassist.statementdata.v1.FindOperationsResponse.items:type_name -> finassist.statementdata.v1.Operation
+	17, // 24: finassist.statementdata.v1.FindOperationsResponse.range:type_name -> finassist.common.v1.TimeRange
+	18, // 25: finassist.statementdata.v1.FindOperationsResponse.bounds:type_name -> finassist.common.v1.DataBounds
+	2,  // 26: finassist.statementdata.v1.FindOperationsResponse.version:type_name -> finassist.statementdata.v1.DataVersion
+	2,  // 27: finassist.statementdata.v1.GetDataVersionResponse.version:type_name -> finassist.statementdata.v1.DataVersion
+	3,  // 28: finassist.statementdata.v1.AssistantToolsService.GetDataOverview:input_type -> finassist.statementdata.v1.GetDataOverviewRequest
+	6,  // 29: finassist.statementdata.v1.AssistantToolsService.AggregateOperations:input_type -> finassist.statementdata.v1.AggregateOperationsRequest
+	11, // 30: finassist.statementdata.v1.AssistantToolsService.FindOperations:input_type -> finassist.statementdata.v1.FindOperationsRequest
+	13, // 31: finassist.statementdata.v1.AssistantToolsService.GetDataVersion:input_type -> finassist.statementdata.v1.GetDataVersionRequest
+	5,  // 32: finassist.statementdata.v1.AssistantToolsService.GetDataOverview:output_type -> finassist.statementdata.v1.GetDataOverviewResponse
+	10, // 33: finassist.statementdata.v1.AssistantToolsService.AggregateOperations:output_type -> finassist.statementdata.v1.AggregateOperationsResponse
+	12, // 34: finassist.statementdata.v1.AssistantToolsService.FindOperations:output_type -> finassist.statementdata.v1.FindOperationsResponse
+	14, // 35: finassist.statementdata.v1.AssistantToolsService.GetDataVersion:output_type -> finassist.statementdata.v1.GetDataVersionResponse
+	32, // [32:36] is the sub-list for method output_type
+	28, // [28:32] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_finassist_statementdata_v1_internal_proto_init() }
