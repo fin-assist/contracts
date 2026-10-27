@@ -2375,6 +2375,8 @@ type PeriodSnapshot struct {
 	// производитель опускает uploads до восстановления metadata, как и DataVersion.
 	// После изменения глобальной ревизии производитель заменяет все периоды,
 	// включая незатронутые, чтобы их baseline не оставался устаревшим бессрочно.
+	// Восстановление legacy metadata, делающее uploads известным без роста счётчика,
+	// также полностью заменяет все периоды с протоколом подтверждения доставки.
 	DataRevisions []*v1.DataRevision `protobuf:"bytes,9,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
