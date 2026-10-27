@@ -1940,6 +1940,8 @@ type GetAnalyticsResponse struct {
 	// и использованного UserDataState: состояние/пояс также входят в ответ.
 	// Если снимка нет или has_data=false — ревизии использованного UserDataState.
 	// Отсутствующий список у прежнего снимка означает неизвестную актуальность.
+	// Пока полнота доставки набора не подтверждена ревизиями UserDataState,
+	// весь список неизвестен, в том числе при отсутствии выбранного снимка.
 	// Поле внутреннее: bank-bff не переносит его в REST, assistant не передаёт
 	// его модели в промпте, результатах инструментов или текстах блоков.
 	DataRevisions []*v1.DataRevision `protobuf:"bytes,14,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
@@ -2211,6 +2213,8 @@ type ListPeriodsResponse struct {
 	// берётся из использованного UserDataState. Смешанные/прежние снимки не получают
 	// выдуманную текущую ревизию. Не более 32 уникальных code; в REST поле не идёт.
 	// В промпт, результаты инструментов для модели и тексты блоков также не входит.
+	// Ревизии UserDataState подтверждают полноту доставки; до финального ACK
+	// всех частей список неизвестен, даже если все имеющиеся заголовки совпадают.
 	DataRevisions []*v1.DataRevision `protobuf:"bytes,3,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2367,6 +2371,8 @@ type PeriodSnapshot struct {
 	// Ревизии исходного снимка, из которого посчитан этот период; до 32 записей
 	// с уникальными code. Хранятся вместе с calc_version; неизвестные code сохраняются.
 	// Прежний снимок без поля не получает ревизии из текущего состояния.
+	// Если первичные границы используемой legacy-загрузки неизвестны (FIN-357),
+	// производитель опускает uploads до восстановления metadata, как и DataVersion.
 	// После изменения глобальной ревизии производитель заменяет все периоды,
 	// включая незатронутые, чтобы их baseline не оставался устаревшим бессрочно.
 	DataRevisions []*v1.DataRevision `protobuf:"bytes,9,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
@@ -2552,6 +2558,12 @@ type UserDataState struct {
 	CalculatedAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=calculated_at,json=calculatedAt,proto3" json:"calculated_at,omitempty"`
 	// Ревизии того же исходного снимка; до 32 записей с уникальными code.
 	// Допустимы и при has_data=false, чтобы последующий импорт был виден в истории.
+	// Наличие дополнительно подтверждает полную доставку всех периодов/удалений.
+	// Перед любыми частями производитель очищает список и дожидается ACK;
+	// в частях список пуст, финальное состояние заполняет его после ACK всех частей.
+	// Протокол действует и без пользовательского recalculating (daily/релиз реестра).
+	// uploads также опускается до восстановления неизвестных первичных границ
+	// используемых legacy-загрузок (FIN-357); текущий счётчик их не подтверждает.
 	DataRevisions []*v1.DataRevision `protobuf:"bytes,10,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

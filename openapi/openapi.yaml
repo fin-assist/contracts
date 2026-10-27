@@ -4552,7 +4552,9 @@ components:
         code:
           type: string
           description: |
-            `MODEL_ERROR` — сбой или таймаут Alice AI; `CANNOT_ANSWER` — вопрос непонятен или на него нельзя ответить
+            `MODEL_ERROR` — сбой или таймаут Alice AI либо неверный список служебных ревизий финансового инструмента
+            (FIN-367): весь ответ failed, попытка возвращается, retryable=true;
+            `CANNOT_ANSWER` — вопрос непонятен или на него нельзя ответить
             по данным; канонический открытый reason валидного внутреннего Status переносится как code без ограничения
             старым enum/unary-реестром. При present-invalid Status внешний code=INTERNAL_ERROR, legacy-код не читается.
             Совпадение reason с REST-кодом не включает REST auth/maintenance/quota или resume исходного Ask;
