@@ -187,7 +187,14 @@ func (Theme) EnumDescriptor() ([]byte, []int) {
 type StartPhoneVerificationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// E.164, только +7 и 10 цифр; неверный формат -> VALIDATION_ERROR с нарушением у поля phone (FIN-68).
-	Phone         string `protobuf:"bytes,1,opt,name=phone,proto3" json:"phone,omitempty"`
+	Phone string `protobuf:"bytes,1,opt,name=phone,proto3" json:"phone,omitempty"`
+	// Отдельное согласие до передачи телефона провайдеру; false -> CONSENT_REQUIRED.
+	PdConsentAccepted bool `protobuf:"varint,2,opt,name=pd_consent_accepted,json=pdConsentAccepted,proto3" json:"pd_consent_accepted,omitempty"`
+	// Версия PERSONAL_DATA, 1–64 символа; неактуальная -> CONSENT_OUTDATED.
+	PdConsentVersion string `protobuf:"bytes,3,opt,name=pd_consent_version,json=pdConsentVersion,proto3" json:"pd_consent_version,omitempty"`
+	// Отдельное подтверждение возраста 14+; false -> VALIDATION_ERROR (age_confirmed).
+	// Дата рождения и сведения о родителях не передаются.
+	AgeConfirmed  bool `protobuf:"varint,4,opt,name=age_confirmed,json=ageConfirmed,proto3" json:"age_confirmed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -227,6 +234,27 @@ func (x *StartPhoneVerificationRequest) GetPhone() string {
 		return x.Phone
 	}
 	return ""
+}
+
+func (x *StartPhoneVerificationRequest) GetPdConsentAccepted() bool {
+	if x != nil {
+		return x.PdConsentAccepted
+	}
+	return false
+}
+
+func (x *StartPhoneVerificationRequest) GetPdConsentVersion() string {
+	if x != nil {
+		return x.PdConsentVersion
+	}
+	return ""
+}
+
+func (x *StartPhoneVerificationRequest) GetAgeConfirmed() bool {
+	if x != nil {
+		return x.AgeConfirmed
+	}
+	return false
 }
 
 // Созданная заявка: секрет для слежения за статусом и номер, на который звонить.
@@ -358,8 +386,8 @@ func (x *WatchPhoneVerificationRequest) GetVerificationToken() string {
 type WatchPhoneVerificationResponse struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Status VerificationStatus     `protobuf:"varint,1,opt,name=status,proto3,enum=finassist.user.v1.VerificationStatus" json:"status,omitempty"`
-	// Только при VERIFIED: номера нет в системе — клиент получает согласие на обработку ПДн и
-	// вызывает Register с registration_token.
+	// Только при VERIFIED: номера нет в системе — клиент вызывает Register с registration_token,
+	// без повторного согласия, уже полученного при StartPhoneVerification.
 	IsNewUser *bool `protobuf:"varint,2,opt,name=is_new_user,json=isNewUser,proto3,oneof" json:"is_new_user,omitempty"`
 	// Только при VERIFIED и !is_new_user.
 	Tokens *TokenPair `protobuf:"bytes,3,opt,name=tokens,proto3,oneof" json:"tokens,omitempty"`
@@ -433,9 +461,12 @@ type RegisterRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Из события VERIFIED.
 	RegistrationToken string `protobuf:"bytes,1,opt,name=registration_token,json=registrationToken,proto3" json:"registration_token,omitempty"`
-	// Согласие на обработку ПДн; false -> CONSENT_REQUIRED.
+	// Подтверждение ранее полученного согласия; false -> CONSENT_REQUIRED.
+	// true не заменяет доказательство заявки и не меняет время его получения.
 	PdConsentAccepted bool `protobuf:"varint,2,opt,name=pd_consent_accepted,json=pdConsentAccepted,proto3" json:"pd_consent_accepted,omitempty"`
-	// Версия документа, который видел пользователь; устаревшая -> CONSENT_OUTDATED.
+	// Версия ранее полученного согласия из StartPhoneVerification, 1–64 символа.
+	// Должна совпадать с закреплённой версией заявки; иначе CONSENT_OUTDATED.
+	// Изменение текущего документа после создания заявки не требует нового согласия.
 	PdConsentVersion string `protobuf:"bytes,3,opt,name=pd_consent_version,json=pdConsentVersion,proto3" json:"pd_consent_version,omitempty"`
 	// Часовой пояс устройства (IANA); без поля — Europe/Moscow.
 	Timezone      *string `protobuf:"bytes,4,opt,name=timezone,proto3,oneof" json:"timezone,omitempty"`
@@ -877,7 +908,7 @@ func (x *GetConsentDocumentResponse) GetDocument() *ConsentDocument {
 type ConsentDocument struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Type  ConsentType            `protobuf:"varint,1,opt,name=type,proto3,enum=finassist.user.v1.ConsentType" json:"type,omitempty"`
-	// Текущая версия — её клиент передаёт в Register или GrantAssistantConsent.
+	// Текущая версия — её клиент передаёт в StartPhoneVerification или GrantAssistantConsent.
 	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	// Название документа («Согласие на обработку персональных данных»).
 	Title string `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
@@ -1696,9 +1727,12 @@ var File_finassist_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_finassist_user_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\x1cfinassist/user/v1/user.proto\x12\x11finassist.user.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"5\n" +
+	"\x1cfinassist/user/v1/user.proto\x12\x11finassist.user.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb8\x01\n" +
 	"\x1dStartPhoneVerificationRequest\x12\x14\n" +
-	"\x05phone\x18\x01 \x01(\tR\x05phone\"\xe6\x01\n" +
+	"\x05phone\x18\x01 \x01(\tR\x05phone\x12.\n" +
+	"\x13pd_consent_accepted\x18\x02 \x01(\bR\x11pdConsentAccepted\x12,\n" +
+	"\x12pd_consent_version\x18\x03 \x01(\tR\x10pdConsentVersion\x12#\n" +
+	"\rage_confirmed\x18\x04 \x01(\bR\fageConfirmed\"\xe6\x01\n" +
 	"\x1eStartPhoneVerificationResponse\x12-\n" +
 	"\x12verification_token\x18\x01 \x01(\tR\x11verificationToken\x12'\n" +
 	"\x0fcallback_number\x18\x02 \x01(\tR\x0ecallbackNumber\x129\n" +

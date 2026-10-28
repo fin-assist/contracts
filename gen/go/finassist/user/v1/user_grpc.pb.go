@@ -45,6 +45,10 @@ type AuthServiceClient interface {
 	// чужого секрета, retry_at = expires_at, округлённый вверх до целой минуты; такой отказ
 	// хранится под ключом до retry_at и засчитывается в лимитах не больше одного раза на окно
 	// до retry_at (docs/grpc-api.md, 6 и 7.1).
+	// До внешнего вызова проверяет согласие, его актуальную версию и подтверждение 14+,
+	// сохраняет доказательство с серверным временем; ошибка БД запрещает вызов провайдера.
+	// Повтор сохраняет первоначальное доказательство; неоднозначный исход провайдера требует
+	// сверки существующей попытки, а не новой внешней заявки (docs/grpc-api.md, 7.1).
 	StartPhoneVerification(ctx context.Context, in *StartPhoneVerificationRequest, opts ...grpc.CallOption) (*StartPhoneVerificationResponse, error)
 	// Следить за статусом заявки на подтверждение: ждёт вебхук провайдера о звонке и отдаёт
 	// результат — для существующего пользователя пару токенов, для нового одноразовый токен
@@ -55,7 +59,7 @@ type AuthServiceClient interface {
 	// verification_token: сверх него -> RATE_LIMITED до первого сообщения (docs/grpc-api.md, 7.1).
 	WatchPhoneVerification(ctx context.Context, in *WatchPhoneVerificationRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[WatchPhoneVerificationResponse], error)
 	// Создать пользователя после подтверждения нового номера: проверяет токен регистрации и
-	// версию согласия на обработку ПДн, фиксирует согласие и время, создаёт аккаунт и выдаёт
+	// доказательство согласия и возраста из заявки, создаёт аккаунт и выдаёт
 	// первую пару токенов. Токен регистрации расходуется только успешным ответом.
 	// POST /v1/auth/register. Требует `idempotency-key`. Лимит запросов за окно на `x-client-ip`
 	// проверяется после ключа и до registration_token: сверх него -> RATE_LIMITED.
@@ -158,6 +162,10 @@ type AuthServiceServer interface {
 	// чужого секрета, retry_at = expires_at, округлённый вверх до целой минуты; такой отказ
 	// хранится под ключом до retry_at и засчитывается в лимитах не больше одного раза на окно
 	// до retry_at (docs/grpc-api.md, 6 и 7.1).
+	// До внешнего вызова проверяет согласие, его актуальную версию и подтверждение 14+,
+	// сохраняет доказательство с серверным временем; ошибка БД запрещает вызов провайдера.
+	// Повтор сохраняет первоначальное доказательство; неоднозначный исход провайдера требует
+	// сверки существующей попытки, а не новой внешней заявки (docs/grpc-api.md, 7.1).
 	StartPhoneVerification(context.Context, *StartPhoneVerificationRequest) (*StartPhoneVerificationResponse, error)
 	// Следить за статусом заявки на подтверждение: ждёт вебхук провайдера о звонке и отдаёт
 	// результат — для существующего пользователя пару токенов, для нового одноразовый токен
@@ -168,7 +176,7 @@ type AuthServiceServer interface {
 	// verification_token: сверх него -> RATE_LIMITED до первого сообщения (docs/grpc-api.md, 7.1).
 	WatchPhoneVerification(*WatchPhoneVerificationRequest, grpc.ServerStreamingServer[WatchPhoneVerificationResponse]) error
 	// Создать пользователя после подтверждения нового номера: проверяет токен регистрации и
-	// версию согласия на обработку ПДн, фиксирует согласие и время, создаёт аккаунт и выдаёт
+	// доказательство согласия и возраста из заявки, создаёт аккаунт и выдаёт
 	// первую пару токенов. Токен регистрации расходуется только успешным ответом.
 	// POST /v1/auth/register. Требует `idempotency-key`. Лимит запросов за окно на `x-client-ip`
 	// проверяется после ключа и до registration_token: сверх него -> RATE_LIMITED.

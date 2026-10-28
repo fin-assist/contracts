@@ -153,6 +153,21 @@ paths:
         лимит верификаций — в том числе после `expires_at` (ответ хранится 24 ч), поэтому новая заявка — с новым
         ключом.
 
+        До передачи телефона провайдеру сервер требует отдельные pd_consent_accepted: true,
+        актуальную pd_consent_version и age_confirmed: true (14+). Обе отметки по умолчанию сняты.
+        Структура/возраст — 400 VALIDATION_ERROR, отказ в согласии — 403 CONSENT_REQUIRED,
+        неактуальная версия — 422 CONSENT_OUTDATED. Эти правила одинаковы для новых и существующих номеров.
+        После проверок и до внешнего вызова user сохраняет долговечное доказательство с серверными
+        временем, версией, проверенным x-client-ip и связью с попыткой; ошибка БД запрещает вызов.
+        Повтор не меняет доказательство и не дублирует заявку при неопределённом исходе провайдера.
+        Версия закрепляется на срок заявки и 15 минут результата verified; новый документ за это время
+        не требует нового согласия. Register использует исходные подтверждения, без повторной отметки.
+        Доказательство не означает владение номером до verified; связь с аккаунтом появляется после звонка.
+        Старые pending/results без доказательств недействительны: Watch/Register — INVALID_TOKEN.
+        Хранение отдельно от аккаунта: для связанного аккаунта 3 года после удаления/отзыва по Политике;
+        для брошенной регистрации 24 часа с окончания срока заявки (решение 28.10.2026).
+        Cleanup сериализуется с привязкой аккаунта; подробности и provider failure — api.md 1.1.
+
         Ключ проверяется до лимитов: повтор с известным ключом и тем же телом получает сохранённый ответ без
         проверок ниже; тот же ключ с другим телом — 409 `IDEMPOTENCY_CONFLICT`, а не 429. Для неизвестного ключа —
         сначала лимиты верификаций на номер и на адрес (при превышении `retry_at` — срок лимита, занятость номера не
@@ -194,6 +209,9 @@ paths:
               $ref: '#/components/schemas/StartPhoneVerificationRequest'
             example:
               phone: '+79001234567'
+              pd_consent_accepted: true
+              pd_consent_version: '2026-09-28'
+              age_confirmed: true
       responses:
         '200':
           description: Заявка создана
@@ -210,6 +228,10 @@ paths:
           $ref: '#/components/responses/RequestTooLarge'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
         '409':
           $ref: '#/components/responses/Conflict'
         '429':
@@ -281,7 +303,9 @@ paths:
       x-min-request-body-bytes: 65536
       summary: Регистрация нового пользователя
       description: |
-        Вызывается с экрана согласия на обработку ПДн после подтверждения нового номера.
+        Вызывается после подтверждения нового номера с исходными подтверждениями из startPhoneVerification,
+        без повторного согласия. Версия сверяется с доказательством заявки, а не с обновлённым текущим
+        документом; момент получения согласия не меняется. Заявка без доказательства — INVALID_TOKEN.
         `registration_token` расходуется только ответом `201`; после ошибки 4xx его можно отправить снова
         (с новым `Idempotency-Key`, если тело изменилось). Повтор с тем же ключом возвращает тот же `201`.
         Лимит запросов на адрес клиента (значение задаёт сервер) проверяется до `registration_token`: сверх него —
@@ -421,8 +445,9 @@ paths:
       operationId: getConsentDocument
       summary: Текущая версия документа согласия
       description: |
-        `personal_data` — без токена (экран согласия до регистрации); `assistant` — с токеном.
-        Клиент не зашивает версию: после `CONSENT_OUTDATED` запрашивает документ заново.
+        `personal_data` — без токена (согласие до отправки телефона); `assistant` — с токеном.
+        Клиент не зашивает версию: после CONSENT_OUTDATED в startPhoneVerification/согласии помощнику
+        запрашивает документ заново. В Register восстанавливает исходную закреплённую версию заявки.
       security:
       - {}
       - bearerAuth: []
@@ -2566,6 +2591,9 @@ components:
       type: object
       required:
       - phone
+      - pd_consent_accepted
+      - pd_consent_version
+      - age_confirmed
       properties:
         phone:
           type: string
@@ -2573,6 +2601,17 @@ components:
             с нарушением у поля `phone` (`INVALID_FORMAT`), FIN-68.
           pattern: ^\+7\d{10}$
           example: '+79001234567'
+        pd_consent_accepted:
+          type: boolean
+          description: Отдельное согласие до передачи телефона провайдеру; false — 403 CONSENT_REQUIRED.
+        pd_consent_version:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Актуальная версия personal_data из getConsentDocument; несовпадение — 422 CONSENT_OUTDATED.
+        age_confirmed:
+          type: boolean
+          description: Отдельное подтверждение 14+; false — 400 VALIDATION_ERROR с полем age_confirmed, код INVALID_VALUE.
     PhoneVerification:
       type: object
       required:
@@ -2624,7 +2663,7 @@ components:
         is_new_user:
           type: boolean
           nullable: true
-          description: 'Только при `verified`: `true` — номера нет в системе, показать экран согласия и вызвать `register`.'
+          description: 'Только при `verified`: `true` — номера нет в системе, вызвать `register` без повторного согласия.'
         access_token:
           type: string
           nullable: true
@@ -2650,11 +2689,15 @@ components:
           description: Из события `verified`.
         pd_consent_accepted:
           type: boolean
-          description: Согласие на обработку ПДн; `false` → 403 `CONSENT_REQUIRED`.
+          description: Подтверждение ранее полученного в startPhoneVerification согласия; false — 403 CONSENT_REQUIRED.
+            Не заменяет доказательство заявки и не меняет его время.
         pd_consent_version:
           type: string
-          description: Версия документа (`getConsentDocument`, `personal_data`), который видел пользователь. Устаревшая →
-            422 `CONSENT_OUTDATED`.
+          minLength: 1
+          maxLength: 64
+          description: Исходная версия из startPhoneVerification; несовпадение с доказательством заявки —
+            422 CONSENT_OUTDATED. С новой текущей версией не сравнивается; клиент восстанавливает исходное
+            значение своей заявки, а при потере состояния начинает новую заявку.
         timezone:
           type: string
           description: Часовой пояс устройства (IANA); без поля — `Europe/Moscow`.
