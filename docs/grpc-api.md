@@ -297,6 +297,7 @@ Permission новой генерации остаётся в `AnswerError.retrya
 
 - Сохраняется пара (gRPC-код + `ErrorInfo`, либо сериализованный ответ), а не REST-ответ: `bank-bff` при повторе получает то же, что в первый раз, и переводит так же. Сохраняются только исходы, соответствующие REST `2xx/400/413/422` (кроме `FILE_TOO_LARGE` в `UploadStatement` — ниже); исключение — `RATE_LIMITED` на дубль в `StartPhoneVerification` (номер занят у провайдера), он хранится под ключом до своего `retry_at` (api.md, «Идемпотентность»; 7.1). Кроме того, у ответа `StartPhoneVerification` поле `expires_in` не берётся из сохранённого ответа: `user` пересчитывает его из `expires_at` в момент отправки (после `expires_at` — 0). Для `RATE_LIMITED` на дубль хранится абсолютный `retry_at`, а не готовый статус: при повторе сервис собирает ошибку заново через `finerr.RateLimited(retry_at)`, так что `RetryInfo` (и `Retry-After` в REST) пересчитывается от текущего момента и не расходится с телом; остальные детали те же. Без `RetryInfo` `bank-bff` отдал бы 500 (раздел 5.1).
 - В `StartPhoneVerification` поиск ключа включает долговечную попытку без кэша ответа после 5xx. Она продолжается по долговечному состоянию на шаге ключа, до лимитов и занятости: первый вызов без отметки либо сверка после отметки (7.1), без повторного списания попытки и повторного confirm/Start; другое тело — конфликт, активный исполнитель — REQUEST_IN_PROGRESS. Неизвестный ключ при известной занятой внешней заявке получает обычный дубль; при неизвестном исходе другой попытки — тот же RATE_LIMITED-дубль с retry_at = сохранённый unknown deadline (default 5 минут), округлённый вверх до минуты. На этом сроке unknown attempt закрывается/номер освобождается с принятым риском, старые ключи сохраняют терминальное состояние (7.1). Определённый отказ без созданной заявки закрывает попытку и требует нового ключа для нового действия; это состояние попытки, а не сохранённый 5xx-ответ (7.1).
+- Original StartPhoneVerification с dispatch-marker и terminal duplicate сохраняет429 до future retry_at, затем в обычном24h окне отдаёт terminal INTERNAL_ERROR false без confirm/нового receipt. Общее выполнение дубля после retry_at относится только к pre-dispatch keys; не к этому состоянию (7.1).
 - Хеш `UploadStatement` (FIN-297) — не по сериализации потока, а по формуле `request_hash = SHA-256(SHA-256(содержимое) ‖ file_name)`: первая часть — 32 байта SHA-256 всех байтов файла (конкатенация `chunk` в порядке потока), вторая — байты `UploadHeader.file_name` в UTF-8, `‖` — конкатенация без разделителя. Первая часть всегда ровно 32 байта, поэтому граница однозначна: разные пары «содержимое, имя» не дают одной строки на входе внешнего SHA-256. `file_name` берётся как передан в запросе, без нормализации (регистр, Unicode-нормализация, пробелы, расширение не меняются) — то самое значение, которое сохраняется и показывается в «Истории загрузок»; пустое имя — пустая вторая часть. Тот же ключ, то же содержимое, другое имя — `IDEMPOTENCY_CONFLICT`: иначе повтор вернул бы загрузку со старым именем. Хеш не зависит от схемы protobuf, поэтому ложного конфликта после деплоя у загрузки нет. Хеш известен только после последнего `chunk`, поэтому сохранённый исход ищется и хеш сверяется в конце потока: повтор с тем же ключом дочитывается, и сохранённый ответ (или `IDEMPOTENCY_CONFLICT`, `REQUEST_IN_PROGRESS`) отдаётся после последнего `chunk`. `FILE_TOO_LARGE` у `UploadStatement` — исключение из сохраняемых `413`: сервис отвечает им до конца потока (по `header.size_bytes` — до первого `chunk`), когда хеша ещё нет, и под ключом его не сохраняет; ключ при этом не проверяется. Повтор выполняется заново и так же дёшево получает тот же `413` — исход зависит только от размера.
 - Хеш — `proto.MarshalOptions{Deterministic: true}` + SHA-256. Детерминизм гарантирован только для одного бинаря; после деплоя с изменённой схемой сообщения хеш повтора может не совпасть → ложный `IDEMPOTENCY_CONFLICT`. Окно — 24 ч после релиза, затрагивает только повторы, пересёкшие деплой; принимаем (решено 14.10.2026: хеш считает сервис по protobuf; вариант с канонизированным телом REST в `bank-bff` отклонён как лишняя сложность).
 - Внутренние вызовы с эффектом идемпотентны по конструкции и ключа не требуют: `UpsertUserMetrics` (версии), `SetUserTimezone` (версия настроек), `PurgeUserData` (повтор — OK), `DismissRegularPayment` / `ChangeCategory` (присваивание).
@@ -353,7 +354,7 @@ Go duration в диапазоне 1s..5m; некорректное значен�
 При первом успешном приёме абсолютный deadline = приём + тогдашняя настройка сохраняется один раз;
 смена env/перезапуск, исполнитель/повтор/сверка его не пересчитывают и не продлевают. Фиксированный
 provider TTL 5 минут, expires_at известной заявки и 15 минут verified-результата не параметризуются этим env.
-До первого внешнего вызова единственный исполнитель атомарно сохраняет отметку «вызов мог начаться» и
+До первого внешнего вызова единственный исполнитель атомарно сохраняет отметку «вызов мог начаться», неизменный first_dispatch_at и
 конечный dispatch_not_after, не позже этого срока. Только впервые записавший её вправе сделать один
 первый вызов строго до границы, с дедлайном не позже неё; позже отправлять не вправе и он. При существующей
 отметке — только читающая сверка, даже после crash между commit и отправкой. Retry-middleware и повторный
@@ -395,35 +396,62 @@ Replay/конфликт/учёт действуют 24 часа с первог�
 fresh-запрос по общему правилу, с новой попыткой и всеми проверками; архивная заявка не восстанавливается. Завершение/очистка сериализуются
 с записью результата/привязкой к аккаунту, другие live account/attempt данные не удаляются, квота не возвращается.
 
-Zvonok confirm может вернуть прежний ID незавершённой заявки. Доверенные поля — provider created,
-call_id/phone, call_status (legacy status), completed и пул. Ключ (provider, настроенная campaign, call_id)
-атомарно уникален между live attempts и сохраняемыми архивами. Campaign устанавливается из доверенного
-запроса к настроенной кампании/проверенного binding, не из клиента и не отсутствующего поля ответа.
-Чужой binding ID — существующий RATE_LIMITED 429 по правилу provider duplicate, без перепривязки.
+Zvonok confirm может вернуть прежний ID незавершённой заявки. Trusted поля — created, call_id/phone,
+call_status (legacy status), completed и пул. (provider, configured campaign, call_id) атомарно уникален
+между live attempts и сохраняемыми архивами; campaign берётся из доверенного запроса/binding, не
+клиента/отсутствующего поля ответа. Чужой ID не перепривязывается; обработка разделяет active/terminal/
+недоверенный ответ по правилам ниже.
 
-Для unbound ID C нужны одновременно: same phone/campaign; provider created в интервале
-[C.first_dispatch_at.Truncate(1ms), получение первого authenticated confirm-ответа], не future;
-first_dispatch_at — сохранённое серверное начало первого confirm, не часы клиента/нового retry. При
-read-only recovery после потери ответа верхняя граница — получение этого authenticated чтения, только
-пока C открыта и её unknown deadline не наступил. Точность — 1 ms; произвольное расширение/локальная
-подстановка времени запрещены. Первое связывание требует pending new/wait/in_process, completed null/zero,
-не pincode_ok/terminal, валидный пул 1–1000 distinct E.164 и usable remaining lifetime.
-expires_at = provider.created + фиксированные 5 минут; expires_in от него, не от C/sent/recovery. Created
-раньше нижней границы — старый вызов/429-дубль; неизвестные/противоречивые поля или непроверяемое время —
-безопасная внутренняя ошибка без binding/proof. Сам closed unknown archive телефона не создаёт 500/новый lock.
+Для unbound ID C проверяются same phone/campaign и provider.created в интервале
+[C.first_dispatch_at.Truncate(1ms) − ε, recv первого authenticated confirm-ответа + ε]. Для Zvonok
+ClockSkewTolerance = 1s — константа адаптера FIN-364, не env; timestamp precision 1ms не означает нулевой
+clock skew. First_dispatch_at атомарен с marker, immutable и не является временем retry/часами клиента.
+При read-only recovery после потери ответа верх — recv этого authenticated чтения + ε, пока C open
+и unknown deadline ещё не наступил. Нет произвольного расширения/подстановки local time. First binding
+требует pending new/wait/in_process, completed null/zero, не pincode_ok/terminal, pool 1–1000 distinct E.164.
+Closed unknown archive сам по себе не создаёт новый lock/500; неразличимый late A внутри расширенного
+интервала — принятый поздний риск без наследования terminal-результата.
 
-Уникальный ID/binding и все условия проверяются атомарно с сохранением результата, включая C open и
-now < сохранённого unknown deadline, независимо от cleanup job. Late A, неразличимый внутри того же
-интервала, остаётся принятым поздним риском, без выдуманного TTL/наследования подтверждённого результата.
-Первое связывание не принимает terminal/pincode_ok; дальнейший proof — только authenticated проверка
-текущего binding. Повтор ID C не меняет created/TTL. Нынешний Recover снова confirm не допускается,
-FIN-364 заменяет его действительно читающим путём.
+Сохраняются once: declared_provider_expiry = provider.created + fixed 5m;
+public/verification expires_at = declared − ε; known_busy_until = declared + ε. Public deadline
+консервативен при clock difference в пределах ε, подтверждение ограничено им; busy отдельно учитывает
+поздний возможный конец внешнего TTL. Replay/restart/повтор ID не пересчитывают created/deadlines.
+На commit public_deadline − now > 0 строго как Duration, без hidden usability threshold; expires_in
+остаётся floor(max(0, public_deadline − now)), поэтому 0 возможен при положительном остатке <1s.
+Fake/local adapter без внешнего skew может ε0 с теми же gates/инвариантами. Usecase принимает проверенные
+сроки через интерфейс, не switch по providerName. Все admission/unique ID/C open/now<unknown deadline/
+positive public remainder проверяются атомарно при commit, независимо от cleanup job.
+Created до lower — старый кандидат; после upper/противоречивые поля/непроверяемое сравнение — безопасная
+ошибка без binding/proof. Последующий proof — только authenticated проверка текущего binding.
+Clock observability: расстояния created вне dispatch/recv interval и RTT, ограниченные метрики/
+агрегированная диагностика без phone/IP/user/call/campaign IDs и raw payload; latency не объявляется
+точным clock offset.
 
-Late executor A с причинным контекстом может дописать только ID/created/фактический expiry в ещё живой
+Dispatched C с marker, получивший проверенный старый/чужой/unusable-public-remainder ID, создаёт known-busy
+факт только для валидированного same-phone/campaign NONTERMINAL вызова с known_busy_until>now.
+Это phone+срок, не ownership/binding/proof чужого ID. C terminal: cached RATE_LIMITED429 до строго
+будущего ceilMinute(known_busy_until) с явным RequestRetryInfo false (REST retryable false), replay
+сохраняет false и пересчитывает RetryInfo от этого срока; после retry_at
+исходный ключ C в своём обычном24h окне получает terminal INTERNAL_ERROR с RequestRetryInfo false,
+без confirm/нового receipt/списания. B/D до busy_until получают DB429 без HTTP, а их pre-dispatch keys
+после retry_at могут выполняться заново по обычному duplicate правилу. Это исключение original dispatched
+C из общего повторного исполнения дубля после retry_at.
+Клиент после полученного429 ждёт retry_at и для нового осознанного Start создаёт новый ключ. Потерянный
+ответ до conclusive outcome повторяется прежним ключом/телом. Terminal C429 false запрещает авто-reconfirm
+старого ключа; RetryInfo лишь задаёт время нового intent. Server compatibility B/D reuse после retry_at
+не требует от нового клиента различать C/B/D. RequestRetryInfo использует существующую optional detail,
+RATE_LIMITED error_spec не меняется.
+Trusted terminal/pincode_ok или known_busy_until<=now не создаёт fake busy из created+5m: C terminal
+INTERNAL_ERROR false, без past retry_at/429/fence. Malformed/untrusted ответ не создаёт срок из payload,
+остаётся обычный unknown recovery/deadline путь. Bare provider duplicate без trusted created использует
+прежний конечный fallback, только со строго будущим retry_at; иначе terminal false без fake fence. Original dispatched C и здесь остаётся terminal после cached429. Recover,
+повторяющий confirm, заменяется действительно читающим путём FIN-364.
+
+Late executor A с причинным контекстом может дописать только ID/created/declared expiry и проверенные public/busy границы в ещё живой
 архив A без reopen/auth/продления retention. Уникальность атомарна: уже связанный C ID не отнимается.
 Webhook не несёт AttemptID; ct_phone/наличие архива не позволяют угадать A. После authenticated call_by_id
 он обновляет архив лишь по уже существующему однозначному binding; иначе unknown-call/ignore, без нового
-binding. Наблюдение не является условием входа, не вводит карантин и не воссоздаёт удалённый архив.
+binding. Наблюдение не является условием входа, не вводит active phone-fence/карантин и не воссоздаёт удалённый архив.
 
 Доказательство переживает provider error и закрытие/истечение рабочей заявки. Для брошенной регистрации
 без созданного аккаунта/связи с подтверждённым существующим аккаунтом оно хранится отдельно 24 часа после
@@ -468,7 +496,15 @@ RefreshTokens/закрытия заявки. Её refresh только из-за
 #### Остальные правила user
 
 - **Вебхук провайдера обратного звонка** — HTTP-эндпоинт `user` на ingress (отдельный маршрут, белый список адресов провайдера, подпись), мимо `bank-bff`. В gRPC-контракт не входит. Номер подтверждения общий для многих заявок, поэтому вебхук сопоставляется с заявкой по номеру звонившего: засчитывается только звонок с номера действующей заявки.
-- **`StartPhoneVerification`** — срок заявки (`expires_at`) задаёт `user`: сейчас 5 минут с создания, это срок заявки у провайдера (не меняется). Порядок: сначала ключ идемпотентности — повтор с тем же ключом получает сохранённый ответ (раздел 6), и после `expires_at` тоже, тот же ключ с другим телом — `IDEMPOTENCY_CONFLICT`, без проверок ниже; для неизвестного ключа — сначала лимиты верификаций на номер и `x-client-ip` (при превышении — `RATE_LIMITED` с `retry_at` по лимиту, занятость номера не проверяется), затем занятость номера. Два понятия: **действующая заявка** — не закрыта: `pending` до `expires_at` или `verified` с неиспользованным результатом до 15 минут с подтверждения звонком (срок результата и `registration_token` отсчитывается от `verified`; закрывают первый `RefreshTokens` с выданным refresh или `Register`), от неё зависит повторная доставка результата; **номер занят у провайдера** — до `expires_at` последней заявки на номер, закрыта она или нет: провайдер не принимает повторную заявку на тот же номер до конца срока предыдущей. `user` определяет занятость по своей БД и для занятого номера отвечает `RATE_LIMITED` без вызова провайдера, без `verification_token` чужой заявки, с `retry_at` = `expires_at` последней заявки, округлённым вверх до целой минуты (22:16:20 → 22:17:00; точный срок чужой заявки не раскрывается). Отказ провайдера по дублю при свободном по БД номере — рассогласование: лог и метрика `finassist_phone_verification_provider_duplicate_total`, клиенту — `RATE_LIMITED` с `retry_at` = время запроса + 5 минут, округлённое вверх до минуты. Оба отказа по дублю сохраняются под ключом до своего `retry_at` (хранится `retry_at`; повтор с тем же ключом до `retry_at` получает `finerr.RateLimited(retry_at)` с задержкой от текущего момента, занятость не перепроверяется; после `retry_at` выполняется заново) и засчитываются в лимитах на номер и `x-client-ip`: попытку списывает выполнение, а не воспроизведение, поэтому один `idempotency-key` учитывается не больше одного раза на каждое окно до `retry_at`. `RATE_LIMITED` по лимиту не сохраняется и попытку не списывает.
+- **`StartPhoneVerification`** — внешний TTL фиксирован 5 минут. Публичный expires_at и внутренняя
+  known-busy граница различаются на clock tolerance по правилам выше; pending/result delivery привязаны
+  к публичному deadline/15 минутам verified, локальная занятость — к busy_until. Закрытие доставки результата
+  первым RefreshTokens/Register не переносит владение чужим ID. Идемпотентность/лимиты/unknown deadline/
+  различие pre-dispatch duplicate key и terminal dispatched key — правила 6/7.1 выше и api.md1.1.
+  Known-busy duplicate отдаётся из БД без confirm и чужих секретов, retry_at округляется вверх до минуты.
+  Отказ provider duplicate без trusted created сохраняет прежний fallback request time +5 минут с
+  округлением; при наличии валидного active call используется его known_busy_until. Rate-limit отказ
+  не кэшируется/не списывает попытку; duplicate execution/replay — по своему правилу до retry_at.
 - **`WatchPhoneVerification`** — первый ответ из БД, дальше `LISTEN/NOTIFY` по ID заявки (только primary). Дедлайн потока — `expires_at` + 10 с. Серверный лимит запросов (попыток подключения) за окно на `x-client-ip`, как у `Register` и `RefreshTokens` (значение задаёт `user`, в контракте не фиксируется; считаются и попытки, отклонённые по токену; отдельный потолок одновременных потоков с адреса — на усмотрение сервера, к защите токена не относится): сверх лимита — `RATE_LIMITED` с `retry_at` до первого сообщения потока и до проверки `verification_token`, чтобы подбор токена упирался в лимит.
 - **Лимиты до проверки токенов**: у `WatchPhoneVerification` (попытки подключения), `Register` и `RefreshTokens` — серверный лимит запросов за окно на `x-client-ip` (значения задаёт `user`, в контракте не фиксируются); он проверяется после ключа идемпотентности и до проверки токена из запроса (`verification_token`, `registration_token`, `refresh_token`) — сверх лимита `RATE_LIMITED` с `retry_at`, подбор токена упирается в лимит.
 - **`UpdateProfile` с `timezone`**: в той же транзакции — строки outbox `SetUserTimezone{user_id, timezone, settings_version}` (`settings_version` — `int32`) для `bank-statement-data` и `assistant` (по строке на получателя, доставляются независимо). При регистрации — так же, с поясом из 1.3. `bank-statement-data` пересчитывает агрегаты и первым делом отправляет в `analytics` `recalculating = true` — до этого `GET /v1/analytics` может несколько секунд отдавать старые цифры без признака пересчёта. Принимаем.

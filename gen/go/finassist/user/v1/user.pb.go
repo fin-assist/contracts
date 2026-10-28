@@ -266,13 +266,15 @@ type StartPhoneVerificationResponse struct {
 	// абонента. Номер может быть общим для многих заявок: звонок засчитывается только с номера
 	// из заявки и только пока она действует.
 	CallbackNumber string `protobuf:"bytes,2,opt,name=callback_number,json=callbackNumber,proto3" json:"callback_number,omitempty"`
-	// Срок жизни заявки по часам сервера; задаёт сервер (сейчас 5 минут с создания — срок заявки
-	// у провайдера). Клиент для отсчёта на устройстве его не использует (см. expires_in).
+	// Наш консервативный deadline подтверждения по часам сервера: для Zvonok
+	// provider.created + fixed TTL 5 минут - ClockSkewTolerance 1s. Отдельная внутренняя
+	// known-busy граница = declared provider expiry + tolerance; это не public expires_at.
+	// Локальный адаптер может tolerance 0 с теми же инвариантами. См. docs/grpc-api.md, 7.1.
 	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	// Оставшийся срок заявки в секундах на момент отправки ответа (expires_at минус время сервера,
 	// округлено вниз, не меньше 0). Вычисляется при каждой отправке, в том числе при повторе
-	// сохранённого ответа по idempotency-key (хранится expires_at). Клиент считает по нему время
-	// окончания по часам устройства.
+	// сохранённого ответа по idempotency-key (хранится expires_at). Положительный остаток <1s
+	// даёт 0; отдельного минимального usability-порога нет. Клиент считает по монотонному времени.
 	ExpiresIn     *int32 `protobuf:"varint,4,opt,name=expires_in,json=expiresIn,proto3,oneof" json:"expires_in,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

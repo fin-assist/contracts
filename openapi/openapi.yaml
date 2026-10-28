@@ -164,7 +164,7 @@ paths:
         Абсолютный deadline сохраняется один раз при первом приёме (приём + тогдашнее env); смена env,
         перезапуск, recovery/replay не пересчитывают и не продлевают его. Фиксированный provider TTL 5 минут,
         expires_at известной заявки/15 минут результата этим env не меняются. До первого вызова атомарно фиксируются долговечная отметка
-        «вызов мог начаться» и конечный dispatch_not_after не позже локального срока. Только впервые
+        «вызов мог начаться», immutable first_dispatch_at в той же транзакции и конечный dispatch_not_after не позже локального срока. Только впервые
         записавший отметку исполнитель вправе сделать один первый вызов строго до границы с дедлайном
         не позже неё; позже не вправе и он. Существующая отметка — только читающая сверка, даже при crash
         между commit и отправкой. Повторный confirm/Start и retry-middleware запрещены навсегда.
@@ -213,36 +213,50 @@ paths:
         phone/IP, request_hash/key/resource bindings, token hashes/result ciphertext, персональные jobs
         и связи карантинных отказов. Общие rate-limit окна/сроки сохраняются, списания не возвращаются;
         другие live account/attempt данные не удаляются. Очистка сериализуется с привязкой к аккаунту.
-        Zvonok confirm может вернуть прежний ID незавершённого вызова. (Provider, настроенная campaign, ID)
-        атомарно уникален между live/сохраняемыми архивами; ID другого binding — 429 provider duplicate.
-        Campaign устанавливается доверенным запросом/связью, не клиентом или отсутствующим полем ответа.
-        Unbound ID C принимается только с same phone/campaign, provider created в интервале
-        [C.first_dispatch_at.Truncate(1ms), получение первого authenticated confirm-ответа], не future.
-        First_dispatch_at — сохранённое серверное начало первого confirm, не время retry/часы клиента.
-        При read-only recovery после потери ответа верх — получение этого authenticated чтения, только
-        пока C open и unknown deadline ещё не наступил. Без произвольного расширения точности/локального fallback.
-        Для первого binding нужны pending new/wait/in_process, completed null/zero, не pincode_ok/terminal,
-        валидный пул 1–1000 distinct E.164 и expires_at = provider.created + fixed 5 минут ещё в будущем.
-        Остаток/таймер не считаются от C/sent/recovery. Created раньше lower — старый429, противоречивые
-        поля/непроверяемое время — безопасная внутренняя ошибка. Наличие closed unknown архива не создаёт lock.
-        При commit атомарно проверяются unique binding, C open и now < unknown deadline, не только cleanup job.
-        Late A, неразличимый внутри интервала, остаётся принятым поздним риском без наследования terminal
-        результата/выдуманного TTL. Последующий proof — только authenticated проверка текущего binding;
-        повтор ID не меняет created/expiry. Нынешний Recover снова confirm заменяется читающим путём FIN-364.
-        Late executor A с causal context может дописать ID/created/expiry только в ещё живой архив A без
+        Zvonok confirm может вернуть прежний ID. (Provider, configured campaign, ID) unique между live/archive;
+        чужой ID не перепривязывается. Campaign устанавливается trusted запросом/binding, не клиентом.
+        Unbound C требует same phone/campaign и created в [first_dispatch_at.Truncate(1ms) − ε, recv + ε].
+        Для Zvonok ClockSkewTolerance=1s — finite adapter constant, не env; precision1ms не равна zero skew.
+        При read-only recovery верх — authenticated read recv+ε, пока C open и до captured unknown deadline.
+        Нельзя произвольно расширять окно/подставлять local time. First binding — только pending
+        new/wait/in_process, completed null/zero, не pincode_ok/terminal, pool1–1000 distinct E.164.
+        Once сохраняются declared_provider_expiry=created+fixed5m; public/verification expires_at=declared−ε;
+        known_busy_until=declared+ε. Повтор ID/replay/restart не пересчитывает created/deadlines.
+        На commit строго Duration(public_deadline−now)>0, без hidden usability threshold;
+        expires_in=floor(max(0,public_deadline−now)) может быть0 при положительном остатке<1s.
+        Fake/local может ε0 с теми же gates; usecase получает проверенные сроки через интерфейс без providerName switch.
+        Commit атомарно проверяет unique binding, все admission условия, C open и now<unknown deadline.
+        Created до lower — старый кандидат; за upper/противоречивые поля — safe error. Closed archive не вводит lock.
+        Late A внутри расширенного интервала — остаточный принятый риск без наследования terminal результата/новогоTTL.
+        Subsequent proof — authenticated проверка текущего binding. Window-distance/RTT наблюдаются как
+        bounded metrics/агрегированная диагностика без PII/IDs/raw payload, не точный offset из latency.
+        Dispatched C при trusted old/foreign/unusable ID terminal. Только валидный same-phone/campaign
+        NONTERMINAL call с known_busy_until>now создаёт known-busy факт (не ownership чужого ID).
+        C получает cached429 до future ceilMinute(known_busy_until) с явным RequestRetryInfo false/REST retryable false; после retry_at его исходный ключ в24hокне
+        получает terminal INTERNAL_ERROR false, без confirm/новогоreceipt. B/D получают DB429 до busy безHTTP;
+        их pre-dispatch duplicate keys после retry_at могут выполняться заново по обычному правилу.
+        Получив429, клиент ждёт retry_at и для нового осознанного Start создаёт новый key; transport retry
+        потерянного ответа до окончательного исхода сохраняет старый key/body. Terminal C429 сохраняет false
+        и не разрешает auto-reconfirm старым key: RetryInfo лишь время новой попытки. Server B/D compatibility
+        reuse после retry_at не требует от нового клиента угадывать фазу; новых wire fields/error_spec нет.
+        Trusted terminal/pincode_ok или уже прошедший busy_until дают C terminal500false без fake fence/past429.
+        Malformed/untrusted ответ идёт по обычному unknown/recoverydeadline, без busy из недоверенного payload.
+        Bare provider duplicate без created сохраняет прежний finite fallback только с future retry_at, иначе
+        terminal false без fake fence; original dispatched C всё равно
+        terminal после cached429. Recover с повторным confirm заменяется читающим путём FIN-364.
+        Late executor A с causal context может дописать ID/created/declared expiry/public/busy только в ещё живой архив A без
         reopen/auth/продления retention; уже связанный C ID не отнимается. Webhook не содержит AttemptID:
         только authenticated call_by_id + existing unambiguous binding позволяют обновить архив, не ct_phone
         или догадка по архиву. Иначе unknown-call/ignore без binding; наблюдение не обязательно для нового
-        входа, не вводит карантин и не воссоздаёт удалённый архив.
+        входа, не вводит active fence/карантин и не воссоздаёт удалённый архив.
         Для неизвестного ключа —
         сначала лимиты верификаций на номер и на адрес (при превышении `retry_at` — срок лимита, занятость номера не
         проверяется), затем занятость номера.
 
-        Провайдер не принимает повторную заявку на тот же номер до конца срока предыдущей, даже если по ней уже
-        вошли. Поэтому номер занят до `expires_at` последней заявки на него, закрыта она или нет (действующая заявка —
+        Локальная известная резервация отделена от доставки результата. Known-занятость держится до сохранённого known_busy_until, отдельно от public expires_at/закрытия доставки результата (действующая заявка —
         `pending` до `expires_at` или `verified` с неиспользованным результатом до 15 минут с подтверждения — отдельное
         понятие, от неё зависит повторная доставка результата). Запрос с новым ключом на занятый номер — 429 `RATE_LIMITED` без обращения к провайдеру и без
-        `verification_token` чужой заявки; `error.retry_at` — `expires_at` последней заявки, округлённый вверх до целой
+        `verification_token` чужой заявки; `error.retry_at` — сохранённый known_busy_until либо unknown deadline, округлённый вверх до целой
         минуты (22:16:20 → 22:17:00). Отказ провайдера по дублю при свободном по БД номере — тоже 429, `retry_at` =
         время запроса + 5 минут, округлённое вверх до минуты. 429 на дубль сохраняется под ключом до своего
         `retry_at` (повтор с тем же ключом получает его с `Retry-After` от текущего момента, занятость не перепроверяется) и засчитывается в лимитах на
@@ -2704,9 +2718,10 @@ components:
         expires_at:
           type: string
           format: date-time
-          description: Срок жизни заявки по часам сервера; задаёт сервер (сейчас 5 минут с создания — срок заявки у
-            провайдера). Для отсчёта на устройстве клиент его не использует (см. `expires_in`) и длительность не
-            зашивает. После него — новая заявка с новым `Idempotency-Key`.
+          description: Наш консервативный deadline подтверждения по серверным часам. Для Zvonok provider.created
+            + fixed TTL 5 минут - ClockSkewTolerance 1s. Внутренняя known-busy граница = declared provider expiry
+            + tolerance, отдельно от public expires_at. Локальный адаптер может tolerance0 с теми же инвариантами.
+            Клиент считает по свежему expires_in, длительность не зашивает. После него — новая заявка с новым `Idempotency-Key`.
         expires_in:
           type: integer
           minimum: 0
