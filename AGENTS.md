@@ -53,7 +53,7 @@ same PR.
 | Reference calculation that produces the expected responses (`docs/calc.md`) | `tools/refcalc/` (Python, stdlib only; tests — spec examples) |
 | Go coverage reports and regression tests | `scripts/coverage-diff.py`, `scripts/test_coverage_diff.py` |
 | PR review by Claude | `.github/workflows/claude.yml` |
-| Pre-provider personal-data consent and 14+ confirmation (FIN-363) | `docs/api.md` 1.1–1.3, `user/v1/user.proto`; durable evidence, pinned version, old attempts and rollout — `docs/grpc-api.md` 7.1; consumers FIN-364/365 |
+| Pre-provider personal-data consent and 14+ confirmation (FIN-363) | `docs/api.md` 1.1–1.3, `user/v1/user.proto`; durable evidence, pinned version, old attempts, PHONE_VERIFICATION_UNKNOWN_TIMEOUT (default 5m, immutable per-attempt deadline) with owner-accepted late-call/duplicate risk, separate 24-hour abandoned proof retention and rollout — `docs/grpc-api.md` 7.1; consumers FIN-364/365 |
 
 ## Checks
 
