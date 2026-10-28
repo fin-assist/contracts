@@ -74,7 +74,7 @@ message StartPhoneVerificationRequest {
   bool pd_consent_accepted = 2;
   // Версия PERSONAL_DATA, 1–64 символа; неактуальная -> CONSENT_OUTDATED.
   string pd_consent_version = 3;
-  // Отдельное подтверждение возраста 14+; false -> VALIDATION_ERROR (age_confirmed).
+  // Отдельное подтверждение возраста 14+; false -> VALIDATION_ERROR (age_confirmed, REQUIRED).
   // Дата рождения и сведения о родителях не передаются.
   bool age_confirmed = 4;
 }

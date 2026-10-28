@@ -192,7 +192,7 @@ type StartPhoneVerificationRequest struct {
 	PdConsentAccepted bool `protobuf:"varint,2,opt,name=pd_consent_accepted,json=pdConsentAccepted,proto3" json:"pd_consent_accepted,omitempty"`
 	// Версия PERSONAL_DATA, 1–64 символа; неактуальная -> CONSENT_OUTDATED.
 	PdConsentVersion string `protobuf:"bytes,3,opt,name=pd_consent_version,json=pdConsentVersion,proto3" json:"pd_consent_version,omitempty"`
-	// Отдельное подтверждение возраста 14+; false -> VALIDATION_ERROR (age_confirmed).
+	// Отдельное подтверждение возраста 14+; false -> VALIDATION_ERROR (age_confirmed, REQUIRED).
 	// Дата рождения и сведения о родителях не передаются.
 	AgeConfirmed  bool `protobuf:"varint,4,opt,name=age_confirmed,json=ageConfirmed,proto3" json:"age_confirmed,omitempty"`
 	unknownFields protoimpl.UnknownFields
