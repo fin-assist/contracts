@@ -26,11 +26,18 @@ service AuthService {
   // лимит. Лимиты по номеру и по `x-client-ip` (вычисляет bank-bff: TCP-пир или, за доверенными
   // HTTP-прокси, адрес из X-Forwarded-For по алгоритму docs/grpc-api.md, «Metadata»; HTTP
   // X-Client-IP не копируется). Ключ проверяется до лимитов; при превышенном лимите
-  // retry_at — срок лимита. Номер занят до expires_at последней заявки на него, закрыта она
-  // или нет: новый ключ на занятый номер -> RATE_LIMITED без обращения к провайдеру и без
-  // чужого секрета, retry_at = expires_at, округлённый вверх до целой минуты; такой отказ
-  // хранится под ключом до retry_at и засчитывается в лимитах не больше одного раза на окно
+  // retry_at — срок лимита. Локальная занятость — до сохранённого known_busy_until известной
+  // заявки либо unknown deadline: новый ключ -> RATE_LIMITED без провайдера/чужого секрета;
+  // retry_at — этот срок, округлённый вверх до минуты. Public expires_at консервативнее busy.
+  // Такой отказ хранится под ключом до retry_at и засчитывается в лимитах не больше одного раза на окно
   // до retry_at (docs/grpc-api.md, 6 и 7.1).
+  // До внешнего вызова проверяет согласие, его актуальную версию и подтверждение 14+,
+  // сохраняет доказательство с серверным временем; ошибка БД запрещает вызов провайдера.
+  // Повтор сохраняет первоначальное доказательство; неоднозначный исход провайдера требует
+  // сверки существующей попытки, а не новой внешней заявки (docs/grpc-api.md, 7.1).
+  // first_dispatch_at атомарен с отметкой внешнего вызова. Dispatched ключ после duplicate
+  // терминален: cached 429 с RequestRetryInfo false до retry_at, затем INTERNAL_ERROR без
+  // нового confirm в окне ключа. RetryInfo задаёт ожидание нового действия, не повтор эффекта.
   rpc StartPhoneVerification(StartPhoneVerificationRequest) returns (StartPhoneVerificationResponse);
 
   // Следить за статусом заявки на подтверждение: ждёт вебхук провайдера о звонке и отдаёт
@@ -43,7 +50,7 @@ service AuthService {
   rpc WatchPhoneVerification(WatchPhoneVerificationRequest) returns (stream WatchPhoneVerificationResponse);
 
   // Создать пользователя после подтверждения нового номера: проверяет токен регистрации и
-  // версию согласия на обработку ПДн, фиксирует согласие и время, создаёт аккаунт и выдаёт
+  // доказательство согласия и возраста из заявки, создаёт аккаунт и выдаёт
   // первую пару токенов. Токен регистрации расходуется только успешным ответом.
   // POST /v1/auth/register. Требует `idempotency-key`. Лимит запросов за окно на `x-client-ip`
   // проверяется после ключа и до registration_token: сверх него -> RATE_LIMITED.
@@ -66,6 +73,13 @@ service AuthService {
 message StartPhoneVerificationRequest {
   // E.164, только +7 и 10 цифр; неверный формат -> VALIDATION_ERROR с нарушением у поля phone (FIN-68).
   string phone = 1;
+  // Отдельное согласие до передачи телефона провайдеру; false -> CONSENT_REQUIRED.
+  bool pd_consent_accepted = 2;
+  // Версия PERSONAL_DATA, 1–64 символа; неактуальная -> CONSENT_OUTDATED.
+  string pd_consent_version = 3;
+  // Отдельное подтверждение возраста 14+; false -> VALIDATION_ERROR (age_confirmed, REQUIRED).
+  // Дата рождения и сведения о родителях не передаются.
+  bool age_confirmed = 4;
 }
 
 // Созданная заявка: секрет для слежения за статусом и номер, на который звонить.
@@ -76,13 +90,15 @@ message StartPhoneVerificationResponse {
   // абонента. Номер может быть общим для многих заявок: звонок засчитывается только с номера
   // из заявки и только пока она действует.
   string callback_number = 2;
-  // Срок жизни заявки по часам сервера; задаёт сервер (сейчас 5 минут с создания — срок заявки
-  // у провайдера). Клиент для отсчёта на устройстве его не использует (см. expires_in).
+  // Наш консервативный deadline подтверждения по часам сервера: для Zvonok
+  // provider.created + fixed TTL 5 минут - ClockSkewTolerance 1s. Отдельная внутренняя
+  // known-busy граница = declared provider expiry + tolerance; это не public expires_at.
+  // Локальный адаптер может tolerance 0 с теми же инвариантами. См. docs/grpc-api.md, 7.1.
   google.protobuf.Timestamp expires_at = 3;
   // Оставшийся срок заявки в секундах на момент отправки ответа (expires_at минус время сервера,
   // округлено вниз, не меньше 0). Вычисляется при каждой отправке, в том числе при повторе
-  // сохранённого ответа по idempotency-key (хранится expires_at). Клиент считает по нему время
-  // окончания по часам устройства.
+  // сохранённого ответа по idempotency-key (хранится expires_at). Положительный остаток <1s
+  // даёт 0; отдельного минимального usability-порога нет. Клиент считает по монотонному времени.
   optional int32 expires_in = 4;
 }
 
@@ -106,8 +122,8 @@ enum VerificationStatus {
 // Событие статуса заявки; при VERIFIED несёт либо токены, либо токен регистрации.
 message WatchPhoneVerificationResponse {
   VerificationStatus status = 1;
-  // Только при VERIFIED: номера нет в системе — клиент получает согласие на обработку ПДн и
-  // вызывает Register с registration_token.
+  // Только при VERIFIED: номера нет в системе — клиент вызывает Register с registration_token,
+  // без повторного согласия, уже полученного при StartPhoneVerification.
   optional bool is_new_user = 2;
   // Только при VERIFIED и !is_new_user.
   optional TokenPair tokens = 3;
@@ -120,9 +136,12 @@ message WatchPhoneVerificationResponse {
 message RegisterRequest {
   // Из события VERIFIED.
   string registration_token = 1;
-  // Согласие на обработку ПДн; false -> CONSENT_REQUIRED.
+  // Подтверждение ранее полученного согласия; false -> CONSENT_REQUIRED.
+  // true не заменяет доказательство заявки и не меняет время его получения.
   bool pd_consent_accepted = 2;
-  // Версия документа, который видел пользователь; устаревшая -> CONSENT_OUTDATED.
+  // Версия ранее полученного согласия из StartPhoneVerification, 1–64 символа.
+  // Должна совпадать с закреплённой версией заявки; иначе CONSENT_OUTDATED.
+  // Изменение текущего документа после создания заявки не требует нового согласия.
   string pd_consent_version = 3;
   // Часовой пояс устройства (IANA); без поля — Europe/Moscow.
   optional string timezone = 4;
@@ -194,7 +213,7 @@ message GetConsentDocumentResponse {
 // Документ согласия: тип, версия, название и ссылка на полный текст.
 message ConsentDocument {
   ConsentType type = 1;
-  // Текущая версия — её клиент передаёт в Register или GrantAssistantConsent.
+  // Текущая версия — её клиент передаёт в StartPhoneVerification или GrantAssistantConsent.
   string version = 2;
   // Название документа («Согласие на обработку персональных данных»).
   string title = 3;
