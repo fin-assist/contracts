@@ -502,6 +502,9 @@ RefreshTokens/закрытия заявки. Её refresh только из-за
   первым RefreshTokens/Register не переносит владение чужим ID. Идемпотентность/лимиты/unknown deadline/
   различие pre-dispatch duplicate key и terminal dispatched key — правила 6/7.1 выше и api.md1.1.
   Known-busy duplicate отдаётся из БД без confirm и чужих секретов, retry_at округляется вверх до минуты.
+  Внешнее рассогласование (bare provider duplicate/проверенный старый или чужой ID) — лог и существующая
+  метрика `finassist_phone_verification_provider_duplicate_total`, без phone/IP/ID-меток. Обычный DB429
+  до обращения к провайдеру её не увеличивает.
   Отказ provider duplicate без trusted created сохраняет прежний fallback request time +5 минут с
   округлением; при наличии валидного active call используется его known_busy_until. Rate-limit отказ
   не кэшируется/не списывает попытку; duplicate execution/replay — по своему правилу до retry_at.
