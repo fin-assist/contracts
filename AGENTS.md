@@ -76,6 +76,8 @@ allowed), or declare `x-idempotency: not-required` with a nonblank `x-idempotenc
 CI cannot infer side effects. A keyed POST must declare a 409 JSON response with examples for both
 IDEMPOTENCY_CONFLICT and REQUEST_IN_PROGRESS, and Retry-After as non-null integer seconds with minimum 0.
 Local references are resolved without accessing files or the network; this lint does not prove runtime behavior.
+Path Item fields beside `$ref` are retained across reference chains; overlapping fields fail because their
+semantics are undefined in OpenAPI 3.0.3.
 A PR that changes calculation rules changes `docs/calc.md` (and `docs/api.md` when the meaning of analytics, feed or
 import fields changes), updates `tools/refcalc` and regenerates `fixtures/calc/expected` in the same PR, and says which
 responses changed. A rule that lives only in `tools/refcalc` or `fixtures/calc/README.md` is a defect: rules go to

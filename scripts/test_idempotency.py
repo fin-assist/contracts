@@ -132,6 +132,28 @@ class IdempotencyTests(unittest.TestCase):
         self.spec["paths"][self.path] = {"$ref": "#/components/pathItems/phone"}
         self.assertEqual(check_spec(self.spec), [])
 
+    def test_post_beside_path_item_reference_is_checked(self):
+        self.spec["paths"]["/v1/new"] = {
+            "$ref": "#/paths/~1v1~1auth~1phone~1events",
+            "post": {"responses": {"204": {"description": "OK"}}},
+        }
+        self.assert_invalid("POST /v1/new: POST must reference")
+        self.spec["paths"]["/v1/new"]["post"] = self.post
+        self.assertEqual(check_spec(self.spec), [])
+
+    def test_chained_path_item_reference_keeps_all_siblings(self):
+        self.spec["paths"]["/v1/middle"] = {
+            "$ref": "#/paths/~1v1~1auth~1phone~1events", "parameters": [KEY],
+        }
+        post = copy.deepcopy(self.post)
+        post["parameters"].remove(KEY)
+        self.spec["paths"]["/v1/new"] = {"$ref": "#/paths/~1v1~1middle", "post": post}
+        self.assertEqual(check_spec(self.spec), [])
+
+    def test_conflicting_path_item_reference_fields_are_rejected(self):
+        self.spec["paths"]["/v1/new"] = {"$ref": "#/paths/~1v1~1auth~1phone", "post": self.post}
+        self.assert_invalid("conflicting Path Item fields")
+
     def test_ci_command_status_and_diagnostics(self):
         invalid = copy.deepcopy(self.spec)
         invalid["paths"][self.path]["post"]["parameters"].remove(KEY)

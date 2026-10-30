@@ -16,10 +16,17 @@ class InvalidSpec(ValueError):
     pass
 
 
-def resolve(spec: dict, value: object) -> dict:
+def resolve(spec: dict, value: object, *, path_item: bool = False) -> dict:
     """Resolve local Reference Objects only; never fetch files or URLs from a PR."""
     seen = set()
+    siblings = {}
     while isinstance(value, dict) and "$ref" in value:
+        if path_item:
+            # OAS 3.0.3 Path Item is not a Reference Object: retain its own fields.
+            own_fields = {key: item for key, item in value.items() if key != "$ref"}
+            if siblings.keys() & own_fields.keys():
+                raise InvalidSpec("conflicting Path Item fields beside $ref have undefined semantics")
+            siblings.update(own_fields)
         ref = value["$ref"]
         if not isinstance(ref, str) or not ref.startswith("#/") or ref in seen:
             raise InvalidSpec(f"unsupported or cyclic reference: {ref!r}")
@@ -32,7 +39,9 @@ def resolve(spec: dict, value: object) -> dict:
             raise InvalidSpec(f"unresolved reference: {ref}") from None
     if not isinstance(value, dict):
         raise InvalidSpec("expected an OpenAPI object")
-    return value
+    if siblings.keys() & value.keys():
+        raise InvalidSpec("conflicting Path Item fields beside $ref have undefined semantics")
+    return value | siblings
 
 
 def parameters(spec: dict, item: dict) -> dict:
@@ -92,7 +101,7 @@ def check_spec(spec: object) -> list[str]:
         if path.startswith("x-"):
             continue
         try:
-            item = resolve(spec, raw_item)
+            item = resolve(spec, raw_item, path_item=True)
             if "post" not in item:
                 continue
             operation = resolve(spec, item["post"])
