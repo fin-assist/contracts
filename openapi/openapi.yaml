@@ -497,6 +497,8 @@ paths:
       tags:
       - auth
       operationId: logout
+      x-idempotency: not-required
+      x-idempotency-reason: Повторный выход завершает ту же сессию и возвращает 204 без нового эффекта.
       x-min-request-body-bytes: 65536
       summary: Выход
       description: Завершает сессию. Повтор возвращает `204`.
@@ -2233,10 +2235,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: REQUEST_IN_PROGRESS
-              message: Request with this Idempotency-Key is in progress
+          examples:
+            idempotencyConflict:
+              summary: Ключ уже использован с другим телом
+              value:
+                error:
+                  code: IDEMPOTENCY_CONFLICT
+                  message: Idempotency-Key was already used with a different request body
+            requestInProgress:
+              summary: Запрос с этим ключом ещё выполняется; ждать Retry-After
+              value:
+                error:
+                  code: REQUEST_IN_PROGRESS
+                  message: Request with this Idempotency-Key is in progress
     RequestTooLarge:
       description: |
         `REQUEST_TOO_LARGE` — JSON-тело больше фактического транспортного предела BFF у шести операций
