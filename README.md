@@ -61,6 +61,7 @@ FIN-339 задаёт минимальный транспортный бюдже�
 | `fixtures/errors/presentation.json`, `scripts/test_error_presentation.py` | Примеры совместимого формата ошибок FIN-224 и проверки OpenAPI: неизвестный код/уровень, прежние REST/SSE/история, границы Unicode-текста, тип REST `retryable`, совпадающий reason в разных контекстах и фиксированные внешние проекции present-invalid Status. Поведение клиента реализуется в FIN-223, политика BFF — FIN-225 |
 | `tools/refcalc/` | Референсный расчёт на Python по `docs/calc.md`: считает ожидаемые ответы `fixtures/calc/expected`, тесты — примеры раздела 9 |
 | `redocly.yaml` | Настройки линтера OpenAPI |
+| `scripts/check_idempotency.py`, `scripts/test_idempotency.py` | Правило идемпотентности каждого POST и регрессии линтера (FIN-77) |
 | `AGENTS.md`, `CLAUDE.md` | Инструкции агентам: карта, правила контракта, процесс, `## Code Review Rules` |
 
 Ссылки внутри файлов перенесены без правок и написаны относительно прежнего расположения: `api.md` и `grpc-api.md` → `docs/`, `openapi.yaml` → `openapi/`, «`proto/finassist/**/v1` (рядом с этим файлом)» → `proto/` в корне, `scripts/check_error_registry.py` → `proto/scripts/`. Упоминания `architecture.md`, `storage.md`, `data-sources.md`, `mvp-scope.md`, `decision-ofx-only.md` и других — бывшие документы claude.ai-проекта, в этот репозиторий не входят; теперь это страницы Confluence PF: [«Архитектура»](https://finassist.atlassian.net/wiki/spaces/PF/pages/5210132), [«Хранение данных»](https://finassist.atlassian.net/wiki/spaces/PF/pages/11239425), [«Источники данных»](https://finassist.atlassian.net/wiki/spaces/PF/pages/11141138), [«Состав MVP»](https://finassist.atlassian.net/wiki/spaces/PF/pages/5242881), [«Решение: импорт только в OFX»](https://finassist.atlassian.net/wiki/spaces/PF/pages/11206657); остальные — в [разделе PF](https://finassist.atlassian.net/wiki/spaces/PF). Путь `go_package` — `github.com/fin-assist/contracts/gen/go/...` (модуль в этом репозитории, FIN-116).
@@ -81,6 +82,7 @@ FIN-339 задаёт минимальный транспортный бюдже�
 | Проверка | Когда | Что не пропустит |
 | --- | --- | --- |
 | `redocly lint openapi/openapi.yaml` | всегда | невалидный OpenAPI, нарушения правил `recommended` (кроме отключённых в `redocly.yaml`) |
+| `check_idempotency.py` (в job `openapi-lint`) и его регрессии | всегда | POST без ссылки на общий обязательный UUID-заголовок или явного `x-idempotency: not-required` с `x-idempotency-reason`; потеря любого из двух JSON-примеров ошибок 409 или `Retry-After` в секундах. Корректность причины исключения остаётся на ревью |
 | `oasdiff breaking` (база PR → PR) | PR | несовместимые изменения REST (уровень `ERR`). В альфе владелец принимает их меткой PR `breaking-accepted` — тогда изменения перечисляются, но проверка не падает |
 | `buf lint` | всегда | нарушения STANDARD (исключение — префикс значений `ErrorReason`) |
 | `buf breaking` против базы PR | PR | несовместимые изменения `.proto`, повторное использование номеров и имён |
@@ -95,6 +97,10 @@ FIN-339 задаёт минимальный транспортный бюдже�
 ```bash
 # OpenAPI lint
 npx @redocly/cli@1 lint openapi/openapi.yaml
+
+# POST idempotency declarations (PyYAML, already used by calculation fixtures)
+python3 scripts/check_idempotency.py openapi/openapi.yaml
+python3 -m unittest discover -s scripts -p 'test_idempotency.py'
 
 # Protobuf lint
 cd proto && buf lint

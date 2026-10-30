@@ -45,6 +45,7 @@ same PR.
 | Service contracts | `proto/finassist/<service>/v1/*.proto`, shared types `proto/finassist/common/v1/` |
 | Source revisions and assistant answer freshness (FIN-367) | `common/v1/data_revision.proto`, `statementdata/v1/internal.proto`, analytics snapshot/state/read provenance; policy and rollout — `docs/grpc-api.md`, «Ревизии исходных данных ответа помощника»; clients FIN-358/368/369/370 |
 | Registry check | `proto/scripts/check_error_registry.py` |
+| POST idempotency declarations and regression tests (FIN-77) | `scripts/check_idempotency.py`, `scripts/test_idempotency.py` |
 | Generated Go module `github.com/fin-assist/contracts/gen/go` (messages, gRPC, `finerr`) | `gen/go/` — generated, never edited by hand (except `go.mod` and tests); config `proto/buf.gen.yaml` |
 | Pinned codegen tools (`buf`, `protoc-gen-go`, `protoc-gen-go-grpc`) and the `finerr` generator | `tools/go.mod`, `tools/protoc-gen-finerr/`; run through `scripts/generate.sh` |
 | Actual Go OpenAPI engine compatibility, shared error fixtures, Unicode boundaries and optional/non-null fields | `tools/openapicheck/` — test-only `kin-openapi` (version in `tools/go.mod`) dependency, run by the existing tools race-test job |
@@ -67,6 +68,16 @@ and `scripts/test_coverage_diff.py`). Run them locally before pushing (commands 
 calculation tests and requires `fixtures/calc/expected` to equal a fresh scenario run that passes `openapi.yaml`
 (block `data` against its primitive's schema) and covers every response field — an uncovered field needs a scenario
 step, or an entry with a reason in `fixtures/calc/coverage-exceptions.json` (FIN-157).
+
+The `openapi-lint` job also runs `scripts/check_idempotency.py openapi/openapi.yaml` and
+`python3 -m unittest discover -s scripts -p 'test_idempotency.py'` using PyYAML. Every POST must effectively
+reference the shared required UUID header `#/components/parameters/IdempotencyKey` (path-level inheritance is
+allowed), or declare `x-idempotency: not-required` with a nonblank `x-idempotency-reason`. Review the reason;
+CI cannot infer side effects. A keyed POST must declare a 409 JSON response with examples for both
+IDEMPOTENCY_CONFLICT and REQUEST_IN_PROGRESS, and Retry-After as non-null integer seconds with minimum 0.
+Local references are resolved without accessing files or the network; this lint does not prove runtime behavior.
+Path Item fields beside `$ref` are retained across reference chains; overlapping fields fail because their
+semantics are undefined in OpenAPI 3.0.3.
 A PR that changes calculation rules changes `docs/calc.md` (and `docs/api.md` when the meaning of analytics, feed or
 import fields changes), updates `tools/refcalc` and regenerates `fixtures/calc/expected` in the same PR, and says which
 responses changed. A rule that lives only in `tools/refcalc` or `fixtures/calc/README.md` is a defect: rules go to
