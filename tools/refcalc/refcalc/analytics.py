@@ -183,19 +183,21 @@ class Ctx:
     # ---- tiles ----
 
     def tiles_block(self) -> dict:
+        if self.period["coverage"] == "no_data":
+            return {"id": "tiles", "type": "tile_group", "v": 1, "status": "none",
+                    "empty_text": "За этот период данных нет", "alt_text": "За этот период данных нет"}
         tiles = [{"id": "balance", "title": "Доходы минус расходы", "status": "ready", **value(self.I - self.E),
                   "caption": "доля дохода"}]
         expense = {"id": "expense", "title": "Расходы", "status": "ready", **value(self.E), "caption": "период",
                    "action": self.open(self.filt(kind="expense"))}
-        if self.period["is_current"] and not self.a.stale():
-            tiles.append(self.forecast())
-        else:
-            tiles.append(expense)
+        tiles.append(expense)
         n = max(1, self.cov.count_days(self.start, min(self.end, self.today + dt.timedelta(days=1))))
         tiles.append({"id": "daily_expense", "title": "Расходы в день", "status": "ready", **value(tdiv(self.E, n)),
                       "caption": "сравнение"})
         tiles.append({"id": "income", "title": "Доходы", "status": "ready", **value(self.I), "show_plus": True,
                       "action": self.open(self.filt(kind="income"))})
+        if self.period["is_current"] and not self.a.stale():
+            tiles.append(self.forecast())
         return {"id": "tiles", "type": "tile_group", "v": 1, "status": "ready", "alt_text": "плитки",
                 "data": {"tiles": tiles}}
 
@@ -213,7 +215,9 @@ class Ctx:
         required = MONTHS_IN[self.ptype]
         full = sorted(self.cov.full_months(), reverse=True)
         if len(full) < required:
-            return {**t, "status": "locked", "lock": lock("need_full_months", required, len(full))}
+            locked = lock("need_full_months", required, len(full))
+            locked["text"] = self.forecast_basis_text(required, full)
+            return {**t, "status": "locked", "lock": locked}
         base = full[:required]
         e_base = sum(self.scope.expense(self.scope.in_days(self.V, m, add_months(m, 1))) for m in base)
         d_base = sum((add_months(m, 1) - m).days for m in base)
@@ -221,6 +225,43 @@ class Ctx:
         R = max(0, (self.end - rem_from).days)
         return {**t, "status": "ready", **value(self.E + round_half_up(Fraction(e_base * R, d_base))), "approx": True,
                 "caption": "к концу периода"}
+
+    def forecast_basis_text(self, required: int, full: list) -> str:
+        """Explain union coverage without inferring continuity from its endpoints."""
+        names = ("январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь")
+
+        def month(m):
+            return f"{names[m.month - 1]} {m.year}"
+
+        text = (f"Нужно {required} полных месяцев, есть {len(full)}. "
+                "База прогноза — вся загруженная история, независимо от выбранного года. "
+                "Учитывается завершённый календарный месяц, покрытый выписками по всем дням. "
+                "Учтены полные месяцы: " + (", ".join(month(m) for m in sorted(full)) or "нет") + ".")
+        incomplete, missing = [], []
+        if self.cov.empty:
+            return text
+        m = month_start(self.cov.first)
+        while m <= month_start(self.cov.last):
+            end = add_months(m, 1)
+            bounds = self.cov.bounds(m, end)
+            if bounds is None:
+                missing.append(month(m))
+            elif m not in full:
+                parts = []
+                if end > self.today:
+                    parts.append("месяц ещё не завершён")
+                parts.append(f"данные {bounds[0].isoformat()}–{bounds[1].isoformat()}")
+                gaps = self.cov.gaps_within(m, end)
+                if gaps:
+                    parts.append("пропуски " + ", ".join(
+                        f"{max(a, m).isoformat()}–{(min(b, end) - dt.timedelta(days=1)).isoformat()}" for a, b in gaps))
+                incomplete.append(month(m) + " (" + "; ".join(parts) + ")")
+            m = end
+        if incomplete:
+            text += " Неполные месяцы: " + ", ".join(incomplete) + "."
+        if missing:
+            text += " Месяцы без данных: " + ", ".join(missing) + "."
+        return text
 
     # ---- monthly chart ----
 

@@ -1489,7 +1489,7 @@ paths:
                       "id": "tiles",
                       "type": "tile_group",
                       "v": 1,
-                      "alt_text": "Доходы минус расходы 72 580 ₽, прогноз расходов около 101 200 ₽, расходы в день 3 372,80 ₽, доходы 156 900 ₽",
+                      "alt_text": "Доходы минус расходы 72 580 ₽, расходы 84 320 ₽, расходы в день 3 372,80 ₽, доходы 156 900 ₽, прогноз расходов около 101 200 ₽",
                       "data": {
                         "tiles": [
                           {
@@ -1500,12 +1500,20 @@ paths:
                             "caption": "46% дохода · по выписке"
                           },
                           {
-                            "id": "forecast",
-                            "title": "Прогноз расходов на сентябрь",
-                            "value": 10120000,
+                            "id": "expense",
+                            "title": "Расходы",
+                            "value": 8432000,
                             "value_kind": "amount",
-                            "approx": true,
-                            "caption": "к 30 сентября"
+                            "caption": "по выписке за 1–25 сентября",
+                            "action": {
+                              "type": "open_operations",
+                              "filter": {
+                                "from": "2026-09-01T00:00:00+03:00",
+                                "to": "2026-10-01T00:00:00+03:00",
+                                "kind": "expense",
+                                "transfer_mode": "with"
+                              }
+                            }
                           },
                           {
                             "id": "daily_expense",
@@ -1529,6 +1537,14 @@ paths:
                                 "transfer_mode": "with"
                               }
                             }
+                          },
+                          {
+                            "id": "forecast",
+                            "title": "Прогноз расходов на сентябрь",
+                            "value": 10120000,
+                            "value_kind": "amount",
+                            "approx": true,
+                            "caption": "к 30 сентября"
                           }
                         ]
                       }
@@ -4120,7 +4136,9 @@ components:
       description: |
         Блокировка плитки внутри `data` блока `tile_group` — те же поля, что у `BlockLock`, но `text` может быть пустым
         или отсутствовать: `bank-bff` не заглядывает в `data` и текст не подставляет, «Пока недоступно» показывает
-        клиент (grpc-api.md 5.3).
+        клиент (grpc-api.md 5.3). Для need_full_months у прогноза text объясняет базу всей истории:
+        точные полные и неполные календарные месяцы независимо от выбранного года; без согласованных
+        метаданных — правило без предполагаемых дат (FIN-408, docs/api.md 6.1).
       required:
       - reason
       properties:
@@ -4360,6 +4378,10 @@ components:
         action:
           $ref: '#/components/schemas/BlockAction'
     TileGroupData:
+      description: >-
+        Открытый серверный список плиток. Текущая композиция аналитики — balance, expense (факт),
+        daily_expense, income и дополнительная forecast для свежего текущего периода.
+        Блокировка прогноза не скрывает фактические расходы (FIN-408).
       type: object
       description: '`tile_group` v1 — плитки по две в ряд, по порядку.'
       required:

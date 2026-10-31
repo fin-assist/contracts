@@ -39,13 +39,21 @@
             "caption": "<ignored>"
           },
           {
-            "id": "forecast",
+            "id": "expense",
             "title": "<ignored>",
             "status": "ready",
-            "value": 459828315,
+            "value": 383190263,
             "value_kind": "amount",
-            "approx": true,
-            "caption": "<ignored>"
+            "caption": "<ignored>",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-09-01T00:00:00+03:00",
+                "to": "2026-10-01T00:00:00+03:00",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
+            }
           },
           {
             "id": "daily_expense",
@@ -71,6 +79,15 @@
                 "transfer_mode": "with"
               }
             }
+          },
+          {
+            "id": "forecast",
+            "title": "<ignored>",
+            "status": "ready",
+            "value": 459828315,
+            "value_kind": "amount",
+            "approx": true,
+            "caption": "<ignored>"
           }
         ]
       }
