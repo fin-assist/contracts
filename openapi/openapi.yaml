@@ -3796,6 +3796,9 @@ components:
           $ref: '#/components/schemas/AnalyticsState'
     AnalyticsPeriodInfo:
       type: object
+      description: >-
+        Для all_time range — оболочка всех покрытых дней, как state.data_from/data_to;
+        coverage=complete без внутренних пропусков независимо от today. Месячные точки сохраняют календарную полноту.
       required:
       - range
       - is_current
@@ -3803,16 +3806,12 @@ components:
       - gaps
       properties:
         range:
-          allOf:
-          - $ref: '#/components/schemas/Range'
-          description: Календарный период; для all_time — оболочка всех покрытых дней, как state.data_from/data_to.
+          $ref: '#/components/schemas/Range'
         is_current:
           type: boolean
           description: Период ещё идёт; для all_time всегда false.
         coverage:
-          allOf:
-          - $ref: '#/components/schemas/Coverage'
-          description: Для all_time complete без внутренних пропусков независимо от today; месячные точки сохраняют календарную полноту.
+          $ref: '#/components/schemas/Coverage'
         data_from:
           type: string
           format: date-time

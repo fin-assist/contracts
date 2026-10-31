@@ -69,6 +69,34 @@ class AnalyticsIncrement(unittest.TestCase):
         self.assertEqual("partial", chart["data"]["points"][0]["coverage"])
         self.assertFalse(s["period"]["is_current"])
 
+    def test_all_time_clock_only_refreshes_both_modes_and_calendar_points(self):
+        b = self.backend("2026-10-30T12:00:00+03:00")
+        b.upload("month.ofx", spec.stmt("20261001", "20261031", [
+            ("shop", "20261003120000", -31, "Shop", "Продукты"),
+            ("person", "20261004120000", -31, "Person", "Переводы")]))
+        original = copy.deepcopy(b.ledger.ops)
+        for now, coverage, days in (("2026-10-30T12:00:00+03:00", "partial", 30),
+                                    ("2026-10-31T12:00:00+03:00", "partial", 31),
+                                    ("2026-11-01T00:05:00+03:00", "complete", 31)):
+            b.now = dt.datetime.fromisoformat(now)
+            for mode, expense in (("with", 6200), ("without", 3100)):
+                s = b.analytics("all_time", mode=mode)
+                self.assertFalse(s["period"]["is_current"])
+                self.assertEqual("complete", s["period"]["coverage"])
+                self.assertEqual(expense, self.tile(s, "expense")["value"])
+                self.assertEqual(expense // days, self.tile(s, "daily_expense")["value"])
+                point = self.block(s, "monthly_chart")[0]["data"]["points"][0]
+                self.assertEqual(coverage, point["coverage"])
+                self.assertEqual("note" in point, coverage == "partial")
+                self.assertEqual("2026-10", point["action"]["date"])
+                self.assertEqual("2026-10-01T00:00:00+03:00", s["period"]["range"]["from"])
+                self.assertEqual("2026-11-01T00:00:00+03:00", s["period"]["range"]["to"])
+        self.assertEqual(original, b.ledger.ops)
+        b.delete_upload("month.ofx")
+        b.now = dt.datetime.fromisoformat("2026-11-02T00:05:00+03:00")
+        for mode in ("with", "without"):
+            self.assertEqual({"has_data": False}, b.analytics("all_time", mode=mode))
+
     def test_all_time_has_no_twelve_month_truncation_or_year_ambiguity(self):
         b = self.ledger()
         b.upload("older.ofx", spec.stmt("20241001", "20241031", [
