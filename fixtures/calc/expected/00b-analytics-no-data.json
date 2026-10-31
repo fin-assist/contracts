@@ -1,0 +1,154 @@
+{
+  "has_data": true,
+  "params": {
+    "period": "month",
+    "date": "2025-09",
+    "transfer_mode": "with"
+  },
+  "currency": "RUB",
+  "period": {
+    "range": {
+      "from": "2025-09-01T00:00:00+03:00",
+      "to": "2025-10-01T00:00:00+03:00"
+    },
+    "is_current": false,
+    "coverage": "no_data",
+    "data_from": null,
+    "data_to": null,
+    "gaps": []
+  },
+  "navigation": {
+    "previous": null,
+    "next": null
+  },
+  "blocks": [
+    {
+      "id": "tiles",
+      "type": "tile_group",
+      "v": 1,
+      "status": "none",
+      "empty_text": "<ignored>",
+      "alt_text": "<ignored>",
+      "data": {
+        "tiles": []
+      }
+    },
+    {
+      "id": "expense_categories",
+      "type": "ranked_list",
+      "v": 1,
+      "title": "<ignored>",
+      "alt_text": "<ignored>",
+      "status": "none",
+      "empty_text": "<ignored>"
+    },
+    {
+      "id": "income_categories",
+      "type": "ranked_list",
+      "v": 1,
+      "title": "<ignored>",
+      "alt_text": "<ignored>",
+      "status": "none",
+      "empty_text": "<ignored>"
+    },
+    {
+      "type": "heading",
+      "v": 1,
+      "data": {
+        "text": "<ignored>"
+      }
+    },
+    {
+      "id": "regular_payments",
+      "type": "insight_card",
+      "v": 1,
+      "status": "locked",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "repeat",
+        "title": "<ignored>"
+      },
+      "lock": {
+        "reason": "need_full_months",
+        "text": "<ignored>",
+        "required": 2,
+        "available": 0
+      }
+    },
+    {
+      "id": "notable_spending",
+      "type": "insight_card",
+      "v": 1,
+      "status": "locked",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "bar-chart",
+        "title": "<ignored>"
+      },
+      "lock": {
+        "reason": "need_full_months",
+        "text": "<ignored>",
+        "required": 3,
+        "available": 0
+      }
+    },
+    {
+      "id": "bank_fees",
+      "type": "insight_card",
+      "v": 1,
+      "status": "none",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "percent",
+        "title": "<ignored>"
+      },
+      "empty_text": "<ignored>"
+    },
+    {
+      "id": "small_frequent",
+      "type": "insight_card",
+      "v": 1,
+      "status": "locked",
+      "alt_text": "<ignored>",
+      "data": {
+        "icon": "coffee",
+        "title": "<ignored>"
+      },
+      "lock": {
+        "reason": "need_full_months",
+        "text": "<ignored>",
+        "required": 1,
+        "available": 0
+      }
+    },
+    {
+      "id": "balance",
+      "type": "chart",
+      "v": 1,
+      "status": "ready",
+      "title": "<ignored>",
+      "alt_text": "<ignored>",
+      "data": {
+        "kind": "bar",
+        "value_kind": "percent",
+        "points": [],
+        "show_values": true,
+        "summary": {
+          "value": 0,
+          "value_kind": "amount"
+        },
+        "caption": "<ignored>"
+      }
+    }
+  ],
+  "state": {
+    "stale": false,
+    "last_operation_at": "2025-10-31T21:06:35+03:00",
+    "data_from": "2025-10-15T00:00:00+03:00",
+    "data_to": "2025-11-01T00:00:00+03:00",
+    "full_months": 0,
+    "unread_lines_count": 0,
+    "calculated_at": "<ignored>",
+    "recalculating": false
+  }
+}

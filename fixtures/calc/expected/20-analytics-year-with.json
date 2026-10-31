@@ -44,14 +44,20 @@
             "caption": "<ignored>"
           },
           {
-            "id": "forecast",
+            "id": "expense",
             "title": "<ignored>",
-            "status": "locked",
-            "lock": {
-              "reason": "need_full_months",
-              "text": "<ignored>",
-              "required": 12,
-              "available": 9
+            "status": "ready",
+            "value": 2246989952,
+            "value_kind": "amount",
+            "caption": "<ignored>",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-01-01T00:00:00+03:00",
+                "to": "2027-01-01T00:00:00+03:00",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
             }
           },
           {
@@ -77,6 +83,17 @@
                 "kind": "income",
                 "transfer_mode": "with"
               }
+            }
+          },
+          {
+            "id": "forecast",
+            "title": "<ignored>",
+            "status": "locked",
+            "lock": {
+              "reason": "need_full_months",
+              "text": "<ignored>",
+              "required": 12,
+              "available": 9
             }
           }
         ]

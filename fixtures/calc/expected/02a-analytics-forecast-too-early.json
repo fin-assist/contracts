@@ -39,13 +39,20 @@
             "caption": "<ignored>"
           },
           {
-            "id": "forecast",
+            "id": "expense",
             "title": "<ignored>",
-            "status": "locked",
-            "lock": {
-              "reason": "too_early_in_month",
-              "text": "<ignored>",
-              "available_from": "2026-08-10T00:00:00+03:00"
+            "status": "ready",
+            "value": 29833003,
+            "value_kind": "amount",
+            "caption": "<ignored>",
+            "action": {
+              "type": "open_operations",
+              "filter": {
+                "from": "2026-08-01T00:00:00+03:00",
+                "to": "2026-09-01T00:00:00+03:00",
+                "kind": "expense",
+                "transfer_mode": "with"
+              }
             }
           },
           {
@@ -71,6 +78,16 @@
                 "kind": "income",
                 "transfer_mode": "with"
               }
+            }
+          },
+          {
+            "id": "forecast",
+            "title": "<ignored>",
+            "status": "locked",
+            "lock": {
+              "reason": "too_early_in_month",
+              "text": "<ignored>",
+              "available_from": "2026-08-10T00:00:00+03:00"
             }
           }
         ]
