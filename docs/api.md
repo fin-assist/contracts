@@ -1443,13 +1443,15 @@ GET /v1/analytics?period=month&date=2026-09&transfer_mode=with&supports=heading@
   "navigation": {"previous": null, "next": null},
   "blocks": [
     {
-      "id": "tiles", "type": "tile_group", "v": 1, "alt_text": "Доходы минус расходы 72 580 ₽, прогноз расходов около 101 200 ₽, расходы в день 3 372,80 ₽, доходы 156 900 ₽",
+      "id": "tiles", "type": "tile_group", "v": 1, "alt_text": "Доходы минус расходы 72 580 ₽, расходы 84 320 ₽, расходы в день 3 372,80 ₽, доходы 156 900 ₽, прогноз расходов около 101 200 ₽",
       "data": {"tiles": [
         {"id": "balance", "title": "Доходы минус расходы", "value": 7258000, "value_kind": "amount", "caption": "46% дохода · по выписке"},
-        {"id": "forecast", "title": "Прогноз расходов на сентябрь", "value": 10120000, "value_kind": "amount", "approx": true, "caption": "к 30 сентября"},
+        {"id": "expense", "title": "Расходы", "value": 8432000, "value_kind": "amount", "caption": "по выписке за 1–25 сентября",
+         "action": {"type": "open_operations", "filter": {"from": "2026-09-01T00:00:00+03:00", "to": "2026-10-01T00:00:00+03:00", "kind": "expense", "transfer_mode": "with"}}},
         {"id": "daily_expense", "title": "Расходы в день", "value": 337280, "value_kind": "amount", "caption": "в среднем за 1–25 сентября"},
         {"id": "income", "title": "Доходы", "value": 15690000, "value_kind": "amount", "show_plus": true,
-         "action": {"type": "open_operations", "filter": {"from": "2026-09-01T00:00:00+03:00", "to": "2026-10-01T00:00:00+03:00", "kind": "income", "transfer_mode": "with"}}}
+         "action": {"type": "open_operations", "filter": {"from": "2026-09-01T00:00:00+03:00", "to": "2026-10-01T00:00:00+03:00", "kind": "income", "transfer_mode": "with"}}},
+        {"id": "forecast", "title": "Прогноз расходов на сентябрь", "value": 10120000, "value_kind": "amount", "approx": true, "caption": "к 30 сентября"}
       ]}
     },
     {
