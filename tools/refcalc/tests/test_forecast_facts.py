@@ -80,3 +80,10 @@ class ForecastFacts(unittest.TestCase):
         self.assertEqual(1, locked["available"])
         self.assertIn("Учтены полные месяцы: сентябрь 2026.", locked["text"])
         self.assertIn("месяц ещё не завершён", locked["text"])
+
+    def test_explanation_stays_within_actual_uploaded_history(self):
+        b = self.backend("2026-10-05T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20260901", "20260925", [("a", "20260910120000", -10, "Shop", "Продукты")]))
+        locked = self.tile(self.screen(b, "2026", period="year"), "forecast")["lock"]
+        self.assertIn("сентябрь 2026", locked["text"])
+        self.assertNotIn("октябрь 2026", locked["text"])

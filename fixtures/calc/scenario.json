@@ -16,6 +16,12 @@
       "expect": "expected/00a-analytics-early-state.json"
     },
     {
+      "name": "analytics-explicit-period-without-coverage",
+      "do": "get",
+      "request": "GET /v1/analytics?period=month&date=2025-09&transfer_mode=with",
+      "expect": "expected/00b-analytics-no-data.json"
+    },
+    {
       "name": "import-1",
       "now": "2026-07-01T10:00:00+03:00",
       "do": "upload",
