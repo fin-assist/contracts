@@ -185,7 +185,7 @@ class Ctx:
     def tiles_block(self) -> dict:
         if self.period["coverage"] == "no_data":
             return {"id": "tiles", "type": "tile_group", "v": 1, "status": "none",
-                    "empty_text": "За этот период данных нет", "alt_text": "За этот период данных нет"}
+                    "empty_text": "За этот период данных нет", "alt_text": "За этот период данных нет", "data": {"tiles": []}}
         tiles = [{"id": "balance", "title": "Доходы минус расходы", "status": "ready", **value(self.I - self.E),
                   "caption": "доля дохода"}]
         expense = {"id": "expense", "title": "Расходы", "status": "ready", **value(self.E), "caption": "период",
@@ -233,10 +233,19 @@ class Ctx:
         def month(m):
             return f"{names[m.month - 1]} {m.year}"
 
+        def ranges(months):
+            groups = []
+            for m in sorted(months):
+                if groups and m == add_months(groups[-1][1], 1):
+                    groups[-1] = (groups[-1][0], m)
+                else:
+                    groups.append((m, m))
+            return ", ".join(month(a) if a == b else month(a) + " — " + month(b) for a, b in groups)
+
         text = (f"Нужно {required} полных месяцев, есть {len(full)}. "
                 "База прогноза — вся загруженная история, независимо от выбранного года. "
                 "Учитывается завершённый календарный месяц, покрытый выписками по всем дням. "
-                "Учтены полные месяцы: " + (", ".join(month(m) for m in sorted(full)) or "нет") + ".")
+                "Учтены полные месяцы: " + (ranges(full) or "нет") + ".")
         incomplete, missing = [], []
         if self.cov.empty:
             return text
@@ -245,7 +254,7 @@ class Ctx:
             end = add_months(m, 1)
             bounds = self.cov.bounds(m, end)
             if bounds is None:
-                missing.append(month(m))
+                missing.append(m)
             elif m not in full:
                 parts = []
                 if end > self.today:
@@ -260,7 +269,7 @@ class Ctx:
         if incomplete:
             text += " Неполные месяцы: " + ", ".join(incomplete) + "."
         if missing:
-            text += " Месяцы без данных: " + ", ".join(missing) + "."
+            text += " Месяцы без данных: " + ranges(missing) + "."
         return text
 
     # ---- monthly chart ----

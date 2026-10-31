@@ -37,7 +37,7 @@ class ForecastFacts(unittest.TestCase):
         b.upload("a.ofx", stmt("20261001", "20261010", [("d", "20261003120000", -10, "Shop", "Продукты")]))
         tiles = self.block(self.screen(b, "2026-09"), "tiles")[0]
         self.assertEqual("none", tiles["status"])
-        self.assertNotIn("data", tiles)
+        self.assertEqual({"tiles": []}, tiles["data"])
 
     def test_covered_period_without_expenses_keeps_real_zero(self):
         b = self.backend("2026-10-20T12:00:00+03:00")
@@ -87,3 +87,13 @@ class ForecastFacts(unittest.TestCase):
         locked = self.tile(self.screen(b, "2026", period="year"), "forecast")["lock"]
         self.assertIn("сентябрь 2026", locked["text"])
         self.assertNotIn("октябрь 2026", locked["text"])
+
+    def test_long_empty_history_is_grouped_without_inventing_covered_months(self):
+        b = self.backend("2026-10-31T12:00:00+03:00")
+        b.upload("old.ofx", stmt("20200101", "20200131", [("a", "20200110120000", -10, "Shop", "Продукты")]))
+        b.upload("new.ofx", stmt("20260901", "20261030", [("b", "20261010120000", -10, "Shop", "Продукты")]))
+        locked = self.tile(self.screen(b, "2026", period="year"), "forecast")["lock"]
+        self.assertEqual(2, locked["available"])
+        self.assertIn("Учтены полные месяцы: январь 2020, сентябрь 2026.", locked["text"])
+        self.assertIn("Месяцы без данных: февраль 2020 — август 2026.", locked["text"])
+        self.assertNotIn("март 2020", locked["text"])

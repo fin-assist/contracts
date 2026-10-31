@@ -28,7 +28,10 @@
       "v": 1,
       "status": "none",
       "empty_text": "<ignored>",
-      "alt_text": "<ignored>"
+      "alt_text": "<ignored>",
+      "data": {
+        "tiles": []
+      }
     },
     {
       "id": "expense_categories",
