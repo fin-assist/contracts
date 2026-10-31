@@ -177,7 +177,9 @@ class Ledger:
 
     def coverage(self, today: dt.date, uploads=None) -> Coverage:
         ups = self.uploads if uploads is None else uploads
-        return Coverage([(u.first_day, u.last_day) for u in ups if u.first_day], today)
+        # Reproject the source instants after a profile time-zone change.
+        ranges = [self.upload_days(u.doc) for u in ups]
+        return Coverage([(a, b) for a, b in ranges if a], today)
 
     def add_upload(self, file_name: str, text: str, uploaded_at: dt.datetime):
         doc = ofx.parse(text)

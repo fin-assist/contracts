@@ -35,7 +35,7 @@ enum TransferMode {
   TRANSFER_MODE_WITHOUT = 2;
 }
 
-// Тип периода аналитики: календарный или вся загруженная история.
+// Тип периода аналитики: календарный, скользящий или вся загруженная история.
 enum PeriodType {
   PERIOD_TYPE_UNSPECIFIED = 0;
   PERIOD_TYPE_MONTH = 1;
@@ -43,6 +43,10 @@ enum PeriodType {
   PERIOD_TYPE_YEAR = 3;
   // Вся загруженная история, точный ключ all_time; границы задаются покрытием выписок.
   PERIOD_TYPE_ALL_TIME = 4;
+  // Последние 12 календарных месяцев до конца покрытия; точный ключ rolling_year.
+  PERIOD_TYPE_ROLLING_YEAR = 5;
+  // Последние 3 календарных месяца до конца покрытия; точный ключ rolling_quarter.
+  PERIOD_TYPE_ROLLING_QUARTER = 6;
 }
 
 // Полнота данных за период.
@@ -93,12 +97,12 @@ message OperationsFilter {
 // Параметры аналитики за период: тип периода, его ключ и режим учёта переводов.
 message AnalyticsParams {
   PeriodType period = 1;
-  // Точный ключ периода в формате `period`; ALL_TIME — all_time.
+  // Точный ключ: календарный либо singleton all_time / rolling_year / rolling_quarter.
   string period_key = 2;
   TransferMode transfer_mode = 3;
 }
 
-// Границы данных внутри календарного периода.
+// Границы данных внутри выбранного периода.
 message DataBounds {
   Coverage coverage = 1;
   // Границы данных внутри периода — по дням, покрытым периодом выписки (DTSTART..DTEND), а не по

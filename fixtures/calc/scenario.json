@@ -16,6 +16,18 @@
       "expect": "expected/00a-analytics-early-state.json"
     },
     {
+      "name": "rolling-short-year",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_year&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/rolling-short-year.json"
+    },
+    {
+      "name": "rolling-short-quarter",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_quarter",
+      "expect": "expected/rolling-short-quarter.json"
+    },
+    {
       "name": "00c-analytics-all-time-early",
       "do": "get",
       "request": "GET /v1/analytics?period=all_time&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
@@ -385,6 +397,88 @@
       "do": "get",
       "request": "GET /v1/analytics?period=year&transfer_mode=with",
       "expect": "expected/33-analytics-year-stale-current.json"
+    },
+    {
+      "name": "rolling-old-upload",
+      "now": "2026-10-31T12:00:00+03:00",
+      "do": "upload",
+      "file": "statements/07-rolling-old-2020-01.ofx"
+    },
+    {
+      "name": "rolling-latest-upload",
+      "do": "upload",
+      "file": "statements/08-rolling-latest-2026-10.ofx"
+    },
+    {
+      "name": "rolling_year-with",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_year&date=rolling_year&transfer_mode=with&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/rolling_year-with.json"
+    },
+    {
+      "name": "rolling_year-without",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_year&date=rolling_year&transfer_mode=without&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/rolling_year-without.json"
+    },
+    {
+      "name": "rolling_year-periods",
+      "do": "get",
+      "request": "GET /v1/analytics/periods?period=rolling_year",
+      "expect": "expected/rolling_year-periods.json"
+    },
+    {
+      "name": "rolling_year-invalid-calendar",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_year&date=2026-10",
+      "expect": "expected/rolling_year-invalid-calendar.json"
+    },
+    {
+      "name": "rolling_quarter-with",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_quarter&date=rolling_quarter&transfer_mode=with&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/rolling_quarter-with.json"
+    },
+    {
+      "name": "rolling_quarter-without",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_quarter&date=rolling_quarter&transfer_mode=without&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/rolling_quarter-without.json"
+    },
+    {
+      "name": "rolling_quarter-periods",
+      "do": "get",
+      "request": "GET /v1/analytics/periods?period=rolling_quarter",
+      "expect": "expected/rolling_quarter-periods.json"
+    },
+    {
+      "name": "rolling_quarter-invalid-calendar",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_quarter&date=2026-10",
+      "expect": "expected/rolling_quarter-invalid-calendar.json"
+    },
+    {
+      "name": "rolling-compare-all-time",
+      "do": "get",
+      "request": "GET /v1/analytics?period=all_time&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/rolling-compare-all-time.json"
+    },
+    {
+      "name": "rolling-delete-latest",
+      "do": "delete_upload",
+      "file": "statements/08-rolling-latest-2026-10.ofx"
+    },
+    {
+      "name": "rolling-year-after-delete",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_year&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/rolling-year-after-delete.json"
+    },
+    {
+      "name": "rolling-quarter-after-delete",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_quarter&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/rolling-quarter-after-delete.json"
     }
   ]
 }

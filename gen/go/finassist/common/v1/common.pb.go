@@ -75,7 +75,7 @@ func (TransferMode) EnumDescriptor() ([]byte, []int) {
 	return file_finassist_common_v1_common_proto_rawDescGZIP(), []int{0}
 }
 
-// Тип периода аналитики: календарный или вся загруженная история.
+// Тип периода аналитики: календарный, скользящий или вся загруженная история.
 type PeriodType int32
 
 const (
@@ -85,6 +85,10 @@ const (
 	PeriodType_PERIOD_TYPE_YEAR        PeriodType = 3
 	// Вся загруженная история, точный ключ all_time; границы задаются покрытием выписок.
 	PeriodType_PERIOD_TYPE_ALL_TIME PeriodType = 4
+	// Последние 12 календарных месяцев до конца покрытия; точный ключ rolling_year.
+	PeriodType_PERIOD_TYPE_ROLLING_YEAR PeriodType = 5
+	// Последние 3 календарных месяца до конца покрытия; точный ключ rolling_quarter.
+	PeriodType_PERIOD_TYPE_ROLLING_QUARTER PeriodType = 6
 )
 
 // Enum value maps for PeriodType.
@@ -95,13 +99,17 @@ var (
 		2: "PERIOD_TYPE_QUARTER",
 		3: "PERIOD_TYPE_YEAR",
 		4: "PERIOD_TYPE_ALL_TIME",
+		5: "PERIOD_TYPE_ROLLING_YEAR",
+		6: "PERIOD_TYPE_ROLLING_QUARTER",
 	}
 	PeriodType_value = map[string]int32{
-		"PERIOD_TYPE_UNSPECIFIED": 0,
-		"PERIOD_TYPE_MONTH":       1,
-		"PERIOD_TYPE_QUARTER":     2,
-		"PERIOD_TYPE_YEAR":        3,
-		"PERIOD_TYPE_ALL_TIME":    4,
+		"PERIOD_TYPE_UNSPECIFIED":     0,
+		"PERIOD_TYPE_MONTH":           1,
+		"PERIOD_TYPE_QUARTER":         2,
+		"PERIOD_TYPE_YEAR":            3,
+		"PERIOD_TYPE_ALL_TIME":        4,
+		"PERIOD_TYPE_ROLLING_YEAR":    5,
+		"PERIOD_TYPE_ROLLING_QUARTER": 6,
 	}
 )
 
@@ -425,7 +433,7 @@ func (x *OperationsFilter) GetSelectionName() string {
 type AnalyticsParams struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Period PeriodType             `protobuf:"varint,1,opt,name=period,proto3,enum=finassist.common.v1.PeriodType" json:"period,omitempty"`
-	// Точный ключ периода в формате `period`; ALL_TIME — all_time.
+	// Точный ключ: календарный либо singleton all_time / rolling_year / rolling_quarter.
 	PeriodKey     string       `protobuf:"bytes,2,opt,name=period_key,json=periodKey,proto3" json:"period_key,omitempty"`
 	TransferMode  TransferMode `protobuf:"varint,3,opt,name=transfer_mode,json=transferMode,proto3,enum=finassist.common.v1.TransferMode" json:"transfer_mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -483,7 +491,7 @@ func (x *AnalyticsParams) GetTransferMode() TransferMode {
 	return TransferMode_TRANSFER_MODE_UNSPECIFIED
 }
 
-// Границы данных внутри календарного периода.
+// Границы данных внутри выбранного периода.
 type DataBounds struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Coverage Coverage               `protobuf:"varint,1,opt,name=coverage,proto3,enum=finassist.common.v1.Coverage" json:"coverage,omitempty"`
@@ -677,14 +685,16 @@ const file_finassist_common_v1_common_proto_rawDesc = "" +
 	"\fTransferMode\x12\x1d\n" +
 	"\x19TRANSFER_MODE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12TRANSFER_MODE_WITH\x10\x01\x12\x19\n" +
-	"\x15TRANSFER_MODE_WITHOUT\x10\x02*\x89\x01\n" +
+	"\x15TRANSFER_MODE_WITHOUT\x10\x02*\xc8\x01\n" +
 	"\n" +
 	"PeriodType\x12\x1b\n" +
 	"\x17PERIOD_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11PERIOD_TYPE_MONTH\x10\x01\x12\x17\n" +
 	"\x13PERIOD_TYPE_QUARTER\x10\x02\x12\x14\n" +
 	"\x10PERIOD_TYPE_YEAR\x10\x03\x12\x18\n" +
-	"\x14PERIOD_TYPE_ALL_TIME\x10\x04*g\n" +
+	"\x14PERIOD_TYPE_ALL_TIME\x10\x04\x12\x1c\n" +
+	"\x18PERIOD_TYPE_ROLLING_YEAR\x10\x05\x12\x1f\n" +
+	"\x1bPERIOD_TYPE_ROLLING_QUARTER\x10\x06*g\n" +
 	"\bCoverage\x12\x18\n" +
 	"\x14COVERAGE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11COVERAGE_COMPLETE\x10\x01\x12\x14\n" +

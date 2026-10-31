@@ -207,13 +207,19 @@ message MonthlyPoint {
   optional int64 income_minor = 4;
   // Полнота данных месяца: с какого по какое число есть данные и каких дней нет.
   finassist.common.v1.DataBounds bounds = 5;
+  // Только для ROLLING_*: пересечение календарного месяца range с интервалом снимка.
+  // Суммы и bounds относятся только к этому пересечению; при отсутствии — ко всему range.
+  // Краевой отрезок всегда PARTIAL, даже если каждый его день покрыт; без покрытых дней — NO_DATA.
+  // analytics использует calculation_range как REST ChartPoint.range, а month — как ключ перехода
+  // к полному календарному месяцу. Нельзя расширять отрезок при композиции или считать суммы из месячных снимков.
+  optional finassist.common.v1.TimeRange calculation_range = 6;
 }
 
 // Детали метрики monthly_chart — расходы, доходы и разница по месяцам. Сравнение с прошлым
 // периодом и «обычно» — отдельные метрики tiles.expense_comparison и tiles.expense_typical.
 message MonthlyChart {
   // Старые первыми. Для месяца — 6 точек, заканчивая выбранным; для квартала — его 3 месяца;
-  // для года — 12 месяцев.
+  // для года — 12 месяцев; для ROLLING_* — все пересекающие интервал месяцы, включая края (до 13/4).
   repeated MonthlyPoint points = 1;
 }
 
@@ -310,7 +316,7 @@ message SmallFrequent {
 
 // Запрос аналитики за период.
 message GetAnalyticsRequest {
-  // Тип периода: месяц, квартал, год или вся история. UNSPECIFIED = месяц.
+  // Тип периода: календарный, скользящий или вся история. UNSPECIFIED = месяц.
   finassist.common.v1.PeriodType period = 1;
   // Какой период собрать. Ключ календарного периода в поясе профиля: «2026-09» (месяц),
   // «2026-Q3» (квартал), «2026» (год). Допускается ключ точнее, чем period: при смене типа
@@ -318,6 +324,10 @@ message GetAnalyticsRequest {
   // квартал, в который входит сентябрь, и возвращает точный ключ «2026-Q3» в params.period_key.
   // Не передан — последний период с данными. Для ALL_TIME допустим только отсутствующий ключ или all_time;
   // в ответе ключ all_time, границы — все покрытые дни, is_current=false, соседей нет.
+  // Для ROLLING_YEAR/ROLLING_QUARTER ключ отсутствует или равен rolling_year/rolling_quarter.
+  // Конец — начало дня после последнего покрытого дня; начало — сдвиг конца на 12/3 месяца
+  // с ограничением дня концом целевого месяца в time_zone. is_current=false, соседей нет.
+  // Любое смешение singleton-ключей/типов или календарного ключа — VALIDATION_ERROR (date, INVALID_FORMAT).
   optional string period_key = 2;
   // Режим учёта переводов:
   // WITH — переводы людям входят в расходы и доходы; WITHOUT — исключаются. Переводы между
@@ -336,9 +346,9 @@ message GetAnalyticsRequest {
 
 // Выбранный период и полнота данных в нём.
 message PeriodInfo {
-  // Границы календарного периода в поясе профиля; ALL_TIME — оболочка всех покрытых дней.
+  // Границы в поясе профиля; ALL_TIME — оболочка покрытия, ROLLING_* — полный запрошенный интервал.
   finassist.common.v1.TimeRange range = 1;
-  // Период ещё идёт (текущий месяц, квартал, год) — для него есть прогноз. Для ALL_TIME всегда false.
+  // Период ещё идёт (текущий месяц, квартал, год) — для него есть прогноз. Для ALL_TIME/ROLLING_* всегда false.
   bool is_current = 2;
   // Полнота данных внутри периода: COMPLETE, PARTIAL (с границами и пропусками в данных)
   // или NO_DATA (возможно при явном period_key).
@@ -461,7 +471,7 @@ message GetAnalyticsResponse {
 
 // Запрос списка периодов с данными.
 message ListPeriodsRequest {
-  // Тип периодов: месяцы, кварталы или годы. UNSPECIFIED = месяц.
+  // Тип периодов: календарный либо singleton ALL_TIME/ROLLING_YEAR/ROLLING_QUARTER. UNSPECIFIED = месяц.
   finassist.common.v1.PeriodType period = 1;
   // Чьи периоды. Только для системного вызова (assistant); при токене пользователя пусто.
   optional string user_id = 2;
@@ -469,7 +479,7 @@ message ListPeriodsRequest {
 
 // Период с данными.
 message PeriodItem {
-  // Ключ периода («2026-09», «2026-Q3», «2026») — значение для period_key в GetAnalytics.
+  // Точный ключ запрошенного типа, включая singleton; значение period_key в GetAnalytics.
   string key = 1;
   // Границы периода; из них клиент формирует название периода.
   finassist.common.v1.TimeRange range = 2;
@@ -521,13 +531,13 @@ message MetricSnapshot {
 // затем bank-statement-data начинает его присылать (grpc-api.md 7.3, «Модель записи»).
 message PeriodSnapshot {
   finassist.common.v1.PeriodType period = 1;
-  // Ключ периода («2026-09», «2026-Q3», «2026», «all_time»).
+  // Ключ периода («2026-09», «2026-Q3», «2026», «all_time», «rolling_year», «rolling_quarter»).
   string period_key = 2;
   // Режим переводов, для которого посчитан снимок.
   finassist.common.v1.TransferMode transfer_mode = 3;
   // Границы периода в поясе профиля.
   finassist.common.v1.TimeRange range = 4;
-  // Полнота данных в периоде. Для ALL_TIME COMPLETE при отсутствии внутренних пропусков независимо от today.
+  // Полнота: для ALL_TIME/ROLLING_* COMPLETE при покрытии каждого дня range независимо от today.
   finassist.common.v1.DataBounds bounds = 5;
   // Незакрытых непрочитанных строк выписок за период (FIN-79).
   int32 unread_lines_count = 6;
@@ -550,9 +560,9 @@ message PeriodSnapshot {
 // Ссылка на период в removed_periods: какой период удалить из хранилища, когда данных за него
 // больше нет (загрузка удалена). Удаляются снимки обоих режимов переводов.
 message PeriodRef {
-  // Тип периода: месяц, квартал, год или вся история.
+  // Тип периода: календарный, скользящий или вся история.
   finassist.common.v1.PeriodType period = 1;
-  // Ключ периода в формате типа («2026-09», «2026-Q3», «2026», «all_time»).
+  // Ключ периода в формате типа («2026-09», «2026-Q3», «2026», «all_time», «rolling_year», «rolling_quarter»).
   string period_key = 2;
 }
 
