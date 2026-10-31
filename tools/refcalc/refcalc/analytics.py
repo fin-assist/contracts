@@ -30,6 +30,23 @@ WORD = re.compile(r"[a-zа-яё]+")
 EXCLUDED_IN_OBSERVATIONS = {OWN_TRANSFER}
 
 
+def parse_supports(supports: Optional[str]):
+    """Absent/empty means the v1 catalog; repeated types advertise their greatest maximum."""
+    if not supports:
+        return None
+    out = {}
+    for part in supports.split(","):
+        kind, sep, raw = part.partition("@")
+        digits = raw[1:] if raw.startswith("+") else raw
+        if not kind or not sep or not digits.isascii() or not digits.isdecimal():
+            raise ValueError("invalid supports")
+        version = int(raw)
+        if version < 1 or version > 2147483647:
+            raise ValueError("invalid supports")
+        out[kind] = max(out.get(kind, 0), version)
+    return out
+
+
 # ---- periods ----
 
 def period_bounds(ptype: str, d: dt.date):
@@ -83,6 +100,8 @@ class Analytics:
         return iso(end_of_day(last_day, self.zone))
 
     def periods_with_data(self, ptype: str) -> list:
+        if ptype == "all_time":
+            return [] if self.cov.empty else [(self.cov.first, self.cov.last + dt.timedelta(days=1), "all_time")]
         keys = []
         for m in self.cov.months_with_data():
             k = period_bounds(ptype, m)
@@ -90,17 +109,22 @@ class Analytics:
                 keys.append(k)
         return keys
 
+    def coverage_of(self, ptype: str, start: dt.date, end: dt.date) -> str:
+        if ptype == "all_time":
+            return "partial" if self.cov.gaps_within(start, end) else "complete"
+        return self.cov.coverage_of(start, end)
+
     def periods(self, ptype: str) -> dict:
-        return {"periods": [{"key": k, "range": self.range(s, e), "coverage": self.cov.coverage_of(s, e)}
+        return {"periods": [{"key": k, "range": self.range(s, e), "coverage": self.coverage_of(ptype, s, e)}
                             for s, e, k in reversed(self.periods_with_data(ptype))]}
 
     # ---- 6.1 ----
 
-    def screen(self, ptype: str, date: Optional[str], mode: str) -> dict:
+    def screen(self, ptype: str, date: Optional[str], mode: str, supports: Optional[str] = None) -> dict:
         if not self.ledger.ops or self.cov.empty:
             return {"has_data": False}
         available = self.periods_with_data(ptype)
-        if date:
+        if date and ptype != "all_time":
             start, end, key = period_bounds(ptype, parse_key(date))
         else:
             start, end, key = available[-1]
@@ -110,19 +134,22 @@ class Analytics:
         V = scope.visible()
         ops = scope.in_days(V, start, end)
         b = self.cov.bounds(start, end)
-        period = {"range": self.range(start, end), "is_current": start <= self.today < end,
-                  "coverage": self.cov.coverage_of(start, end),
+        period = {"range": self.range(start, end), "is_current": ptype != "all_time" and start <= self.today < end,
+                  "coverage": self.coverage_of(ptype, start, end),
                   "data_from": self.at(b[0]) if b else None, "data_to": self.data_to(start, end),
                   "gaps": [self.range(a, z) for a, z in self.cov.gaps_within(start, end)]}
         ctx = Ctx(self, ptype, start, end, key, mode, scope, V, ops, period)
-        blocks = ctx.tiles_block()
+        supported = parse_supports(supports)
+        blocks = ctx.tiles_block(2 if supported is not None and supported.get("tile_group", 0) >= 2 else 1)
         chart = ctx.monthly_chart()
         blocks = [blocks] + ([chart] if chart else []) + [ctx.expense_categories(), ctx.income_categories()]
         if ptype == "month":
             blocks += [{"type": "heading", "v": 1, "data": {"text": "Регулярные платежи и заметные траты"}},
                        ctx.regular_payments(), *ctx.notable_spending(), ctx.bank_fees(), ctx.small_frequent()]
-        if ptype != "year":
+        if ptype not in ("year", "all_time"):
             blocks.append(ctx.balance(chart))
+        if supported is not None:
+            blocks = [block for block in blocks if block["v"] <= supported.get(block["type"], 0)]
         unread = sum(1 for _, line in self.ledger.open_unread()
                      if line.date and start_of_day(start, self.zone) <= line.date < start_of_day(end, self.zone))
         return {
@@ -182,10 +209,11 @@ class Ctx:
 
     # ---- tiles ----
 
-    def tiles_block(self) -> dict:
+    def tiles_block(self, version: int = 1) -> dict:
         if self.period["coverage"] == "no_data":
-            return {"id": "tiles", "type": "tile_group", "v": 1, "status": "none",
-                    "empty_text": "За этот период данных нет", "alt_text": "За этот период данных нет", "data": {"tiles": []}}
+            return {"id": "tiles", "type": "tile_group", "v": version, "status": "none",
+                    "empty_text": "За этот период данных нет", "alt_text": "За этот период данных нет",
+                    "data": {"groups": []} if version == 2 else {"tiles": []}}
         tiles = [{"id": "balance", "title": "Доходы минус расходы", "status": "ready", **value(self.I - self.E),
                   "caption": "доля дохода"}]
         expense = {"id": "expense", "title": "Расходы", "status": "ready", **value(self.E), "caption": "период",
@@ -198,8 +226,18 @@ class Ctx:
                       "action": self.open(self.filt(kind="income"))})
         if self.period["is_current"] and not self.a.stale():
             tiles.append(self.forecast())
-        return {"id": "tiles", "type": "tile_group", "v": 1, "status": "ready", "alt_text": "плитки",
-                "data": {"tiles": tiles}}
+        data = {"tiles": tiles}
+        if version == 2:
+            by_id = {tile["id"]: tile for tile in tiles}
+            by_id["expense"]["title"] = "Расходы за период"
+            by_id["income"]["title"] = "Доходы за период"
+            by_id["daily_expense"]["title"] = "Средние расходы в день"
+            by_id["daily_expense"]["caption"] = "По дням с данными не позже сегодня; пропуски не учитываются"
+            data = {"groups": [{"tiles": [by_id[key] for key in ("expense", "income", "balance")]},
+                               {"title": "Дополнительные показатели", "tiles": [by_id[key] for key in
+                                ("daily_expense", "forecast") if key in by_id]}]}
+        return {"id": "tiles", "type": "tile_group", "v": version, "status": "ready", "alt_text": "плитки",
+                "data": data}
 
     def forecast(self) -> dict:
         t = {"id": "forecast", "title": "Прогноз расходов"}
@@ -275,6 +313,12 @@ class Ctx:
     # ---- monthly chart ----
 
     def chart_months(self) -> list:
+        if self.ptype == "all_time":
+            out, month = [], month_start(self.start)
+            while month < self.end:
+                out.append(month)
+                month = add_months(month, 1)
+            return out
         if self.ptype == "month":
             return [add_months(self.month, -i) for i in range(5, -1, -1)]
         return [add_months(self.start, i) for i in range(MONTHS_IN[self.ptype])]
@@ -311,6 +355,8 @@ class Ctx:
         previous quarters); year — the peak month and the total by months. Texts are placeholders."""
         notes = []
         has_peak = any(p["value"] is not None for p in points)
+        if self.ptype == "all_time":
+            return [{"text": "пиковый месяц", "tone": "primary"}] if has_peak else []
         prev = add_months(self.start, -MONTHS_IN[self.ptype])
         if self.ptype == "month":
             if self.cov.full(prev, self.start):
@@ -326,16 +372,19 @@ class Ctx:
 
     def monthly_chart(self) -> Optional[dict]:
         with_data = self.cov.months_with_data()
-        if len(with_data) == 1 and not self.cov.full_month(with_data[0]):
+        if self.ptype != "all_time" and len(with_data) == 1 and not self.cov.full_month(with_data[0]):
             return None  # early state: no block (spec section 4)
         base = {"id": "monthly_chart", "type": "chart", "v": 1, "title": "Расходы по месяцам", "alt_text": "график"}
-        if len(with_data) < 2:
+        if self.ptype != "all_time" and len(with_data) < 2:
             return {**base, "status": "locked", "lock": lock("need_months_with_data", 2, len(with_data))}
         points = []
         for m in self.chart_months():
             e = add_months(m, 1)
             has = self.cov.has_data_month(m)
-            points.append(self.point(m, self.scope.expense(self.scope.in_days(self.V, m, e)) if has else None))
+            point = self.point(m, self.scope.expense(self.scope.in_days(self.V, m, e)) if has else None)
+            if has:
+                point["action"] = {"type": "select_analytics_period", "period": "month", "date": month_key(m)}
+            points.append(point)
         data = {"kind": "bar", "value_kind": "amount", "points": points, "notes": self.chart_notes(points)}
         if self.highlight() is not None:
             data["highlight_index"] = self.highlight()

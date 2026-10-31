@@ -158,7 +158,9 @@ message Chip {
   ChipScreen screen = 2;
   // Для OPERATIONS; всегда с transfer_mode ответа.
   optional finassist.common.v1.OperationsFilter filters = 3;
-  // Для ANALYTICS.
+  // Для ANALYTICS — только MONTH/QUARTER/YEAR. ALL_TIME запрещён для генерации, сохранения и выдачи чипов
+  // (поток, snapshot, история) до отдельного инкремента с согласованием возможностей клиента.
+  // Неизвестные/некорректные параметры — клиент пропускает только этот чип и продолжает показ ответа.
   optional finassist.common.v1.AnalyticsParams params = 4;
 }
 

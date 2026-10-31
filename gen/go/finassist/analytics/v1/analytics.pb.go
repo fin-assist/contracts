@@ -1374,13 +1374,14 @@ func (x *SmallFrequent) GetItems() []*SmallFrequentGroup {
 // Запрос аналитики за период.
 type GetAnalyticsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Тип периода: месяц, квартал или год. UNSPECIFIED = месяц.
+	// Тип периода: месяц, квартал, год или вся история. UNSPECIFIED = месяц.
 	Period v1.PeriodType `protobuf:"varint,1,opt,name=period,proto3,enum=finassist.common.v1.PeriodType" json:"period,omitempty"`
 	// Какой период собрать. Ключ календарного периода в поясе профиля: «2026-09» (месяц),
 	// «2026-Q3» (квартал), «2026» (год). Допускается ключ точнее, чем period: при смене типа
 	// периода с месяца на квартал клиент передаёт period=QUARTER и period_key=«2026-09», сервер находит
 	// квартал, в который входит сентябрь, и возвращает точный ключ «2026-Q3» в params.period_key.
-	// Не передан — последний период с данными.
+	// Не передан — последний период с данными. Для ALL_TIME допустим только отсутствующий ключ или all_time;
+	// в ответе ключ all_time, границы — все покрытые дни, is_current=false, соседей нет.
 	PeriodKey *string `protobuf:"bytes,2,opt,name=period_key,json=periodKey,proto3,oneof" json:"period_key,omitempty"`
 	// Режим учёта переводов:
 	// WITH — переводы людям входят в расходы и доходы; WITHOUT — исключаются. Переводы между
@@ -1474,9 +1475,9 @@ func (x *GetAnalyticsRequest) GetExperiments() map[string]string {
 // Выбранный период и полнота данных в нём.
 type PeriodInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Границы календарного периода в поясе профиля.
+	// Границы календарного периода в поясе профиля; ALL_TIME — оболочка всех покрытых дней.
 	Range *v1.TimeRange `protobuf:"bytes,1,opt,name=range,proto3" json:"range,omitempty"`
-	// Период ещё идёт (текущий месяц, квартал, год) — для него есть прогноз.
+	// Период ещё идёт (текущий месяц, квартал, год) — для него есть прогноз. Для ALL_TIME всегда false.
 	IsCurrent bool `protobuf:"varint,2,opt,name=is_current,json=isCurrent,proto3" json:"is_current,omitempty"`
 	// Полнота данных внутри периода: COMPLETE, PARTIAL (с границами и пропусками в данных)
 	// или NO_DATA (возможно при явном period_key).
@@ -2354,13 +2355,13 @@ func (x *MetricSnapshot) GetMetric() *Metric {
 type PeriodSnapshot struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Period v1.PeriodType          `protobuf:"varint,1,opt,name=period,proto3,enum=finassist.common.v1.PeriodType" json:"period,omitempty"`
-	// Ключ периода («2026-09», «2026-Q3», «2026»).
+	// Ключ периода («2026-09», «2026-Q3», «2026», «all_time»).
 	PeriodKey string `protobuf:"bytes,2,opt,name=period_key,json=periodKey,proto3" json:"period_key,omitempty"`
 	// Режим переводов, для которого посчитан снимок.
 	TransferMode v1.TransferMode `protobuf:"varint,3,opt,name=transfer_mode,json=transferMode,proto3,enum=finassist.common.v1.TransferMode" json:"transfer_mode,omitempty"`
 	// Границы периода в поясе профиля.
 	Range *v1.TimeRange `protobuf:"bytes,4,opt,name=range,proto3" json:"range,omitempty"`
-	// Полнота данных в периоде.
+	// Полнота данных в периоде. Для ALL_TIME COMPLETE при отсутствии внутренних пропусков независимо от today.
 	Bounds *v1.DataBounds `protobuf:"bytes,5,opt,name=bounds,proto3" json:"bounds,omitempty"`
 	// Незакрытых непрочитанных строк выписок за период (FIN-79).
 	UnreadLinesCount int32 `protobuf:"varint,6,opt,name=unread_lines_count,json=unreadLinesCount,proto3" json:"unread_lines_count,omitempty"`
@@ -2479,9 +2480,9 @@ func (x *PeriodSnapshot) GetDataRevisions() []*v1.DataRevision {
 // больше нет (загрузка удалена). Удаляются снимки обоих режимов переводов.
 type PeriodRef struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Тип периода: месяц, квартал или год.
+	// Тип периода: месяц, квартал, год или вся история.
 	Period v1.PeriodType `protobuf:"varint,1,opt,name=period,proto3,enum=finassist.common.v1.PeriodType" json:"period,omitempty"`
-	// Ключ периода в формате типа («2026-09», «2026-Q3», «2026»).
+	// Ключ периода в формате типа («2026-09», «2026-Q3», «2026», «all_time»).
 	PeriodKey     string `protobuf:"bytes,2,opt,name=period_key,json=periodKey,proto3" json:"period_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

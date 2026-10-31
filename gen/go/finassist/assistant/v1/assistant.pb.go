@@ -889,7 +889,9 @@ type Chip struct {
 	Screen ChipScreen `protobuf:"varint,2,opt,name=screen,proto3,enum=finassist.assistant.v1.ChipScreen" json:"screen,omitempty"`
 	// Для OPERATIONS; всегда с transfer_mode ответа.
 	Filters *v1.OperationsFilter `protobuf:"bytes,3,opt,name=filters,proto3,oneof" json:"filters,omitempty"`
-	// Для ANALYTICS.
+	// Для ANALYTICS — только MONTH/QUARTER/YEAR. ALL_TIME запрещён для генерации, сохранения и выдачи чипов
+	// (поток, snapshot, история) до отдельного инкремента с согласованием возможностей клиента.
+	// Неизвестные/некорректные параметры — клиент пропускает только этот чип и продолжает показ ответа.
 	Params        *v1.AnalyticsParams `protobuf:"bytes,4,opt,name=params,proto3,oneof" json:"params,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

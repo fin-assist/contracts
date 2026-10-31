@@ -127,7 +127,12 @@
             "coverage": "partial",
             "data_from": "2025-10-15T00:00:00+03:00",
             "data_to": "2025-10-31T21:06:35+03:00",
-            "note": "<ignored>"
+            "note": "<ignored>",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2025-10"
+            }
           },
           {
             "range": {
@@ -135,7 +140,12 @@
               "to": "2025-12-01T00:00:00+03:00"
             },
             "value": 84853478,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2025-11"
+            }
           },
           {
             "range": {
@@ -143,7 +153,12 @@
               "to": "2026-01-01T00:00:00+03:00"
             },
             "value": 130271771,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2025-12"
+            }
           }
         ],
         "notes": [

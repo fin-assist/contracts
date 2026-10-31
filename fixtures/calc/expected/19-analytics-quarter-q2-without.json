@@ -100,7 +100,12 @@
               "to": "2026-05-01T00:00:00+03:00"
             },
             "value": 34005097,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-04"
+            }
           },
           {
             "range": {
@@ -108,7 +113,12 @@
               "to": "2026-06-01T00:00:00+03:00"
             },
             "value": 21928229,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-05"
+            }
           },
           {
             "range": {
@@ -116,7 +126,12 @@
               "to": "2026-07-01T00:00:00+03:00"
             },
             "value": 8958556,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-06"
+            }
           }
         ],
         "notes": [

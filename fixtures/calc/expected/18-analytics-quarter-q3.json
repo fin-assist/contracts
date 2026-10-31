@@ -114,7 +114,12 @@
               "to": "2026-08-01T00:00:00+03:00"
             },
             "value": 258194452,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-07"
+            }
           },
           {
             "range": {
@@ -125,7 +130,12 @@
             "coverage": "partial",
             "data_from": "2026-08-01T00:00:00+03:00",
             "data_to": "2026-08-31T22:26:03+03:00",
-            "note": "<ignored>"
+            "note": "<ignored>",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-08"
+            }
           },
           {
             "range": {
@@ -136,7 +146,12 @@
             "coverage": "partial",
             "data_from": "2026-09-01T00:00:00+03:00",
             "data_to": "2026-09-25T22:36:53+03:00",
-            "note": "<ignored>"
+            "note": "<ignored>",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-09"
+            }
           }
         ],
         "notes": [

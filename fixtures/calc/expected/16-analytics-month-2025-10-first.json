@@ -143,7 +143,12 @@
             "coverage": "partial",
             "data_from": "2025-10-15T00:00:00+03:00",
             "data_to": "2025-10-31T21:06:35+03:00",
-            "note": "<ignored>"
+            "note": "<ignored>",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2025-10"
+            }
           }
         ],
         "notes": [],
