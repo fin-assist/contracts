@@ -39,6 +39,13 @@ class ForecastFacts(unittest.TestCase):
         self.assertEqual("none", tiles["status"])
         self.assertNotIn("data", tiles)
 
+    def test_covered_period_without_expenses_keeps_real_zero(self):
+        b = self.backend("2026-10-20T12:00:00+03:00")
+        b.upload("a.ofx", stmt("20261001", "20261010", [("i", "20261003120000", 10, "Salary", "Зарплата")]))
+        expense = self.tile(self.screen(b, "2026-10"), "expense")
+        self.assertEqual("ready", expense["status"])
+        self.assertEqual(0, expense["value"])
+
     def test_rolling_year_has_eleven_full_months_without_edge_transactions(self):
         b = self.backend("2026-10-31T12:00:00+03:00")
         b.upload("a.ofx", stmt("20251030", "20261030", [("d", "20260415120000", -10, "Shop", "Продукты")]))

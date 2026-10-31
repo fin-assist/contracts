@@ -4379,11 +4379,11 @@ components:
           $ref: '#/components/schemas/BlockAction'
     TileGroupData:
       description: >-
-        Открытый серверный список плиток. Текущая композиция аналитики — balance, expense (факт),
+        `tile_group` v1 — плитки по две в ряд, по порядку. Открытый серверный список плиток.
+        Текущая композиция аналитики — balance, expense (факт),
         daily_expense, income и дополнительная forecast для свежего текущего периода.
         Блокировка прогноза не скрывает фактические расходы (FIN-408).
       type: object
-      description: '`tile_group` v1 — плитки по две в ряд, по порядку.'
       required:
       - tiles
       properties:
