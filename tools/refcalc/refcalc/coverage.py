@@ -20,9 +20,9 @@ def block_data_schema(block: dict):
     """Select the exact known primitive version; never validate a new shape as an older one."""
     if block.get("type") == "tile_group" and block.get("v", 1) == 2:
         return "TileGroupDataV2"
-    if block.get("v", 1) == 1:
-        return BLOCK_DATA.get(block.get("type"))
-    return None
+    if block.get("v", 1) == 1 and block.get("type") in BLOCK_DATA:
+        return BLOCK_DATA[block["type"]]
+    raise ValueError(f"unsupported expected block {block.get('type')}@{block.get('v', 1)}")
 
 
 class Coverage:
@@ -87,10 +87,10 @@ class Coverage:
                 if instance.get(prop) is not None:
                     self.observed.add(f"{owner}.{prop}")
                     self._observe(sub, f"{owner}.{prop}", instance[prop])
-            if owner == "Block" and instance.get("data") is not None:
+            if owner == "Block":
                 name = block_data_schema(instance)
-                if name is not None:
-                    self.data_types.add(name)
+                self.data_types.add(name)
+                if instance.get("data") is not None:
                     self._observe({"$ref": f"#/components/schemas/{name}"}, name, instance["data"])
         elif isinstance(instance, list) and "items" in schema:
             for el in instance:

@@ -24,9 +24,10 @@ FEATURES = [  # (code, name, threshold kind, required) — spec section 7
 
 
 class ApiError(Exception):
-    def __init__(self, status: int, code: str):
+    def __init__(self, status: int, code: str, details=None):
         super().__init__(code)
         self.status, self.code = status, code
+        self.details = details
 
 
 class Backend:
@@ -315,7 +316,8 @@ class Backend:
         try:
             parse_supports(supports)
         except ValueError:
-            raise ApiError(400, "VALIDATION_ERROR")
+            raise ApiError(400, "VALIDATION_ERROR", [{"field": "supports", "code": "INVALID_FORMAT",
+                                                     "message": "has invalid format"}])
         return Analytics(self.ledger, self.now).screen(period, date, mode, supports)
 
     def periods(self, period: str = "month") -> dict:

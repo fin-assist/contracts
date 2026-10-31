@@ -34,8 +34,12 @@ class SchemaCheck:
         if name == "Analytics" and isinstance(response, dict):
             from .coverage import block_data_schema
             for i, b in enumerate(response.get("blocks") or []):
-                data_type = block_data_schema(b)
-                if data_type is not None and b.get("data") is not None:
+                try:
+                    data_type = block_data_schema(b)
+                except ValueError as e:
+                    errors.append(f"blocks/{i}: {e}")
+                    continue
+                if b.get("data") is not None:
                     data_schema = {"$ref": f"openapi.yaml#/components/schemas/{data_type}"}
                     errors += self._validate(data_schema, b["data"], f"blocks/{i}/data/")
         return errors

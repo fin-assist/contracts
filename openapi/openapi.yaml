@@ -1421,7 +1421,7 @@ paths:
           Период в поясе профиля. Может быть точнее `period`: `period=quarter&date=2026-09` — квартал, в который
           входит сентябрь; ответ содержит точный ключ (`2026-Q3`). Без параметра — последний период с данными.
           Для all_time допустимы только отсутствие date или date=all_time; смешение с календарным типом/ключом —
-          400 VALIDATION_ERROR (date, invalid_format).
+          400 VALIDATION_ERROR (date, INVALID_FORMAT).
         schema:
           $ref: '#/components/schemas/PeriodKey'
       - name: transfer_mode
@@ -1443,7 +1443,9 @@ paths:
         description: |
           Примитивы, которые умеет рисовать клиент: `type@v` через запятую (`tile_group@1,chart@1`). Сервер отдаёт
           только совместимые блоки (при возможности — в поддерживаемой версии или более простым примитивом). Без
-          параметра — версия 1 всех типов каталога.
+          параметра или пустая строка — версия 1 всех типов каталога. type непустой, без запятой/@;
+          v — ASCII-десятичное целое 1..2147483647 с необязательным одним ведущим +, без пробелов. Повторы типа — максимальная версия, неизвестные типы допустимы и не порождают
+          неизвестных серверу блоков. Нарушение — 400 VALIDATION_ERROR (field=supports, code=INVALID_FORMAT).
         schema:
           type: string
           example: heading@1,text@1,rows@1,chart@1,tile_group@1,ranked_list@1,insight_card@1
@@ -4600,7 +4602,10 @@ components:
           $ref: '#/components/schemas/BlockAction'
     Chip:
       type: object
-      description: Чип-переход под ответом (и событие `chip`). Неизвестный `screen` — чип не показывать.
+      description: >-
+        Чип-переход под ответом (и событие chip). Неизвестный screen, period или некорректный ключ — пропустить
+        этот чип, продолжить показ ответа. До отдельного согласования возможностей assistant не генерирует,
+        не сохраняет и не отдаёт all_time-чипы в потоке/snapshot/истории.
       required:
       - label
       - screen
@@ -4623,7 +4628,7 @@ components:
           nullable: true
           allOf:
           - $ref: '#/components/schemas/AnalyticsParams'
-          description: Для `analytics`.
+          description: Для analytics — только month/quarter/year; all_time запрещён до отдельного согласования возможностей.
           type: object
     AnswerSource:
       type: object

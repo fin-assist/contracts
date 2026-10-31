@@ -327,6 +327,11 @@ func (x *BlockAction) GetPeriodKey() string {
 }
 
 // Примитив, который умеет рисовать клиент: тип и наибольшая версия схемы (REST `supports=type@v`).
+// Непустой type, max_version 1..2147483647; повторы типа объединяются по максимальной версии.
+// Неизвестный тип допустим и не создаёт неизвестных блоков; пустой список — v1 всего каталога.
+// REST v — ASCII-десятичное число с необязательным одним ведущим +, без пробелов.
+// Некорректный формат/диапазон — VALIDATION_ERROR (field supports, code INVALID_FORMAT).
+// Отдельный меньший лимит supports не вводится; общий HTTP-бюджет BFF описан в grpc-api.md.
 type BlockSupport struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`

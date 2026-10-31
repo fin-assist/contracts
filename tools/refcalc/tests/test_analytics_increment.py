@@ -177,13 +177,33 @@ class AnalyticsIncrement(unittest.TestCase):
     def test_supports_empty_higher_duplicate_and_malformed(self):
         b = self.ledger()
         for supports, version in ((None, 1), ("", 1), ("tile_group@1", 1), ("tile_group@2", 2),
-                                  ("tile_group@99", 2), ("tile_group@2,tile_group@1", 2)):
+                                  ("tile_group@99", 2), ("tile_group@2,tile_group@1", 2),
+                                  ("tile_group@+1", 1), ("tile_group@2147483647", 2)):
             self.assertEqual(version, self.block(b.analytics("all_time", supports=supports), "tiles")[0]["v"])
         for supports in ("tile_group", "tile_group@abc", "@2", "tile_group@0", "tile_group@2147483648", "tile_group@2,"):
             with self.subTest(supports=supports), self.assertRaises(ApiError) as caught:
                 b.analytics("all_time", supports=supports)
             self.assertEqual(400, caught.exception.status)
+            self.assertEqual("supports", caught.exception.details[0]["field"])
+            self.assertEqual("INVALID_FORMAT", caught.exception.details[0]["code"])
         self.assertEqual([], b.analytics("all_time", supports="future@3")["blocks"])
+
+    def test_expected_producer_blocks_cannot_bypass_schema_with_unknown_type_or_version(self):
+        schema = SchemaCheck(os.path.join(ROOT, "openapi/openapi.yaml"))
+        base = self.ledger().analytics("all_time", supports=SUPPORTS)
+        for kind, version in (("tile_group", 3), ("chart", 2), ("future", 1)):
+            for has_data in (True, False):
+                with self.subTest(kind=kind, version=version, has_data=has_data):
+                    changed = copy.deepcopy(base)
+                    block = changed["blocks"][0]
+                    block["type"], block["v"] = kind, version
+                    if not has_data:
+                        block.pop("data", None)
+                    self.assertTrue(any("unsupported expected block" in error
+                                        for error in schema.errors("/v1/analytics", changed)))
+                    cov = Coverage(os.path.join(ROOT, "openapi/openapi.yaml"))
+                    with self.assertRaisesRegex(ValueError, "unsupported expected block"):
+                        cov.observe("Analytics", changed)
 
     def test_only_monthly_expense_chart_gets_actions_including_zero_values(self):
         b = self.backend("2026-10-31T12:00:00+03:00")
@@ -206,7 +226,8 @@ class AnalyticsIncrement(unittest.TestCase):
         self.assertTrue(schema.errors("/v1/analytics", changed))
         self.block(changed, "tiles")[0]["v"] = 1
         self.assertEqual([], schema.errors("/v1/analytics", changed))
-        self.assertIsNone(block_data_schema({"type": "tile_group", "v": 99}))
+        with self.assertRaises(ValueError):
+            block_data_schema({"type": "tile_group", "v": 99})
         cov = Coverage(os.path.join(ROOT, "openapi/openapi.yaml"))
         cov.observe("Analytics", s)
         cov.observe("Analytics", b.analytics("all_time"))

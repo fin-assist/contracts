@@ -37,7 +37,8 @@ def parse_supports(supports: Optional[str]):
     out = {}
     for part in supports.split(","):
         kind, sep, raw = part.partition("@")
-        if not kind or not sep or not raw.isascii() or not raw.isdecimal():
+        digits = raw[1:] if raw.startswith("+") else raw
+        if not kind or not sep or not digits.isascii() or not digits.isdecimal():
             raise ValueError("invalid supports")
         version = int(raw)
         if version < 1 or version > 2147483647:
