@@ -32,10 +32,11 @@ class SchemaCheck:
         errors = self._validate(schema, response, "")
         # Block `data` is a free object in the envelope: check it against the schema of its primitive (FIN-157).
         if name == "Analytics" and isinstance(response, dict):
-            from .coverage import BLOCK_DATA
+            from .coverage import block_data_schema
             for i, b in enumerate(response.get("blocks") or []):
-                if b.get("type") in BLOCK_DATA and b.get("data") is not None:
-                    data_schema = {"$ref": f"openapi.yaml#/components/schemas/{BLOCK_DATA[b['type']]}"}
+                data_type = block_data_schema(b)
+                if data_type is not None and b.get("data") is not None:
+                    data_schema = {"$ref": f"openapi.yaml#/components/schemas/{data_type}"}
                     errors += self._validate(data_schema, b["data"], f"blocks/{i}/data/")
         return errors
 

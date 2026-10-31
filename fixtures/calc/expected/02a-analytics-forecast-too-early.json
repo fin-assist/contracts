@@ -110,7 +110,12 @@
               "to": "2026-04-01T00:00:00+03:00"
             },
             "value": 479880069,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-03"
+            }
           },
           {
             "range": {
@@ -118,7 +123,12 @@
               "to": "2026-05-01T00:00:00+03:00"
             },
             "value": 248700997,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-04"
+            }
           },
           {
             "range": {
@@ -126,7 +136,12 @@
               "to": "2026-06-01T00:00:00+03:00"
             },
             "value": 142959126,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-05"
+            }
           },
           {
             "range": {
@@ -134,7 +149,12 @@
               "to": "2026-07-01T00:00:00+03:00"
             },
             "value": 151255356,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-06"
+            }
           },
           {
             "range": {
@@ -142,7 +162,12 @@
               "to": "2026-08-01T00:00:00+03:00"
             },
             "value": 258194452,
-            "coverage": "complete"
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-07"
+            }
           },
           {
             "range": {
@@ -153,7 +178,12 @@
             "coverage": "partial",
             "data_from": "2026-08-01T00:00:00+03:00",
             "data_to": "2026-08-07T22:02:11+03:00",
-            "note": "<ignored>"
+            "note": "<ignored>",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-08"
+            }
           }
         ],
         "notes": [

@@ -47,7 +47,7 @@ message BlockLock {
 
 // Действие из фиксированного словаря.
 message BlockAction {
-  // open_operations, open_assistant, dismiss_regular_payment. Поля своего type обязательны: без них клиент
+  // open_operations, open_assistant, dismiss_regular_payment, select_analytics_period. Поля своего type обязательны: без них клиент
   // считает действие неизвестным (api.md «Действия»); пустая строка и filter без условий — как отсутствие.
   // Условие filter — хотя бы одно из: from, to, q, category_id, kind (кроме KIND_FILTER_UNSPECIFIED),
   // amount_from_minor, amount_to_minor, selection; transfer_mode и selection_name не в счёт.
@@ -58,6 +58,11 @@ message BlockAction {
   optional string payment_id = 3;
   // Подпись кнопки («Не подписка»); обязательно для dismiss_regular_payment.
   optional string label = 4;
+  // Только для select_analytics_period: точный тип целевого периода; неизвестный — действие игнорируется.
+  optional PeriodType period = 5;
+  // Только для select_analytics_period: точный ключ целевого периода (REST date).
+  // Оба поля обязательны для этого type. Для точки monthly_chart — MONTH и YYYY-MM, с сохранением режима переводов.
+  optional string period_key = 6;
 }
 
 // Примитив, который умеет рисовать клиент: тип и наибольшая версия схемы (REST `supports=type@v`).

@@ -1404,21 +1404,24 @@ paths:
       - name: period
         in: query
         description: |
-          `month` (по умолчанию), `quarter`, `year`. Набор расширяемый (например, `week`) — новое значение
+          `month` (по умолчанию), `quarter`, `year`, `all_time`. Набор расширяемый (например, `week`) — новое значение
           появляется вместе с новым форматом `PeriodKey`; клиент запрашивает только известные ему значения.
         schema:
           type: string
-          description: 'Тип периода: `month`, `quarter`, `year`. Открытый набор: клиент запрашивает только известные значения.'
+          description: 'Тип периода: `month`, `quarter`, `year`, `all_time` (вся загруженная история). Открытый набор: клиент запрашивает только известные значения.'
           x-extensible-enum:
           - month
           - quarter
           - year
+          - all_time
           default: month
       - name: date
         in: query
         description: |
           Период в поясе профиля. Может быть точнее `period`: `period=quarter&date=2026-09` — квартал, в который
           входит сентябрь; ответ содержит точный ключ (`2026-Q3`). Без параметра — последний период с данными.
+          Для all_time допустимы только отсутствие date или date=all_time; смешение с календарным типом/ключом —
+          400 VALIDATION_ERROR (date, invalid_format).
         schema:
           $ref: '#/components/schemas/PeriodKey'
       - name: transfer_mode
@@ -1662,11 +1665,12 @@ paths:
         description: Тип периода, как в `getAnalytics`.
         schema:
           type: string
-          description: 'Тип периода: `month`, `quarter`, `year`. Открытый набор: клиент запрашивает только известные значения.'
+          description: 'Тип периода: `month`, `quarter`, `year`, `all_time`. Открытый набор: клиент запрашивает только известные значения.'
           x-extensible-enum:
           - month
           - quarter
           - year
+          - all_time
           default: month
       - $ref: '#/components/parameters/XRequestId'
       - $ref: '#/components/parameters/XClientVersion'
@@ -2381,17 +2385,18 @@ components:
     PeriodKey:
       type: string
       description: |
-        Ключ календарного периода: `YYYY-MM` (месяц), `YYYY-Qn` (квартал), `YYYY` (год). Формат расширяется вместе
+        Ключ периода: `YYYY-MM` (месяц), `YYYY-Qn` (квартал), `YYYY` (год), `all_time` (вся история). Формат расширяется вместе
         с `PeriodType` (неделя — `YYYY-Www`); сервер возвращает ключи только в формате запрошенного `period`.
-      pattern: ^\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?$
+      pattern: ^(\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?|all_time)$
       example: '2026-Q3'
     PeriodType:
       type: string
-      description: 'Тип периода: `month`, `quarter`, `year`. Открытый набор: клиент запрашивает только известные значения.'
+      description: 'Тип периода: `month`, `quarter`, `year`, `all_time`. Открытый набор: клиент запрашивает только известные значения.'
       x-extensible-enum:
       - month
       - quarter
       - year
+      - all_time
     TransferMode:
       type: string
       description: |
@@ -3798,12 +3803,16 @@ components:
       - gaps
       properties:
         range:
-          $ref: '#/components/schemas/Range'
+          allOf:
+          - $ref: '#/components/schemas/Range'
+          description: Календарный период; для all_time — оболочка всех покрытых дней, как state.data_from/data_to.
         is_current:
           type: boolean
-          description: Период ещё идёт.
+          description: Период ещё идёт; для all_time всегда false.
         coverage:
-          $ref: '#/components/schemas/Coverage'
+          allOf:
+          - $ref: '#/components/schemas/Coverage'
+          description: Для all_time complete без внутренних пропусков независимо от today; месячные точки сохраняют календарную полноту.
         data_from:
           type: string
           format: date-time
@@ -4069,7 +4078,7 @@ components:
       description: |
         Блок общего каталога (api.md «Блоки», FIN-4): экран «Аналитика» (6.1) и ответ помощника (7.2). Оболочка общая,
         содержимое — в `data` по схеме примитива `type` версии `v`: `heading` — `HeadingData`, `text` — `TextData`,
-        `rows` — `RowsData`, `chart` — `ChartData`, `tile_group` — `TileGroupData`, `ranked_list` — `RankedListData`,
+        `rows` — `RowsData`, `chart` — `ChartData`, `tile_group@1` — `TileGroupData`, `tile_group@2` — `TileGroupDataV2`, `ranked_list` — `RankedListData`,
         `insight_card` — `InsightCardData`. Неизвестный `type` или `v` клиент не рисует: показывает `alt_text`, если он
         есть, иначе пропускает блок. Блок, который не удалось разобрать, пропускается, остальной экран показывается.
       required:
@@ -4199,9 +4208,11 @@ components:
       type: object
       nullable: true
       description: |
-        Действие из фиксированного словаря: `open_operations` — Поиск с `filter`; `open_assistant` — чат помощника;
+        Действие из фиксированного словаря: `select_analytics_period` — смена периода аналитики по period/date с сохранением режима переводов;
+        Действие выбора периода поддерживается только у точки monthly_chart экрана «Аналитика»; в assistant/balance и других контекстах игнорируется.
+        `open_operations` — Поиск с `filter`; `open_assistant` — чат помощника;
         `dismiss_regular_payment` — кнопка `label` у строки платежа (6.3 с `payment_id`). Неизвестное — элемент не
-        нажимается. Поля своего `type` обязательны (`filter`; `payment_id` и `label`): без них действие — как
+        нажимается. Поля своего `type` обязательны (`filter`; `payment_id` и `label`; `period` и `date`): без них действие — как
         неизвестное, кнопка не показывается. Пустая строка и `filter` без условий — как отсутствие. Условие — хотя бы одно из
         `from`/`to`, `q`, `category_id`, `kind`, `amount_from`/`amount_to`, `selection`; `transfer_mode` и `selection_name`
         не в счёт. Значения «все» у `kind` нет: без направления поля нет.
@@ -4214,6 +4225,7 @@ components:
           - open_operations
           - open_assistant
           - dismiss_regular_payment
+          - select_analytics_period
         filter:
           nullable: true
           allOf:
@@ -4227,6 +4239,20 @@ components:
         label:
           type: string
           nullable: true
+        period:
+          type: string
+          nullable: true
+          x-extensible-enum:
+          - month
+          - quarter
+          - year
+          - all_time
+          description: Только select_analytics_period; вместе с date обязателен для этого действия. Неизвестное значение — действие не нажимается.
+        date:
+          type: string
+          nullable: true
+          pattern: ^(\d{4}(-(0[1-9]|1[0-2])|-Q[1-4])?|all_time)$
+          description: Точный ключ целевого period для select_analytics_period. Несовпадение типа и ключа — действие не нажимается.
     ValueKind:
       type: string
       description: |
@@ -4360,6 +4386,8 @@ components:
           type: string
           nullable: true
           description: Подпись неполного столбца («по 25-е»).
+        action:
+          $ref: '#/components/schemas/BlockAction'
     BlockValue:
       type: object
       nullable: true
@@ -4387,6 +4415,32 @@ components:
       required:
       - tiles
       properties:
+        tiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+    TileGroupDataV2:
+      description: >-
+        tile_group@2 — упорядоченные группы плиток. Каждая группа визуально отделена; внутри плитки по две в ряд,
+        последняя одиночная занимает всю ширину. Плитки используют прежнюю схему Tile. Только по supports=tile_group@2
+        или выше; без supports и для max_version=1 сервер возвращает прежний tile_group@1.
+      type: object
+      required:
+      - groups
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/TileGroupSection'
+    TileGroupSection:
+      type: object
+      required:
+      - tiles
+      properties:
+        title:
+          type: string
+          nullable: true
+          description: Необязательный заголовок группы, готовый текст сервера.
         tiles:
           type: array
           items:

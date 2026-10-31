@@ -5,7 +5,7 @@ import datetime as dt
 from decimal import Decimal, InvalidOperation
 from typing import Optional
 
-from .analytics import Analytics, period_bounds
+from .analytics import Analytics, parse_supports, period_bounds
 from .ledger import Ledger, stable_id
 from .registry import OWN_TRANSFER, REFUND, TRANSFERS_NAME, UNCATEGORIZED, Registry
 from .util import add_months, day_of, end_of_day, iso, month_key, month_start, parse_iso, start_of_day
@@ -308,8 +308,15 @@ class Backend:
     def categories(self) -> dict:
         return {"categories": [c.api() for c in self.reg.all()]}
 
-    def analytics(self, period: str = "month", date: Optional[str] = None, mode: str = "with") -> dict:
-        return Analytics(self.ledger, self.now).screen(period, date, mode)
+    def analytics(self, period: str = "month", date: Optional[str] = None, mode: str = "with",
+                  supports: Optional[str] = None) -> dict:
+        if (period == "all_time" and date not in (None, "all_time")) or (period != "all_time" and date == "all_time"):
+            raise ApiError(400, "VALIDATION_ERROR")
+        try:
+            parse_supports(supports)
+        except ValueError:
+            raise ApiError(400, "VALIDATION_ERROR")
+        return Analytics(self.ledger, self.now).screen(period, date, mode, supports)
 
     def periods(self, period: str = "month") -> dict:
         return Analytics(self.ledger, self.now).periods(period)

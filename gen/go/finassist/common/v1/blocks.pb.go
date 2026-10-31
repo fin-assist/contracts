@@ -234,7 +234,7 @@ func (x *BlockLock) GetAvailableFrom() *timestamppb.Timestamp {
 // Действие из фиксированного словаря.
 type BlockAction struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// open_operations, open_assistant, dismiss_regular_payment. Поля своего type обязательны: без них клиент
+	// open_operations, open_assistant, dismiss_regular_payment, select_analytics_period. Поля своего type обязательны: без них клиент
 	// считает действие неизвестным (api.md «Действия»); пустая строка и filter без условий — как отсутствие.
 	// Условие filter — хотя бы одно из: from, to, q, category_id, kind (кроме KIND_FILTER_UNSPECIFIED),
 	// amount_from_minor, amount_to_minor, selection; transfer_mode и selection_name не в счёт.
@@ -244,7 +244,12 @@ type BlockAction struct {
 	// Обязательно для dismiss_regular_payment.
 	PaymentId *string `protobuf:"bytes,3,opt,name=payment_id,json=paymentId,proto3,oneof" json:"payment_id,omitempty"`
 	// Подпись кнопки («Не подписка»); обязательно для dismiss_regular_payment.
-	Label         *string `protobuf:"bytes,4,opt,name=label,proto3,oneof" json:"label,omitempty"`
+	Label *string `protobuf:"bytes,4,opt,name=label,proto3,oneof" json:"label,omitempty"`
+	// Только для select_analytics_period: точный тип целевого периода; неизвестный — действие игнорируется.
+	Period *PeriodType `protobuf:"varint,5,opt,name=period,proto3,enum=finassist.common.v1.PeriodType,oneof" json:"period,omitempty"`
+	// Только для select_analytics_period: точный ключ целевого периода (REST date).
+	// Оба поля обязательны для этого type. Для точки monthly_chart — MONTH и YYYY-MM, с сохранением режима переводов.
+	PeriodKey     *string `protobuf:"bytes,6,opt,name=period_key,json=periodKey,proto3,oneof" json:"period_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -303,6 +308,20 @@ func (x *BlockAction) GetPaymentId() string {
 func (x *BlockAction) GetLabel() string {
 	if x != nil && x.Label != nil {
 		return *x.Label
+	}
+	return ""
+}
+
+func (x *BlockAction) GetPeriod() PeriodType {
+	if x != nil && x.Period != nil {
+		return *x.Period
+	}
+	return PeriodType_PERIOD_TYPE_UNSPECIFIED
+}
+
+func (x *BlockAction) GetPeriodKey() string {
+	if x != nil && x.PeriodKey != nil {
+		return *x.PeriodKey
 	}
 	return ""
 }
@@ -393,16 +412,21 @@ const file_finassist_common_v1_blocks_proto_rawDesc = "" +
 	"\t_requiredB\f\n" +
 	"\n" +
 	"_availableB\x11\n" +
-	"\x0f_available_from\"\xc8\x01\n" +
+	"\x0f_available_from\"\xc4\x02\n" +
 	"\vBlockAction\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12B\n" +
 	"\x06filter\x18\x02 \x01(\v2%.finassist.common.v1.OperationsFilterH\x00R\x06filter\x88\x01\x01\x12\"\n" +
 	"\n" +
 	"payment_id\x18\x03 \x01(\tH\x01R\tpaymentId\x88\x01\x01\x12\x19\n" +
-	"\x05label\x18\x04 \x01(\tH\x02R\x05label\x88\x01\x01B\t\n" +
+	"\x05label\x18\x04 \x01(\tH\x02R\x05label\x88\x01\x01\x12<\n" +
+	"\x06period\x18\x05 \x01(\x0e2\x1f.finassist.common.v1.PeriodTypeH\x03R\x06period\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"period_key\x18\x06 \x01(\tH\x04R\tperiodKey\x88\x01\x01B\t\n" +
 	"\a_filterB\r\n" +
 	"\v_payment_idB\b\n" +
-	"\x06_label\"C\n" +
+	"\x06_labelB\t\n" +
+	"\a_periodB\r\n" +
+	"\v_period_key\"C\n" +
 	"\fBlockSupport\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x1f\n" +
 	"\vmax_version\x18\x02 \x01(\x05R\n" +
@@ -429,6 +453,7 @@ var file_finassist_common_v1_blocks_proto_goTypes = []any{
 	(*structpb.Struct)(nil),       // 4: google.protobuf.Struct
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 	(*OperationsFilter)(nil),      // 6: finassist.common.v1.OperationsFilter
+	(PeriodType)(0),               // 7: finassist.common.v1.PeriodType
 }
 var file_finassist_common_v1_blocks_proto_depIdxs = []int32{
 	1, // 0: finassist.common.v1.Block.lock:type_name -> finassist.common.v1.BlockLock
@@ -436,11 +461,12 @@ var file_finassist_common_v1_blocks_proto_depIdxs = []int32{
 	2, // 2: finassist.common.v1.Block.action:type_name -> finassist.common.v1.BlockAction
 	5, // 3: finassist.common.v1.BlockLock.available_from:type_name -> google.protobuf.Timestamp
 	6, // 4: finassist.common.v1.BlockAction.filter:type_name -> finassist.common.v1.OperationsFilter
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	7, // 5: finassist.common.v1.BlockAction.period:type_name -> finassist.common.v1.PeriodType
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_finassist_common_v1_blocks_proto_init() }

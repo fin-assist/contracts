@@ -52,7 +52,7 @@ class Runner:
         if url.path == "/v1/categories":
             return b.categories()
         if url.path == "/v1/analytics":
-            return b.analytics(q.get("period", "month"), q.get("date"), q.get("transfer_mode", "with"))
+            return b.analytics(q.get("period", "month"), q.get("date"), q.get("transfer_mode", "with"), q.get("supports"))
         if url.path == "/v1/analytics/periods":
             return b.periods(q.get("period", "month"))
         raise ValueError(f"unknown request {request}")

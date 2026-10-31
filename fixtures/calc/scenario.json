@@ -16,10 +16,22 @@
       "expect": "expected/00a-analytics-early-state.json"
     },
     {
+      "name": "00c-analytics-all-time-early",
+      "do": "get",
+      "request": "GET /v1/analytics?period=all_time&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/00c-analytics-all-time-early.json"
+    },
+    {
       "name": "analytics-explicit-period-without-coverage",
       "do": "get",
       "request": "GET /v1/analytics?period=month&date=2025-09&transfer_mode=with",
       "expect": "expected/00b-analytics-no-data.json"
+    },
+    {
+      "name": "00d-analytics-no-data-v2",
+      "do": "get",
+      "request": "GET /v1/analytics?period=month&date=2025-09&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/00d-analytics-no-data-v2.json"
     },
     {
       "name": "import-1",
@@ -60,6 +72,30 @@
       "do": "get",
       "request": "GET /v1/categories",
       "expect": "expected/05-categories.json"
+    },
+    {
+      "name": "05a-analytics-all-time-with",
+      "do": "get",
+      "request": "GET /v1/analytics?period=all_time&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/05a-analytics-all-time-with.json"
+    },
+    {
+      "name": "05b-analytics-all-time-without",
+      "do": "get",
+      "request": "GET /v1/analytics?period=all_time&date=all_time&transfer_mode=without&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/05b-analytics-all-time-without.json"
+    },
+    {
+      "name": "05c-analytics-grouped-month",
+      "do": "get",
+      "request": "GET /v1/analytics?period=month&date=2026-09&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/05c-analytics-grouped-month.json"
+    },
+    {
+      "name": "05d-periods-all-time",
+      "do": "get",
+      "request": "GET /v1/analytics/periods?period=all_time",
+      "expect": "expected/05d-periods-all-time.json"
     },
     {
       "name": "feed-1",
@@ -324,6 +360,12 @@
       "do": "get",
       "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with",
       "expect": "expected/30-analytics-after-delete.json"
+    },
+    {
+      "name": "30a-analytics-all-time-after-delete",
+      "do": "get",
+      "request": "GET /v1/analytics?period=all_time&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/30a-analytics-all-time-after-delete.json"
     },
     {
       "name": "stale-feed",

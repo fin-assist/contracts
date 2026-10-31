@@ -35,12 +35,14 @@ enum TransferMode {
   TRANSFER_MODE_WITHOUT = 2;
 }
 
-// Тип календарного периода аналитики.
+// Тип периода аналитики: календарный или вся загруженная история.
 enum PeriodType {
   PERIOD_TYPE_UNSPECIFIED = 0;
   PERIOD_TYPE_MONTH = 1;
   PERIOD_TYPE_QUARTER = 2;
   PERIOD_TYPE_YEAR = 3;
+  // Вся загруженная история, точный ключ all_time; границы задаются покрытием выписок.
+  PERIOD_TYPE_ALL_TIME = 4;
 }
 
 // Полнота данных за период.
@@ -91,7 +93,7 @@ message OperationsFilter {
 // Параметры аналитики за период: тип периода, его ключ и режим учёта переводов.
 message AnalyticsParams {
   PeriodType period = 1;
-  // Точный ключ периода в формате `period`.
+  // Точный ключ периода в формате `period`; ALL_TIME — all_time.
   string period_key = 2;
   TransferMode transfer_mode = 3;
 }

@@ -16,6 +16,15 @@ BLOCK_DATA = {
 }
 
 
+def block_data_schema(block: dict):
+    """Select the exact known primitive version; never validate a new shape as an older one."""
+    if block.get("type") == "tile_group" and block.get("v", 1) == 2:
+        return "TileGroupDataV2"
+    if block.get("v", 1) == 1:
+        return BLOCK_DATA.get(block.get("type"))
+    return None
+
+
 class Coverage:
     def __init__(self, openapi_path: str):
         with open(openapi_path, encoding="utf-8") as f:
@@ -59,8 +68,8 @@ class Coverage:
         if "items" in schema:
             self._collect(schema["items"], f"{owner}[]", seen)
         if owner == "Block":
-            for t in sorted(self.data_types):
-                self._collect({"$ref": f"#/components/schemas/{BLOCK_DATA[t]}"}, BLOCK_DATA[t], seen)
+            for name in sorted(self.data_types):
+                self._collect({"$ref": f"#/components/schemas/{name}"}, name, seen)
 
     # ---- dynamic: fields with a value in the responses ----
 
@@ -78,10 +87,11 @@ class Coverage:
                 if instance.get(prop) is not None:
                     self.observed.add(f"{owner}.{prop}")
                     self._observe(sub, f"{owner}.{prop}", instance[prop])
-            if owner == "Block" and instance.get("type") in BLOCK_DATA and instance.get("data") is not None:
-                self.data_types.add(instance["type"])
-                name = BLOCK_DATA[instance["type"]]
-                self._observe({"$ref": f"#/components/schemas/{name}"}, name, instance["data"])
+            if owner == "Block" and instance.get("data") is not None:
+                name = block_data_schema(instance)
+                if name is not None:
+                    self.data_types.add(name)
+                    self._observe({"$ref": f"#/components/schemas/{name}"}, name, instance["data"])
         elif isinstance(instance, list) and "items" in schema:
             for el in instance:
                 self._observe(schema["items"], f"{owner}[]", el)

@@ -172,3 +172,8 @@ CI публикует разделы «Покрытие проекта» и «П
 (cd tools && go test -race -count=1 -coverpkg=./... -coverprofile=cover.out ./...)
 python3 scripts/coverage-diff.py --module-profile gen/go gen/go/cover.out --module-profile tools tools/cover.out --base origin/main
 ```
+
+FIN-409 расширяет аналитику периодом `all_time`/ключом `all_time`, действием выбора месяца у покрытых точек
+`monthly_chart` и согласуемым `tile_group@2` с группами итогов/дополнительных показателей. Без supports и для
+максимума1 сохраняется tile_group@1. Эталон проверяет обе версии, всю историю и выбор схемы data по type/v.
+Клиенты — FIN-398, FIN-400, FIN-403; сервисные PR ждут merge и неизменяемого gen/go-тега владельца.
