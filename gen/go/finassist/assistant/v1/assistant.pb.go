@@ -891,7 +891,7 @@ type Chip struct {
 	Filters *v1.OperationsFilter `protobuf:"bytes,3,opt,name=filters,proto3,oneof" json:"filters,omitempty"`
 	// Для ANALYTICS — только MONTH/QUARTER/YEAR. ALL_TIME запрещён для генерации, сохранения и выдачи чипов
 	// (поток, snapshot, история) до отдельного инкремента с согласованием возможностей клиента.
-	// Неизвестные/некорректные параметры делают ненажимаемым только этот переход; остальные данные сохраняются.
+	// Неизвестные/некорректные параметры — клиент пропускает только этот чип и продолжает показ ответа.
 	Params        *v1.AnalyticsParams `protobuf:"bytes,4,opt,name=params,proto3,oneof" json:"params,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
