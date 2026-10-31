@@ -343,3 +343,5 @@ FIN-409 adds the all_time period/key and producer snapshots, covered monthly-cha
 tile_group@2 sections. REST keeps tile_group@1 when supports is absent or its maximum is1. Reference fixtures
 include both versions and all_time; schema/coverage choose block data by type and version. Consumers are
 FIN-398/400/403; backend consumers wait for merge and an owner-created immutable gen/go tag.
+
+FIN-413 adds singleton rolling_year/rolling_quarter and optional MonthlyPoint.calculation_range for exact edge slices. Keep month/range calendar identity separate from the calculation interval; compose REST point.range from calculation_range and navigate by month. FIN-411 owns runtime/Android/mock after merge and an owner-created gen/go tag. Reference tests/fixtures cover clamps, coverage anchors, short history and gaps; docs/calc.md12 and docs/grpc-api.md define rollout.

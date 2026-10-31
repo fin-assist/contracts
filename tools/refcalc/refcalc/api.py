@@ -5,7 +5,7 @@ import datetime as dt
 from decimal import Decimal, InvalidOperation
 from typing import Optional
 
-from .analytics import Analytics, parse_supports, period_bounds
+from .analytics import Analytics, SINGLETONS, parse_supports, period_bounds
 from .ledger import Ledger, stable_id
 from .registry import OWN_TRANSFER, REFUND, TRANSFERS_NAME, UNCATEGORIZED, Registry
 from .util import add_months, day_of, end_of_day, iso, month_key, month_start, parse_iso, start_of_day
@@ -311,8 +311,9 @@ class Backend:
 
     def analytics(self, period: str = "month", date: Optional[str] = None, mode: str = "with",
                   supports: Optional[str] = None) -> dict:
-        if (period == "all_time" and date not in (None, "all_time")) or (period != "all_time" and date == "all_time"):
-            raise ApiError(400, "VALIDATION_ERROR")
+        if (period in SINGLETONS and date not in (None, period)) or (date in SINGLETONS and date != period):
+            raise ApiError(400, "VALIDATION_ERROR", [{"field": "date", "code": "INVALID_FORMAT",
+                                                     "message": "has invalid format"}])
         try:
             parse_supports(supports)
         except ValueError:

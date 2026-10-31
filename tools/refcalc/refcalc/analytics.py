@@ -4,6 +4,7 @@ Texts are plain placeholders: the fixtures do not compare them (README, «Пра
 """
 from __future__ import annotations
 
+import calendar
 import datetime as dt
 import re
 from fractions import Fraction
@@ -21,6 +22,8 @@ NOTABLE_MIN = 100_000
 SMALL_MIN_COUNT = 8
 SMALL_MAX_AVG = 50_000
 MONTHS_IN = {"month": 1, "quarter": 3, "year": 12}
+ROLLING_MONTHS = {"rolling_quarter": 3, "rolling_year": 12}
+SINGLETONS = {"all_time", *ROLLING_MONTHS}
 FEE_WORDS = {
     "комиссия", "комиссии", "комиссию", "комиссией", "комиссий", "комиссиям", "комиссиями", "комиссиях",
     "процент", "процента", "проценту", "процентом", "проценте", "проценты", "процентов", "процентам", "процентами",
@@ -59,6 +62,14 @@ def period_bounds(ptype: str, d: dt.date):
         return s, add_months(s, 3), f"{s.year:04d}-Q{(s.month - 1) // 3 + 1}"
     s = dt.date(d.year, 1, 1)
     return s, dt.date(d.year + 1, 1, 1), f"{s.year:04d}"
+
+
+def rolling_bounds(ptype: str, last: dt.date):
+    """Shift the exclusive end in calendar months, clamping the target day."""
+    end = last + dt.timedelta(days=1)
+    month = add_months(end, -ROLLING_MONTHS[ptype])
+    start = month.replace(day=min(end.day, calendar.monthrange(month.year, month.month)[1]))
+    return start, end, ptype
 
 
 def parse_key(key: str) -> dt.date:
@@ -100,6 +111,8 @@ class Analytics:
         return iso(end_of_day(last_day, self.zone))
 
     def periods_with_data(self, ptype: str) -> list:
+        if ptype in ROLLING_MONTHS:
+            return [] if self.cov.empty else [rolling_bounds(ptype, self.cov.last)]
         if ptype == "all_time":
             return [] if self.cov.empty else [(self.cov.first, self.cov.last + dt.timedelta(days=1), "all_time")]
         keys = []
@@ -110,6 +123,8 @@ class Analytics:
         return keys
 
     def coverage_of(self, ptype: str, start: dt.date, end: dt.date) -> str:
+        if ptype in ROLLING_MONTHS:
+            return "complete" if self.cov.count_days(start, end) == (end - start).days else "partial"
         if ptype == "all_time":
             return "partial" if self.cov.gaps_within(start, end) else "complete"
         return self.cov.coverage_of(start, end)
@@ -124,7 +139,7 @@ class Analytics:
         if not self.ledger.ops or self.cov.empty:
             return {"has_data": False}
         available = self.periods_with_data(ptype)
-        if date and ptype != "all_time":
+        if date and ptype not in SINGLETONS:
             start, end, key = period_bounds(ptype, parse_key(date))
         else:
             start, end, key = available[-1]
@@ -134,7 +149,7 @@ class Analytics:
         V = scope.visible()
         ops = scope.in_days(V, start, end)
         b = self.cov.bounds(start, end)
-        period = {"range": self.range(start, end), "is_current": ptype != "all_time" and start <= self.today < end,
+        period = {"range": self.range(start, end), "is_current": ptype not in SINGLETONS and start <= self.today < end,
                   "coverage": self.coverage_of(ptype, start, end),
                   "data_from": self.at(b[0]) if b else None, "data_to": self.data_to(start, end),
                   "gaps": [self.range(a, z) for a, z in self.cov.gaps_within(start, end)]}
@@ -146,7 +161,7 @@ class Analytics:
         if ptype == "month":
             blocks += [{"type": "heading", "v": 1, "data": {"text": "Регулярные платежи и заметные траты"}},
                        ctx.regular_payments(), *ctx.notable_spending(), ctx.bank_fees(), ctx.small_frequent()]
-        if ptype not in ("year", "all_time"):
+        if ptype != "year" and ptype not in SINGLETONS:
             blocks.append(ctx.balance(chart))
         if supported is not None:
             blocks = [block for block in blocks if block["v"] <= supported.get(block["type"], 0)]
@@ -313,7 +328,7 @@ class Ctx:
     # ---- monthly chart ----
 
     def chart_months(self) -> list:
-        if self.ptype == "all_time":
+        if self.ptype in SINGLETONS:
             out, month = [], month_start(self.start)
             while month < self.end:
                 out.append(month)
@@ -337,6 +352,15 @@ class Ctx:
             p["note"] = "неполный"
         return p
 
+    def rolling_point(self, m: dt.date, start: dt.date, end: dt.date, val) -> dict:
+        bounds = self.cov.bounds(start, end)
+        cov = "no_data" if bounds is None else (
+            "complete" if start == m and end == add_months(m, 1) and self.cov.full_month(m) else "partial")
+        point = {"range": self.a.range(start, end), "value": val, "coverage": cov}
+        if cov == "partial":
+            point.update(data_from=self.a.at(bounds[0]), data_to=self.a.data_to(start, end), note="неполный")
+        return point
+
     def full_previous(self) -> list:
         """Full previous periods of the same type, newest first, starting not before the first covered month."""
         out, s = [], self.start
@@ -355,7 +379,7 @@ class Ctx:
         previous quarters); year — the peak month and the total by months. Texts are placeholders."""
         notes = []
         has_peak = any(p["value"] is not None for p in points)
-        if self.ptype == "all_time":
+        if self.ptype in SINGLETONS:
             return [{"text": "пиковый месяц", "tone": "primary"}] if has_peak else []
         prev = add_months(self.start, -MONTHS_IN[self.ptype])
         if self.ptype == "month":
@@ -372,16 +396,19 @@ class Ctx:
 
     def monthly_chart(self) -> Optional[dict]:
         with_data = self.cov.months_with_data()
-        if self.ptype != "all_time" and len(with_data) == 1 and not self.cov.full_month(with_data[0]):
+        if self.ptype not in SINGLETONS and len(with_data) == 1 and not self.cov.full_month(with_data[0]):
             return None  # early state: no block (spec section 4)
         base = {"id": "monthly_chart", "type": "chart", "v": 1, "title": "Расходы по месяцам", "alt_text": "график"}
-        if self.ptype != "all_time" and len(with_data) < 2:
+        if self.ptype not in SINGLETONS and len(with_data) < 2:
             return {**base, "status": "locked", "lock": lock("need_months_with_data", 2, len(with_data))}
         points = []
         for m in self.chart_months():
             e = add_months(m, 1)
-            has = self.cov.has_data_month(m)
-            point = self.point(m, self.scope.expense(self.scope.in_days(self.V, m, e)) if has else None)
+            s, z = (max(m, self.start), min(e, self.end)) if self.ptype in ROLLING_MONTHS else (m, e)
+            bounds = self.cov.bounds(s, z)
+            has = bounds is not None
+            val = self.scope.expense(self.scope.in_days(self.V, s, z)) if has else None
+            point = self.rolling_point(m, s, z, val) if self.ptype in ROLLING_MONTHS else self.point(m, val)
             if has:
                 point["action"] = {"type": "select_analytics_period", "period": "month", "date": month_key(m)}
             points.append(point)

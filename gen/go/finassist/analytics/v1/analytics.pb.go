@@ -765,9 +765,15 @@ type MonthlyPoint struct {
 	// Доходы за месяц, копейки со знаком; отсутствует по тому же правилу.
 	IncomeMinor *int64 `protobuf:"varint,4,opt,name=income_minor,json=incomeMinor,proto3,oneof" json:"income_minor,omitempty"`
 	// Полнота данных месяца: с какого по какое число есть данные и каких дней нет.
-	Bounds        *v1.DataBounds `protobuf:"bytes,5,opt,name=bounds,proto3" json:"bounds,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Bounds *v1.DataBounds `protobuf:"bytes,5,opt,name=bounds,proto3" json:"bounds,omitempty"`
+	// Только для ROLLING_*: пересечение календарного месяца range с интервалом снимка.
+	// Суммы и bounds относятся только к этому пересечению; при отсутствии — ко всему range.
+	// Краевой отрезок всегда PARTIAL, даже если каждый его день покрыт; без покрытых дней — NO_DATA.
+	// analytics использует calculation_range как REST ChartPoint.range, а month — как ключ перехода
+	// к полному календарному месяцу. Нельзя расширять отрезок при композиции или считать суммы из месячных снимков.
+	CalculationRange *v1.TimeRange `protobuf:"bytes,6,opt,name=calculation_range,json=calculationRange,proto3,oneof" json:"calculation_range,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *MonthlyPoint) Reset() {
@@ -835,12 +841,19 @@ func (x *MonthlyPoint) GetBounds() *v1.DataBounds {
 	return nil
 }
 
+func (x *MonthlyPoint) GetCalculationRange() *v1.TimeRange {
+	if x != nil {
+		return x.CalculationRange
+	}
+	return nil
+}
+
 // Детали метрики monthly_chart — расходы, доходы и разница по месяцам. Сравнение с прошлым
 // периодом и «обычно» — отдельные метрики tiles.expense_comparison и tiles.expense_typical.
 type MonthlyChart struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Старые первыми. Для месяца — 6 точек, заканчивая выбранным; для квартала — его 3 месяца;
-	// для года — 12 месяцев.
+	// для года — 12 месяцев; для ROLLING_* — все пересекающие интервал месяцы, включая края (до 13/4).
 	Points        []*MonthlyPoint `protobuf:"bytes,1,rep,name=points,proto3" json:"points,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1374,7 +1387,7 @@ func (x *SmallFrequent) GetItems() []*SmallFrequentGroup {
 // Запрос аналитики за период.
 type GetAnalyticsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Тип периода: месяц, квартал, год или вся история. UNSPECIFIED = месяц.
+	// Тип периода: календарный, скользящий или вся история. UNSPECIFIED = месяц.
 	Period v1.PeriodType `protobuf:"varint,1,opt,name=period,proto3,enum=finassist.common.v1.PeriodType" json:"period,omitempty"`
 	// Какой период собрать. Ключ календарного периода в поясе профиля: «2026-09» (месяц),
 	// «2026-Q3» (квартал), «2026» (год). Допускается ключ точнее, чем period: при смене типа
@@ -1382,6 +1395,10 @@ type GetAnalyticsRequest struct {
 	// квартал, в который входит сентябрь, и возвращает точный ключ «2026-Q3» в params.period_key.
 	// Не передан — последний период с данными. Для ALL_TIME допустим только отсутствующий ключ или all_time;
 	// в ответе ключ all_time, границы — все покрытые дни, is_current=false, соседей нет.
+	// Для ROLLING_YEAR/ROLLING_QUARTER ключ отсутствует или равен rolling_year/rolling_quarter.
+	// Конец — начало дня после последнего покрытого дня; начало — сдвиг конца на 12/3 месяца
+	// с ограничением дня концом целевого месяца в time_zone. is_current=false, соседей нет.
+	// Любое смешение singleton-ключей/типов или календарного ключа — VALIDATION_ERROR (date, INVALID_FORMAT).
 	PeriodKey *string `protobuf:"bytes,2,opt,name=period_key,json=periodKey,proto3,oneof" json:"period_key,omitempty"`
 	// Режим учёта переводов:
 	// WITH — переводы людям входят в расходы и доходы; WITHOUT — исключаются. Переводы между
@@ -1475,9 +1492,9 @@ func (x *GetAnalyticsRequest) GetExperiments() map[string]string {
 // Выбранный период и полнота данных в нём.
 type PeriodInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Границы календарного периода в поясе профиля; ALL_TIME — оболочка всех покрытых дней.
+	// Границы в поясе профиля; ALL_TIME — оболочка покрытия, ROLLING_* — полный запрошенный интервал.
 	Range *v1.TimeRange `protobuf:"bytes,1,opt,name=range,proto3" json:"range,omitempty"`
-	// Период ещё идёт (текущий месяц, квартал, год) — для него есть прогноз. Для ALL_TIME всегда false.
+	// Период ещё идёт (текущий месяц, квартал, год) — для него есть прогноз. Для ALL_TIME/ROLLING_* всегда false.
 	IsCurrent bool `protobuf:"varint,2,opt,name=is_current,json=isCurrent,proto3" json:"is_current,omitempty"`
 	// Полнота данных внутри периода: COMPLETE, PARTIAL (с границами и пропусками в данных)
 	// или NO_DATA (возможно при явном period_key).
@@ -2086,7 +2103,7 @@ func (x *GetAnalyticsResponse) GetDataRevisions() []*v1.DataRevision {
 // Запрос списка периодов с данными.
 type ListPeriodsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Тип периодов: месяцы, кварталы или годы. UNSPECIFIED = месяц.
+	// Тип периодов: календарный либо singleton ALL_TIME/ROLLING_YEAR/ROLLING_QUARTER. UNSPECIFIED = месяц.
 	Period v1.PeriodType `protobuf:"varint,1,opt,name=period,proto3,enum=finassist.common.v1.PeriodType" json:"period,omitempty"`
 	// Чьи периоды. Только для системного вызова (assistant); при токене пользователя пусто.
 	UserId        *string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3,oneof" json:"user_id,omitempty"`
@@ -2141,7 +2158,7 @@ func (x *ListPeriodsRequest) GetUserId() string {
 // Период с данными.
 type PeriodItem struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Ключ периода («2026-09», «2026-Q3», «2026») — значение для period_key в GetAnalytics.
+	// Точный ключ запрошенного типа, включая singleton; значение period_key в GetAnalytics.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// Границы периода; из них клиент формирует название периода.
 	Range *v1.TimeRange `protobuf:"bytes,2,opt,name=range,proto3" json:"range,omitempty"`
@@ -2355,13 +2372,13 @@ func (x *MetricSnapshot) GetMetric() *Metric {
 type PeriodSnapshot struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Period v1.PeriodType          `protobuf:"varint,1,opt,name=period,proto3,enum=finassist.common.v1.PeriodType" json:"period,omitempty"`
-	// Ключ периода («2026-09», «2026-Q3», «2026», «all_time»).
+	// Ключ периода («2026-09», «2026-Q3», «2026», «all_time», «rolling_year», «rolling_quarter»).
 	PeriodKey string `protobuf:"bytes,2,opt,name=period_key,json=periodKey,proto3" json:"period_key,omitempty"`
 	// Режим переводов, для которого посчитан снимок.
 	TransferMode v1.TransferMode `protobuf:"varint,3,opt,name=transfer_mode,json=transferMode,proto3,enum=finassist.common.v1.TransferMode" json:"transfer_mode,omitempty"`
 	// Границы периода в поясе профиля.
 	Range *v1.TimeRange `protobuf:"bytes,4,opt,name=range,proto3" json:"range,omitempty"`
-	// Полнота данных в периоде. Для ALL_TIME COMPLETE при отсутствии внутренних пропусков независимо от today.
+	// Полнота: для ALL_TIME/ROLLING_* COMPLETE при покрытии каждого дня range независимо от today.
 	Bounds *v1.DataBounds `protobuf:"bytes,5,opt,name=bounds,proto3" json:"bounds,omitempty"`
 	// Незакрытых непрочитанных строк выписок за период (FIN-79).
 	UnreadLinesCount int32 `protobuf:"varint,6,opt,name=unread_lines_count,json=unreadLinesCount,proto3" json:"unread_lines_count,omitempty"`
@@ -2480,9 +2497,9 @@ func (x *PeriodSnapshot) GetDataRevisions() []*v1.DataRevision {
 // больше нет (загрузка удалена). Удаляются снимки обоих режимов переводов.
 type PeriodRef struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Тип периода: месяц, квартал, год или вся история.
+	// Тип периода: календарный, скользящий или вся история.
 	Period v1.PeriodType `protobuf:"varint,1,opt,name=period,proto3,enum=finassist.common.v1.PeriodType" json:"period,omitempty"`
-	// Ключ периода в формате типа («2026-09», «2026-Q3», «2026», «all_time»).
+	// Ключ периода в формате типа («2026-09», «2026-Q3», «2026», «all_time», «rolling_year», «rolling_quarter»).
 	PeriodKey     string `protobuf:"bytes,2,opt,name=period_key,json=periodKey,proto3" json:"period_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2892,15 +2909,17 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\x05_noteB\b\n" +
 	"\x06_share\"Q\n" +
 	"\x11CategoryBreakdown\x12<\n" +
-	"\x05items\x18\x01 \x03(\v2&.finassist.analytics.v1.CategoryAmountR\x05items\"\x88\x02\n" +
+	"\x05items\x18\x01 \x03(\v2&.finassist.analytics.v1.CategoryAmountR\x05items\"\xf0\x02\n" +
 	"\fMonthlyPoint\x12\x14\n" +
 	"\x05month\x18\x01 \x01(\tR\x05month\x124\n" +
 	"\x05range\x18\x02 \x01(\v2\x1e.finassist.common.v1.TimeRangeR\x05range\x12(\n" +
 	"\rexpense_minor\x18\x03 \x01(\x03H\x00R\fexpenseMinor\x88\x01\x01\x12&\n" +
 	"\fincome_minor\x18\x04 \x01(\x03H\x01R\vincomeMinor\x88\x01\x01\x127\n" +
-	"\x06bounds\x18\x05 \x01(\v2\x1f.finassist.common.v1.DataBoundsR\x06boundsB\x10\n" +
+	"\x06bounds\x18\x05 \x01(\v2\x1f.finassist.common.v1.DataBoundsR\x06bounds\x12P\n" +
+	"\x11calculation_range\x18\x06 \x01(\v2\x1e.finassist.common.v1.TimeRangeH\x02R\x10calculationRange\x88\x01\x01B\x10\n" +
 	"\x0e_expense_minorB\x0f\n" +
-	"\r_income_minor\"L\n" +
+	"\r_income_minorB\x14\n" +
+	"\x12_calculation_range\"L\n" +
 	"\fMonthlyChart\x12<\n" +
 	"\x06points\x18\x01 \x03(\v2$.finassist.analytics.v1.MonthlyPointR\x06points\"\x92\x02\n" +
 	"\x0eRegularPayment\x12\x0e\n" +
@@ -3177,80 +3196,81 @@ var file_finassist_analytics_v1_analytics_proto_depIdxs = []int32{
 	6,  // 16: finassist.analytics.v1.CategoryBreakdown.items:type_name -> finassist.analytics.v1.CategoryAmount
 	35, // 17: finassist.analytics.v1.MonthlyPoint.range:type_name -> finassist.common.v1.TimeRange
 	37, // 18: finassist.analytics.v1.MonthlyPoint.bounds:type_name -> finassist.common.v1.DataBounds
-	8,  // 19: finassist.analytics.v1.MonthlyChart.points:type_name -> finassist.analytics.v1.MonthlyPoint
-	36, // 20: finassist.analytics.v1.RegularPayment.filters:type_name -> finassist.common.v1.OperationsFilter
-	10, // 21: finassist.analytics.v1.RegularPayments.items:type_name -> finassist.analytics.v1.RegularPayment
-	36, // 22: finassist.analytics.v1.NotableSpendingItem.filters:type_name -> finassist.common.v1.OperationsFilter
-	12, // 23: finassist.analytics.v1.NotableSpending.items:type_name -> finassist.analytics.v1.NotableSpendingItem
-	36, // 24: finassist.analytics.v1.SmallFrequentGroup.filters:type_name -> finassist.common.v1.OperationsFilter
-	15, // 25: finassist.analytics.v1.SmallFrequent.items:type_name -> finassist.analytics.v1.SmallFrequentGroup
-	38, // 26: finassist.analytics.v1.GetAnalyticsRequest.period:type_name -> finassist.common.v1.PeriodType
-	39, // 27: finassist.analytics.v1.GetAnalyticsRequest.transfer_mode:type_name -> finassist.common.v1.TransferMode
-	40, // 28: finassist.analytics.v1.GetAnalyticsRequest.supports:type_name -> finassist.common.v1.BlockSupport
-	33, // 29: finassist.analytics.v1.GetAnalyticsRequest.experiments:type_name -> finassist.analytics.v1.GetAnalyticsRequest.ExperimentsEntry
-	35, // 30: finassist.analytics.v1.PeriodInfo.range:type_name -> finassist.common.v1.TimeRange
-	37, // 31: finassist.analytics.v1.PeriodInfo.bounds:type_name -> finassist.common.v1.DataBounds
-	4,  // 32: finassist.analytics.v1.Tiles.expense:type_name -> finassist.analytics.v1.Metric
-	4,  // 33: finassist.analytics.v1.Tiles.expense_comparison:type_name -> finassist.analytics.v1.Metric
-	4,  // 34: finassist.analytics.v1.Tiles.expense_typical:type_name -> finassist.analytics.v1.Metric
-	4,  // 35: finassist.analytics.v1.Tiles.income:type_name -> finassist.analytics.v1.Metric
-	4,  // 36: finassist.analytics.v1.Tiles.balance:type_name -> finassist.analytics.v1.Metric
-	4,  // 37: finassist.analytics.v1.Tiles.daily_expense:type_name -> finassist.analytics.v1.Metric
-	4,  // 38: finassist.analytics.v1.Tiles.daily_expense_comparison:type_name -> finassist.analytics.v1.Metric
-	4,  // 39: finassist.analytics.v1.Tiles.forecast:type_name -> finassist.analytics.v1.Metric
-	4,  // 40: finassist.analytics.v1.Insights.regular_payments:type_name -> finassist.analytics.v1.Metric
-	4,  // 41: finassist.analytics.v1.Insights.notable_spending:type_name -> finassist.analytics.v1.Metric
-	4,  // 42: finassist.analytics.v1.Insights.bank_fees:type_name -> finassist.analytics.v1.Metric
-	4,  // 43: finassist.analytics.v1.Insights.small_frequent:type_name -> finassist.analytics.v1.Metric
-	34, // 44: finassist.analytics.v1.ScreenState.last_operation_at:type_name -> google.protobuf.Timestamp
-	34, // 45: finassist.analytics.v1.ScreenState.data_from:type_name -> google.protobuf.Timestamp
-	34, // 46: finassist.analytics.v1.ScreenState.data_to:type_name -> google.protobuf.Timestamp
-	34, // 47: finassist.analytics.v1.ScreenState.calculated_at:type_name -> google.protobuf.Timestamp
-	41, // 48: finassist.analytics.v1.GetAnalyticsResponse.params:type_name -> finassist.common.v1.AnalyticsParams
-	18, // 49: finassist.analytics.v1.GetAnalyticsResponse.period:type_name -> finassist.analytics.v1.PeriodInfo
-	19, // 50: finassist.analytics.v1.GetAnalyticsResponse.navigation:type_name -> finassist.analytics.v1.Navigation
-	20, // 51: finassist.analytics.v1.GetAnalyticsResponse.tiles:type_name -> finassist.analytics.v1.Tiles
-	4,  // 52: finassist.analytics.v1.GetAnalyticsResponse.expense_categories:type_name -> finassist.analytics.v1.Metric
-	4,  // 53: finassist.analytics.v1.GetAnalyticsResponse.income_categories:type_name -> finassist.analytics.v1.Metric
-	4,  // 54: finassist.analytics.v1.GetAnalyticsResponse.monthly_chart:type_name -> finassist.analytics.v1.Metric
-	21, // 55: finassist.analytics.v1.GetAnalyticsResponse.insights:type_name -> finassist.analytics.v1.Insights
-	22, // 56: finassist.analytics.v1.GetAnalyticsResponse.state:type_name -> finassist.analytics.v1.ScreenState
-	42, // 57: finassist.analytics.v1.GetAnalyticsResponse.blocks:type_name -> finassist.common.v1.Block
-	43, // 58: finassist.analytics.v1.GetAnalyticsResponse.data_revisions:type_name -> finassist.common.v1.DataRevision
-	38, // 59: finassist.analytics.v1.ListPeriodsRequest.period:type_name -> finassist.common.v1.PeriodType
-	35, // 60: finassist.analytics.v1.PeriodItem.range:type_name -> finassist.common.v1.TimeRange
-	44, // 61: finassist.analytics.v1.PeriodItem.coverage:type_name -> finassist.common.v1.Coverage
-	25, // 62: finassist.analytics.v1.ListPeriodsResponse.periods:type_name -> finassist.analytics.v1.PeriodItem
-	43, // 63: finassist.analytics.v1.ListPeriodsResponse.data_revisions:type_name -> finassist.common.v1.DataRevision
-	4,  // 64: finassist.analytics.v1.MetricSnapshot.metric:type_name -> finassist.analytics.v1.Metric
-	38, // 65: finassist.analytics.v1.PeriodSnapshot.period:type_name -> finassist.common.v1.PeriodType
-	39, // 66: finassist.analytics.v1.PeriodSnapshot.transfer_mode:type_name -> finassist.common.v1.TransferMode
-	35, // 67: finassist.analytics.v1.PeriodSnapshot.range:type_name -> finassist.common.v1.TimeRange
-	37, // 68: finassist.analytics.v1.PeriodSnapshot.bounds:type_name -> finassist.common.v1.DataBounds
-	27, // 69: finassist.analytics.v1.PeriodSnapshot.metrics:type_name -> finassist.analytics.v1.MetricSnapshot
-	34, // 70: finassist.analytics.v1.PeriodSnapshot.calculated_at:type_name -> google.protobuf.Timestamp
-	43, // 71: finassist.analytics.v1.PeriodSnapshot.data_revisions:type_name -> finassist.common.v1.DataRevision
-	38, // 72: finassist.analytics.v1.PeriodRef.period:type_name -> finassist.common.v1.PeriodType
-	34, // 73: finassist.analytics.v1.UserDataState.data_from:type_name -> google.protobuf.Timestamp
-	34, // 74: finassist.analytics.v1.UserDataState.data_to:type_name -> google.protobuf.Timestamp
-	34, // 75: finassist.analytics.v1.UserDataState.last_operation_at:type_name -> google.protobuf.Timestamp
-	34, // 76: finassist.analytics.v1.UserDataState.stale_after:type_name -> google.protobuf.Timestamp
-	34, // 77: finassist.analytics.v1.UserDataState.calculated_at:type_name -> google.protobuf.Timestamp
-	43, // 78: finassist.analytics.v1.UserDataState.data_revisions:type_name -> finassist.common.v1.DataRevision
-	30, // 79: finassist.analytics.v1.UpsertUserMetricsRequest.state:type_name -> finassist.analytics.v1.UserDataState
-	28, // 80: finassist.analytics.v1.UpsertUserMetricsRequest.periods:type_name -> finassist.analytics.v1.PeriodSnapshot
-	29, // 81: finassist.analytics.v1.UpsertUserMetricsRequest.removed_periods:type_name -> finassist.analytics.v1.PeriodRef
-	17, // 82: finassist.analytics.v1.AnalyticsService.GetAnalytics:input_type -> finassist.analytics.v1.GetAnalyticsRequest
-	24, // 83: finassist.analytics.v1.AnalyticsService.ListPeriods:input_type -> finassist.analytics.v1.ListPeriodsRequest
-	31, // 84: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:input_type -> finassist.analytics.v1.UpsertUserMetricsRequest
-	23, // 85: finassist.analytics.v1.AnalyticsService.GetAnalytics:output_type -> finassist.analytics.v1.GetAnalyticsResponse
-	26, // 86: finassist.analytics.v1.AnalyticsService.ListPeriods:output_type -> finassist.analytics.v1.ListPeriodsResponse
-	32, // 87: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:output_type -> finassist.analytics.v1.UpsertUserMetricsResponse
-	85, // [85:88] is the sub-list for method output_type
-	82, // [82:85] is the sub-list for method input_type
-	82, // [82:82] is the sub-list for extension type_name
-	82, // [82:82] is the sub-list for extension extendee
-	0,  // [0:82] is the sub-list for field type_name
+	35, // 19: finassist.analytics.v1.MonthlyPoint.calculation_range:type_name -> finassist.common.v1.TimeRange
+	8,  // 20: finassist.analytics.v1.MonthlyChart.points:type_name -> finassist.analytics.v1.MonthlyPoint
+	36, // 21: finassist.analytics.v1.RegularPayment.filters:type_name -> finassist.common.v1.OperationsFilter
+	10, // 22: finassist.analytics.v1.RegularPayments.items:type_name -> finassist.analytics.v1.RegularPayment
+	36, // 23: finassist.analytics.v1.NotableSpendingItem.filters:type_name -> finassist.common.v1.OperationsFilter
+	12, // 24: finassist.analytics.v1.NotableSpending.items:type_name -> finassist.analytics.v1.NotableSpendingItem
+	36, // 25: finassist.analytics.v1.SmallFrequentGroup.filters:type_name -> finassist.common.v1.OperationsFilter
+	15, // 26: finassist.analytics.v1.SmallFrequent.items:type_name -> finassist.analytics.v1.SmallFrequentGroup
+	38, // 27: finassist.analytics.v1.GetAnalyticsRequest.period:type_name -> finassist.common.v1.PeriodType
+	39, // 28: finassist.analytics.v1.GetAnalyticsRequest.transfer_mode:type_name -> finassist.common.v1.TransferMode
+	40, // 29: finassist.analytics.v1.GetAnalyticsRequest.supports:type_name -> finassist.common.v1.BlockSupport
+	33, // 30: finassist.analytics.v1.GetAnalyticsRequest.experiments:type_name -> finassist.analytics.v1.GetAnalyticsRequest.ExperimentsEntry
+	35, // 31: finassist.analytics.v1.PeriodInfo.range:type_name -> finassist.common.v1.TimeRange
+	37, // 32: finassist.analytics.v1.PeriodInfo.bounds:type_name -> finassist.common.v1.DataBounds
+	4,  // 33: finassist.analytics.v1.Tiles.expense:type_name -> finassist.analytics.v1.Metric
+	4,  // 34: finassist.analytics.v1.Tiles.expense_comparison:type_name -> finassist.analytics.v1.Metric
+	4,  // 35: finassist.analytics.v1.Tiles.expense_typical:type_name -> finassist.analytics.v1.Metric
+	4,  // 36: finassist.analytics.v1.Tiles.income:type_name -> finassist.analytics.v1.Metric
+	4,  // 37: finassist.analytics.v1.Tiles.balance:type_name -> finassist.analytics.v1.Metric
+	4,  // 38: finassist.analytics.v1.Tiles.daily_expense:type_name -> finassist.analytics.v1.Metric
+	4,  // 39: finassist.analytics.v1.Tiles.daily_expense_comparison:type_name -> finassist.analytics.v1.Metric
+	4,  // 40: finassist.analytics.v1.Tiles.forecast:type_name -> finassist.analytics.v1.Metric
+	4,  // 41: finassist.analytics.v1.Insights.regular_payments:type_name -> finassist.analytics.v1.Metric
+	4,  // 42: finassist.analytics.v1.Insights.notable_spending:type_name -> finassist.analytics.v1.Metric
+	4,  // 43: finassist.analytics.v1.Insights.bank_fees:type_name -> finassist.analytics.v1.Metric
+	4,  // 44: finassist.analytics.v1.Insights.small_frequent:type_name -> finassist.analytics.v1.Metric
+	34, // 45: finassist.analytics.v1.ScreenState.last_operation_at:type_name -> google.protobuf.Timestamp
+	34, // 46: finassist.analytics.v1.ScreenState.data_from:type_name -> google.protobuf.Timestamp
+	34, // 47: finassist.analytics.v1.ScreenState.data_to:type_name -> google.protobuf.Timestamp
+	34, // 48: finassist.analytics.v1.ScreenState.calculated_at:type_name -> google.protobuf.Timestamp
+	41, // 49: finassist.analytics.v1.GetAnalyticsResponse.params:type_name -> finassist.common.v1.AnalyticsParams
+	18, // 50: finassist.analytics.v1.GetAnalyticsResponse.period:type_name -> finassist.analytics.v1.PeriodInfo
+	19, // 51: finassist.analytics.v1.GetAnalyticsResponse.navigation:type_name -> finassist.analytics.v1.Navigation
+	20, // 52: finassist.analytics.v1.GetAnalyticsResponse.tiles:type_name -> finassist.analytics.v1.Tiles
+	4,  // 53: finassist.analytics.v1.GetAnalyticsResponse.expense_categories:type_name -> finassist.analytics.v1.Metric
+	4,  // 54: finassist.analytics.v1.GetAnalyticsResponse.income_categories:type_name -> finassist.analytics.v1.Metric
+	4,  // 55: finassist.analytics.v1.GetAnalyticsResponse.monthly_chart:type_name -> finassist.analytics.v1.Metric
+	21, // 56: finassist.analytics.v1.GetAnalyticsResponse.insights:type_name -> finassist.analytics.v1.Insights
+	22, // 57: finassist.analytics.v1.GetAnalyticsResponse.state:type_name -> finassist.analytics.v1.ScreenState
+	42, // 58: finassist.analytics.v1.GetAnalyticsResponse.blocks:type_name -> finassist.common.v1.Block
+	43, // 59: finassist.analytics.v1.GetAnalyticsResponse.data_revisions:type_name -> finassist.common.v1.DataRevision
+	38, // 60: finassist.analytics.v1.ListPeriodsRequest.period:type_name -> finassist.common.v1.PeriodType
+	35, // 61: finassist.analytics.v1.PeriodItem.range:type_name -> finassist.common.v1.TimeRange
+	44, // 62: finassist.analytics.v1.PeriodItem.coverage:type_name -> finassist.common.v1.Coverage
+	25, // 63: finassist.analytics.v1.ListPeriodsResponse.periods:type_name -> finassist.analytics.v1.PeriodItem
+	43, // 64: finassist.analytics.v1.ListPeriodsResponse.data_revisions:type_name -> finassist.common.v1.DataRevision
+	4,  // 65: finassist.analytics.v1.MetricSnapshot.metric:type_name -> finassist.analytics.v1.Metric
+	38, // 66: finassist.analytics.v1.PeriodSnapshot.period:type_name -> finassist.common.v1.PeriodType
+	39, // 67: finassist.analytics.v1.PeriodSnapshot.transfer_mode:type_name -> finassist.common.v1.TransferMode
+	35, // 68: finassist.analytics.v1.PeriodSnapshot.range:type_name -> finassist.common.v1.TimeRange
+	37, // 69: finassist.analytics.v1.PeriodSnapshot.bounds:type_name -> finassist.common.v1.DataBounds
+	27, // 70: finassist.analytics.v1.PeriodSnapshot.metrics:type_name -> finassist.analytics.v1.MetricSnapshot
+	34, // 71: finassist.analytics.v1.PeriodSnapshot.calculated_at:type_name -> google.protobuf.Timestamp
+	43, // 72: finassist.analytics.v1.PeriodSnapshot.data_revisions:type_name -> finassist.common.v1.DataRevision
+	38, // 73: finassist.analytics.v1.PeriodRef.period:type_name -> finassist.common.v1.PeriodType
+	34, // 74: finassist.analytics.v1.UserDataState.data_from:type_name -> google.protobuf.Timestamp
+	34, // 75: finassist.analytics.v1.UserDataState.data_to:type_name -> google.protobuf.Timestamp
+	34, // 76: finassist.analytics.v1.UserDataState.last_operation_at:type_name -> google.protobuf.Timestamp
+	34, // 77: finassist.analytics.v1.UserDataState.stale_after:type_name -> google.protobuf.Timestamp
+	34, // 78: finassist.analytics.v1.UserDataState.calculated_at:type_name -> google.protobuf.Timestamp
+	43, // 79: finassist.analytics.v1.UserDataState.data_revisions:type_name -> finassist.common.v1.DataRevision
+	30, // 80: finassist.analytics.v1.UpsertUserMetricsRequest.state:type_name -> finassist.analytics.v1.UserDataState
+	28, // 81: finassist.analytics.v1.UpsertUserMetricsRequest.periods:type_name -> finassist.analytics.v1.PeriodSnapshot
+	29, // 82: finassist.analytics.v1.UpsertUserMetricsRequest.removed_periods:type_name -> finassist.analytics.v1.PeriodRef
+	17, // 83: finassist.analytics.v1.AnalyticsService.GetAnalytics:input_type -> finassist.analytics.v1.GetAnalyticsRequest
+	24, // 84: finassist.analytics.v1.AnalyticsService.ListPeriods:input_type -> finassist.analytics.v1.ListPeriodsRequest
+	31, // 85: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:input_type -> finassist.analytics.v1.UpsertUserMetricsRequest
+	23, // 86: finassist.analytics.v1.AnalyticsService.GetAnalytics:output_type -> finassist.analytics.v1.GetAnalyticsResponse
+	26, // 87: finassist.analytics.v1.AnalyticsService.ListPeriods:output_type -> finassist.analytics.v1.ListPeriodsResponse
+	32, // 88: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:output_type -> finassist.analytics.v1.UpsertUserMetricsResponse
+	86, // [86:89] is the sub-list for method output_type
+	83, // [83:86] is the sub-list for method input_type
+	83, // [83:83] is the sub-list for extension type_name
+	83, // [83:83] is the sub-list for extension extendee
+	0,  // [0:83] is the sub-list for field type_name
 }
 
 func init() { file_finassist_analytics_v1_analytics_proto_init() }

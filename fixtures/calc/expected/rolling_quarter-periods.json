@@ -1,0 +1,12 @@
+{
+  "periods": [
+    {
+      "key": "rolling_quarter",
+      "range": {
+        "from": "2026-07-31T00:00:00+03:00",
+        "to": "2026-10-31T00:00:00+03:00"
+      },
+      "coverage": "partial"
+    }
+  ]
+}
