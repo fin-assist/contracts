@@ -156,13 +156,14 @@ class Analytics:
         ctx = Ctx(self, ptype, start, end, key, mode, scope, V, ops, period)
         supported = parse_supports(supports)
         blocks = ctx.tiles_block(2 if supported is not None and supported.get("tile_group", 0) >= 2 else 1)
-        chart = ctx.monthly_chart()
-        blocks = [blocks] + ([chart] if chart else []) + [ctx.expense_categories(), ctx.income_categories()]
+        selected_points = ctx.selected_points()
+        chart = ctx.monthly_chart(selected_points)
+        blocks = [blocks, chart, ctx.expense_categories(), ctx.income_categories()]
         if ptype == "month":
             blocks += [{"type": "heading", "v": 1, "data": {"text": "Регулярные платежи и заметные траты"}},
                        ctx.regular_payments(), *ctx.notable_spending(), ctx.bank_fees(), ctx.small_frequent()]
         if ptype != "year" and ptype not in SINGLETONS:
-            blocks.append(ctx.balance(chart))
+            blocks.append(ctx.balance(selected_points))
         if supported is not None:
             blocks = [block for block in blocks if block["v"] <= supported.get(block["type"], 0)]
         unread = sum(1 for _, line in self.ledger.open_unread()
@@ -236,7 +237,8 @@ class Ctx:
         tiles.append(expense)
         n = max(1, self.cov.count_days(self.start, min(self.end, self.today + dt.timedelta(days=1))))
         tiles.append({"id": "daily_expense", "title": "Расходы в день", "status": "ready", **value(tdiv(self.E, n)),
-                      "caption": "сравнение"})
+                      "caption": "сравнение",
+                      "help_text": "Средние расходы по покрытым дням не позже сегодня; пропуски не учитываются"})
         tiles.append({"id": "income", "title": "Доходы", "status": "ready", **value(self.I), "show_plus": True,
                       "action": self.open(self.filt(kind="income"))})
         if self.period["is_current"] and not self.a.stale():
@@ -247,7 +249,6 @@ class Ctx:
             by_id["expense"]["title"] = "Расходы за период"
             by_id["income"]["title"] = "Доходы за период"
             by_id["daily_expense"]["title"] = "Средние расходы в день"
-            by_id["daily_expense"]["caption"] = "По дням с данными не позже сегодня; пропуски не учитываются"
             data = {"groups": [{"tiles": [by_id[key] for key in ("expense", "income", "balance")]},
                                {"title": "Дополнительные показатели", "tiles": [by_id[key] for key in
                                 ("daily_expense", "forecast") if key in by_id]}]}
@@ -255,7 +256,11 @@ class Ctx:
                 "data": data}
 
     def forecast(self) -> dict:
-        t = {"id": "forecast", "title": "Прогноз расходов"}
+        t = {"id": "forecast", "title": "Прогноз расходов на год" if self.ptype == "year" else "Прогноз расходов"}
+        if self.ptype == "year":
+            t["help_text"] = ("Это оценка расходов за весь год. К расходам с начала года добавляем прогноз на оставшиеся дни "
+                              "по средним дневным расходам за последние 12 полных месяцев загруженной истории.")
+        caption = f"К концу {self.start.year} года" if self.ptype == "year" else "к концу периода"
         D = self.bounds[1] if self.bounds else None
         if self.ptype == "month":
             if self.today.day < FORECAST_FROM_DAY:
@@ -269,15 +274,16 @@ class Ctx:
         full = sorted(self.cov.full_months(), reverse=True)
         if len(full) < required:
             locked = lock("need_full_months", required, len(full))
-            locked["text"] = self.forecast_basis_text(required, full)
-            return {**t, "status": "locked", "lock": locked}
+            locked["text"] = f"Нужно {required} полных месяцев, есть {len(full)}"
+            t["help_text"] = " ".join(filter(None, (t.get("help_text"), self.forecast_basis_text(required, full))))
+            return {**t, "status": "locked", "lock": locked, "caption": caption}
         base = full[:required]
         e_base = sum(self.scope.expense(self.scope.in_days(self.V, m, add_months(m, 1))) for m in base)
         d_base = sum((add_months(m, 1) - m).days for m in base)
         rem_from = D + dt.timedelta(days=1) if D else self.start
         R = max(0, (self.end - rem_from).days)
         return {**t, "status": "ready", **value(self.E + round_half_up(Fraction(e_base * R, d_base))), "approx": True,
-                "caption": "к концу периода"}
+                "caption": caption}
 
     def forecast_basis_text(self, required: int, full: list) -> str:
         """Explain union coverage without inferring continuity from its endpoints."""
@@ -394,13 +400,10 @@ class Ctx:
             notes.append({"text": "обычно", "tone": "muted"})
         return notes
 
-    def monthly_chart(self) -> Optional[dict]:
-        with_data = self.cov.months_with_data()
-        if self.ptype not in SINGLETONS and len(with_data) == 1 and not self.cov.full_month(with_data[0]):
-            return None  # early state: no block (spec section 4)
-        base = {"id": "monthly_chart", "type": "chart", "v": 1, "title": "Расходы по месяцам", "alt_text": "график"}
-        if self.ptype not in SINGLETONS and len(with_data) < 2:
-            return {**base, "status": "locked", "lock": lock("need_months_with_data", 2, len(with_data))}
+    def selected_points(self) -> Optional[list]:
+        """Selected-period slices for notes and the separate calendar balance chart."""
+        if self.ptype not in SINGLETONS and len(self.cov.months_with_data()) < 2:
+            return None
         points = []
         for m in self.chart_months():
             e = add_months(m, 1)
@@ -412,14 +415,38 @@ class Ctx:
             if has:
                 point["action"] = {"type": "select_analytics_period", "period": "month", "date": month_key(m)}
             points.append(point)
-        data = {"kind": "bar", "value_kind": "amount", "points": points, "notes": self.chart_notes(points)}
-        if self.highlight() is not None:
-            data["highlight_index"] = self.highlight()
-        return {**base, "status": "ready", "data": data}
+        return points
 
-    def balance(self, chart: Optional[dict]) -> dict:
+    def monthly_chart(self, selected: Optional[list]) -> dict:
+        """Navigate whole calendar history while notes keep the selected-period facts."""
         points = []
-        if chart and chart.get("status") == "ready":
+        month = month_start(self.cov.first)
+        while month <= month_start(self.cov.last):
+            end = add_months(month, 1)
+            covered = self.cov.bounds(month, end) is not None
+            amount = self.scope.expense(self.scope.in_days(self.V, month, end)) if covered else None
+            point = self.point(month, amount)
+            if covered:
+                point["action"] = {"type": "select_analytics_period", "period": "month", "date": month_key(month)}
+            points.append(point)
+            month = end
+        notes = self.chart_notes(selected) if selected is not None else []
+        data = {"kind": "bar", "value_kind": "amount", "points": points,
+                "notes": [{**note, "text": f"За выбранный период {self.key}: {note['text']}"} for note in notes]}
+        if self.ptype == "month":
+            highlight = next((i for i, p in enumerate(points)
+                             if p["range"]["from"] == self.a.at(self.month)), None)
+            if highlight is not None:
+                data["highlight_index"] = highlight
+        return {"id": "monthly_chart", "type": "chart", "v": 1, "title": "Расходы по месяцам",
+                "alt_text": "Расходы по месяцам всей загруженной истории", "status": "ready", "data": data,
+                "help_text": "Столбики показывают полные календарные месяцы всей загруженной истории. "
+                             "Нажмите на месяц с данными, чтобы открыть его аналитику. "
+                             "Итоги и выводы экрана относятся к выбранному периоду."}
+
+    def balance(self, selected: Optional[list]) -> dict:
+        points = []
+        if selected is not None:
             for m in self.chart_months():
                 e = add_months(m, 1)
                 ms = self.scope.in_days(self.V, m, e)

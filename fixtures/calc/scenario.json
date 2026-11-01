@@ -3,6 +3,24 @@
   "time_zone": "Europe/Moscow",
   "steps": [
     {
+      "name": "fin418-config-first",
+      "do": "get",
+      "request": "GET /v1/statements/config",
+      "expect": "expected/fin418-config-first.json",
+      "now": "2025-11-01T10:00:00+03:00"
+    },
+    {
+      "name": "fin418-import-without-coverage",
+      "do": "upload",
+      "file": "statements/09-empty-no-period.ofx",
+      "expect": "expected/fin418-import-without-coverage.json"
+    },
+    {
+      "name": "fin418-delete-empty",
+      "do": "delete_upload",
+      "file": "statements/09-empty-no-period.ofx"
+    },
+    {
       "name": "import-0",
       "now": "2025-11-01T10:00:00+03:00",
       "do": "upload",
@@ -14,6 +32,24 @@
       "do": "get",
       "request": "GET /v1/analytics",
       "expect": "expected/00a-analytics-early-state.json"
+    },
+    {
+      "name": "fin418-early-chart",
+      "do": "get",
+      "request": "GET /v1/analytics?period=month&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/fin418-early-chart.json"
+    },
+    {
+      "name": "fin418-config-loaded",
+      "do": "get",
+      "request": "GET /v1/statements/config",
+      "expect": "expected/fin418-config-loaded.json"
+    },
+    {
+      "name": "fin418-config-one-day",
+      "do": "get",
+      "request": "GET /v1/statements/config?period_from=2025-10-31&period_to=2025-10-31",
+      "expect": "expected/fin418-config-one-day.json"
     },
     {
       "name": "rolling-short-year",
@@ -462,6 +498,60 @@
       "do": "get",
       "request": "GET /v1/analytics?period=all_time&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
       "expect": "expected/rolling-compare-all-time.json"
+    },
+    {
+      "name": "fin418-chart-month",
+      "do": "get",
+      "request": "GET /v1/analytics?period=month&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/fin418-chart-month.json"
+    },
+    {
+      "name": "fin418-chart-quarter",
+      "do": "get",
+      "request": "GET /v1/analytics?period=quarter&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/fin418-chart-quarter.json"
+    },
+    {
+      "name": "fin418-chart-year",
+      "do": "get",
+      "request": "GET /v1/analytics?period=year&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/fin418-chart-year.json"
+    },
+    {
+      "name": "fin418-chart-all_time",
+      "do": "get",
+      "request": "GET /v1/analytics?period=all_time&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/fin418-chart-all_time.json"
+    },
+    {
+      "name": "fin418-chart-rolling_year",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_year&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/fin418-chart-rolling_year.json"
+    },
+    {
+      "name": "fin418-chart-rolling_quarter",
+      "do": "get",
+      "request": "GET /v1/analytics?period=rolling_quarter&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/fin418-chart-rolling_quarter.json"
+    },
+    {
+      "name": "fin418-chart-old-month",
+      "do": "get",
+      "request": "GET /v1/analytics?period=month&date=2020-01&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/fin418-chart-old-month.json"
+    },
+    {
+      "name": "fin418-chart-return",
+      "do": "get",
+      "request": "GET /v1/analytics?period=month&date=2026-10&supports=heading@1,text@1,rows@1,chart@1,tile_group@2,ranked_list@1,insight_card@1",
+      "expect": "expected/fin418-chart-return.json"
+    },
+    {
+      "name": "fin418-config-cross-year",
+      "do": "get",
+      "request": "GET /v1/statements/config?period_from=2025-12-31&period_to=2026-01-01",
+      "expect": "expected/fin418-config-cross-year.json"
     },
     {
       "name": "rolling-delete-latest",

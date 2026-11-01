@@ -69,7 +69,7 @@
         "feature": "monthly_chart",
         "feature_name": "<ignored>",
         "open": true,
-        "opened_now": true
+        "opened_now": false
       },
       {
         "feature": "typical",

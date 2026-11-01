@@ -11,11 +11,11 @@ import re
 
 IGNORED = "<ignored>"
 # Opaque values and moments that depend on the implementation or on the wall clock.
-OPAQUE_KEYS = {"id", "replaced_id", "upload_id", "payment_id", "selection", "calculated_at"}
+OPAQUE_KEYS = {"id", "replaced_id", "upload_id", "payment_id", "selection", "calculated_at", "download_url", "login_url"}
 # Texts the server writes for the client: shown, not compared (their numbers come in structured fields).
 TEXT_KEYS = {"selection_name", "type_name", "feature_name", "text", "alt_text", "empty_text", "title", "caption", "label",
              "note", "description", "badge", "sublabel", "value_suffix", "more_label", "spoken",
-             "note_details", "source_name", "message"}
+             "note_details", "source_name", "message", "help_text"}
 # Outside blocks these are data, not texts: an operation's description, a notice code's text is still a text.
 DATA_TITLE_OUTSIDE_BLOCKS = {"title", "note", "description"}
 RFC3339 = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$")

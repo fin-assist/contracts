@@ -742,10 +742,31 @@ paths:
       - statements
       operationId: getImportConfig
       summary: Конфигурация импорта
-      description: Для экрана «Загрузка выписки».
+      description: |
+        Для экрана «Загрузка выписки». Без дат — рекомендуемый период; period_from и period_to
+        задают оба включительных календарных дня в поясе профиля. Идентичность — из токена.
+        Сервер формирует ссылку, не обращаясь к банку. Детальная валидация и rollout — api.md3.1.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
       - $ref: '#/components/parameters/XClientVersion'
+      - name: period_from
+        in: query
+        description: Начальный день включительно; только вместе с period_to. Профильный часовой пояс.
+        schema:
+          type: string
+          format: date
+          minLength: 10
+          maxLength: 10
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+      - name: period_to
+        in: query
+        description: Конечный день включительно; не раньше period_from и не позже сегодня в поясе профиля.
+        schema:
+          type: string
+          format: date
+          minLength: 10
+          maxLength: 10
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
       responses:
         '200':
           description: Конфигурация
@@ -2985,7 +3006,7 @@ components:
         download_url:
           type: string
           format: uri
-          description: Ссылка выгрузки OFX за `suggested_period` («Скачать за год»), открывается в браузере.
+          description: Ссылка выгрузки OFX за точный `suggested_period`, открывается в браузере; название действия зависит от выбранного режима и наличия операций.
         login_url:
           type: string
           format: uri
@@ -3002,8 +3023,10 @@ components:
         suggested_period:
           allOf:
           - $ref: '#/components/schemas/Range'
-          description: 12 месяцев назад для первой загрузки, от начала дня последней загруженной операции — для повторной;
-            `to` — начало завтрашнего дня.
+          description: |
+            С датами — от начала period_from до начала дня после period_to в поясе профиля.
+            Без дат — 12 месяцев назад для первой загрузки или от начала дня последней операции для повторной;
+            to — начало завтрашнего дня. Клиент проверяет совпадение с выбранными днями до открытия ссылки.
         loaded:
           nullable: true
           allOf:
@@ -4096,6 +4119,9 @@ components:
       - type
       - v
       properties:
+        help_text:
+          type: string
+          description: Вспомогательное пояснение по отдельному действию; основной текст и краткая причина недоступности остаются видимыми. Пустое/отсутствующее — без иконки.
         id:
           type: string
           nullable: true
@@ -4324,7 +4350,10 @@ components:
           $ref: '#/components/schemas/BlockAction'
     ChartData:
       type: object
-      description: '`chart` v1 — столбцы по периодам, с итогом и строками под графиком.'
+      description: |
+        chart v1 — столбцы с итогом и строками под графиком. Для monthly_chart экранной аналитики
+        points — полные календарные месяцы всей загруженной истории во всех типах периода (FIN-418).
+        Факты выбранного/скользящего периода и другие графики не меняются. Notes называют выбранный период.
       required:
       - kind
       - value_kind
@@ -4464,6 +4493,9 @@ components:
       - id
       - title
       properties:
+        help_text:
+          type: string
+          description: Вспомогательное пояснение по отдельному действию; основной текст и краткая причина недоступности остаются видимыми. Пустое/отсутствующее — без иконки.
         id:
           type: string
         title:

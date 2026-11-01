@@ -43,6 +43,13 @@ class Runner:
         url = urlsplit(request)
         q = dict(parse_qsl(url.query))
         b = self.backend
+        if url.path == "/v1/statements/config":
+            pairs = parse_qsl(url.query, keep_blank_values=True)
+            dates = dict(pairs)
+            for field in ("period_from", "period_to"):
+                if sum(key == field for key, _ in pairs) > 1:
+                    raise ApiError(400, "VALIDATION_ERROR", [{"field": field, "code": "INVALID_FORMAT"}])
+            return b.import_config(dates.get("period_from"), dates.get("period_to"))
         if url.path == "/v1/operations":
             if not q or set(q) == {"before"}:
                 return b.feed(q.get("before"))

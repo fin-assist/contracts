@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import datetime as dt
+import calendar
 from decimal import Decimal, InvalidOperation
 from typing import Optional
+from urllib.parse import urlencode
+import re
 
 from .analytics import Analytics, SINGLETONS, parse_supports, period_bounds
 from .ledger import Ledger, stable_id
@@ -14,7 +17,7 @@ from .views import Scope, account, details, item, records, selection_id
 MAX_SEARCH = 10_000
 FEATURES = [  # (code, name, threshold kind, required) — spec section 7
     ("comparison", "Сравнение с прошлым месяцем", "full", 1),
-    ("monthly_chart", "Расходы по месяцам", "with_data", 2),
+    ("monthly_chart", "Расходы по месяцам", "with_data", 1),
     ("typical", "Обычные расходы", "full", 2),
     ("regular_payments", "Регулярные платежи", "full", 2),
     ("notable_spending", "Заметные траты", "full", 3),
@@ -43,6 +46,63 @@ class Backend:
 
     def at(self, d: dt.date) -> str:
         return iso(start_of_day(d, self.zone))
+
+    # ---- 3.1 ----
+
+    def import_config(self, period_from: Optional[str] = None, period_to: Optional[str] = None) -> dict:
+        """Server-owned download range; both requested calendar days are inclusive."""
+        def invalid(field, code):
+            raise ApiError(400, "VALIDATION_ERROR", [{"field": field, "code": code}])
+
+        def parse(value, field):
+            if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
+                invalid(field, "INVALID_FORMAT")
+            try:
+                return dt.date.fromisoformat(value)
+            except ValueError:
+                invalid(field, "INVALID_FORMAT")
+
+        def boundary(day, field):
+            try:
+                instant = start_of_day(day, self.zone).astimezone(dt.timezone.utc)
+                return instant.astimezone(self.zone)
+            except (ValueError, OverflowError):
+                invalid(field, "OUT_OF_RANGE")
+
+        start = parse(period_from, "period_from") if period_from is not None else None
+        last = parse(period_to, "period_to") if period_to is not None else None
+        if (period_from is None) != (period_to is None):
+            invalid("period_from" if period_from is None else "period_to", "REQUIRED")
+        ats = [o.at for o in self.ledger.ops.values()]
+        if period_from is not None:
+            if start > last:
+                invalid("period_from", "OUT_OF_RANGE")
+            if last > self.today:
+                invalid("period_to", "OUT_OF_RANGE")
+        else:
+            start = day_of(max(ats), self.zone) if ats else self.today.replace(
+                year=self.today.year - 1, day=min(self.today.day, calendar.monthrange(self.today.year - 1, self.today.month)[1]))
+            last = self.today
+        try:
+            end = last + dt.timedelta(days=1)
+        except OverflowError:
+            invalid("period_to", "OUT_OF_RANGE")
+        begin, finish = boundary(start, "period_from"), boundary(end, "period_to")
+        if begin.astimezone(dt.timezone.utc) >= finish.astimezone(dt.timezone.utc):
+            invalid("period_to", "OUT_OF_RANGE")
+        epoch = dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc)
+        def millis(at):
+            delta = at.astimezone(dt.timezone.utc) - epoch
+            return delta.days * 86_400_000 + delta.seconds * 1_000 + delta.microseconds // 1000
+        query = urlencode({"appName": "supreme", "appVersion": "0.0.1", "origin": "web,ib5,platform",
+                           "start": millis(begin), "end": millis(finish), "format": "ofx"})
+        out = {"download_url": "https://www.tbank-online.com/mybank/api/operations/timeline/public/legacy/v1/export_operations?" + query,
+               "login_url": "https://www.tbank.ru/login/", "max_file_size_bytes": 10485760, "accepted_formats": ["OFX"],
+               "suggested_period": {"from": iso(begin), "to": iso(finish)}}
+        if ats:
+            out["loaded"] = {"first_operation_at": iso(min(ats)), "last_operation_at": iso(max(ats)),
+                             "operation_count": len(ats)}
+        return out
 
     # ---- 3.2 / 3.3 ----
 

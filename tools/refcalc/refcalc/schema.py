@@ -10,6 +10,7 @@ from referencing.jsonschema import DRAFT4
 
 SCHEMAS = {
     "upload": "ImportResult",
+    "/v1/statements/config": "ImportConfig",
     "/v1/operations": "OperationsList",
     "/v1/categories": "CategoriesList",
     "/v1/analytics": "Analytics",

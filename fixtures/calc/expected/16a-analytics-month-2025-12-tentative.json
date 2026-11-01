@@ -61,7 +61,8 @@
             "status": "ready",
             "value": 4202315,
             "value_kind": "amount",
-            "caption": "<ignored>"
+            "caption": "<ignored>",
+            "help_text": "<ignored>"
           },
           {
             "id": "income",
@@ -94,30 +95,6 @@
         "kind": "bar",
         "value_kind": "amount",
         "points": [
-          {
-            "range": {
-              "from": "2025-07-01T00:00:00+03:00",
-              "to": "2025-08-01T00:00:00+03:00"
-            },
-            "value": null,
-            "coverage": "no_data"
-          },
-          {
-            "range": {
-              "from": "2025-08-01T00:00:00+03:00",
-              "to": "2025-09-01T00:00:00+03:00"
-            },
-            "value": null,
-            "coverage": "no_data"
-          },
-          {
-            "range": {
-              "from": "2025-09-01T00:00:00+03:00",
-              "to": "2025-10-01T00:00:00+03:00"
-            },
-            "value": null,
-            "coverage": "no_data"
-          },
           {
             "range": {
               "from": "2025-10-01T00:00:00+03:00",
@@ -159,6 +136,129 @@
               "period": "month",
               "date": "2025-12"
             }
+          },
+          {
+            "range": {
+              "from": "2026-01-01T00:00:00+03:00",
+              "to": "2026-02-01T00:00:00+03:00"
+            },
+            "value": 101020510,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-01"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-02-01T00:00:00+03:00",
+              "to": "2026-03-01T00:00:00+03:00"
+            },
+            "value": 397023788,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-02"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-03-01T00:00:00+03:00",
+              "to": "2026-04-01T00:00:00+03:00"
+            },
+            "value": 479880069,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-03"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-04-01T00:00:00+03:00",
+              "to": "2026-05-01T00:00:00+03:00"
+            },
+            "value": 248700997,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-04"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-05-01T00:00:00+03:00",
+              "to": "2026-06-01T00:00:00+03:00"
+            },
+            "value": 142959126,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-05"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-06-01T00:00:00+03:00",
+              "to": "2026-07-01T00:00:00+03:00"
+            },
+            "value": 151255356,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-06"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-07-01T00:00:00+03:00",
+              "to": "2026-08-01T00:00:00+03:00"
+            },
+            "value": 258194452,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-07"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-08-01T00:00:00+03:00",
+              "to": "2026-09-01T00:00:00+03:00"
+            },
+            "value": 84765391,
+            "coverage": "partial",
+            "data_from": "2026-08-01T00:00:00+03:00",
+            "data_to": "2026-08-31T22:26:03+03:00",
+            "note": "<ignored>",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-08"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-09-01T00:00:00+03:00",
+              "to": "2026-10-01T00:00:00+03:00"
+            },
+            "value": 383190263,
+            "coverage": "partial",
+            "data_from": "2026-09-01T00:00:00+03:00",
+            "data_to": "2026-09-25T22:36:53+03:00",
+            "note": "<ignored>",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-09"
+            }
           }
         ],
         "notes": [
@@ -167,8 +267,9 @@
             "tone": "primary"
           }
         ],
-        "highlight_index": 5
-      }
+        "highlight_index": 2
+      },
+      "help_text": "<ignored>"
     },
     {
       "id": "expense_categories",

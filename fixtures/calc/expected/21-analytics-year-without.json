@@ -66,7 +66,8 @@
             "status": "ready",
             "value": 774219,
             "value_kind": "amount",
-            "caption": "<ignored>"
+            "caption": "<ignored>",
+            "help_text": "<ignored>"
           },
           {
             "id": "income",
@@ -88,13 +89,15 @@
           {
             "id": "forecast",
             "title": "<ignored>",
+            "help_text": "<ignored>",
             "status": "locked",
             "lock": {
               "reason": "need_full_months",
               "text": "<ignored>",
               "required": 12,
               "available": 9
-            }
+            },
+            "caption": "<ignored>"
           }
         ]
       }
@@ -110,6 +113,48 @@
         "kind": "bar",
         "value_kind": "amount",
         "points": [
+          {
+            "range": {
+              "from": "2025-10-01T00:00:00+03:00",
+              "to": "2025-11-01T00:00:00+03:00"
+            },
+            "value": 12696983,
+            "coverage": "partial",
+            "data_from": "2025-10-15T00:00:00+03:00",
+            "data_to": "2025-10-31T21:06:35+03:00",
+            "note": "<ignored>",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2025-10"
+            }
+          },
+          {
+            "range": {
+              "from": "2025-11-01T00:00:00+03:00",
+              "to": "2025-12-01T00:00:00+03:00"
+            },
+            "value": 13922663,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2025-11"
+            }
+          },
+          {
+            "range": {
+              "from": "2025-12-01T00:00:00+03:00",
+              "to": "2026-01-01T00:00:00+03:00"
+            },
+            "value": 15823475,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2025-12"
+            }
+          },
           {
             "range": {
               "from": "2026-01-01T00:00:00+03:00",
@@ -232,30 +277,6 @@
               "period": "month",
               "date": "2026-09"
             }
-          },
-          {
-            "range": {
-              "from": "2026-10-01T00:00:00+03:00",
-              "to": "2026-11-01T00:00:00+03:00"
-            },
-            "value": null,
-            "coverage": "no_data"
-          },
-          {
-            "range": {
-              "from": "2026-11-01T00:00:00+03:00",
-              "to": "2026-12-01T00:00:00+03:00"
-            },
-            "value": null,
-            "coverage": "no_data"
-          },
-          {
-            "range": {
-              "from": "2026-12-01T00:00:00+03:00",
-              "to": "2027-01-01T00:00:00+03:00"
-            },
-            "value": null,
-            "coverage": "no_data"
           }
         ],
         "notes": [
@@ -268,7 +289,8 @@
             "tone": "muted"
           }
         ]
-      }
+      },
+      "help_text": "<ignored>"
     },
     {
       "id": "expense_categories",

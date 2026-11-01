@@ -49,9 +49,10 @@ class ForecastFacts(unittest.TestCase):
     def test_rolling_year_has_eleven_full_months_without_edge_transactions(self):
         b = self.backend("2026-10-31T12:00:00+03:00")
         b.upload("a.ofx", stmt("20251030", "20261030", [("d", "20260415120000", -10, "Shop", "Продукты")]))
-        locked = self.tile(self.screen(b, "2026", period="year"), "forecast")["lock"]
+        forecast = self.tile(self.screen(b, "2026", period="year"), "forecast")
+        locked = forecast["lock"]
         self.assertEqual((12, 11), (locked["required"], locked["available"]))
-        text = locked["text"]
+        text = forecast["help_text"]
         self.assertIn("независимо от выбранного года", text)
         self.assertIn("ноябрь 2025", text)
         self.assertIn("сентябрь 2026", text)
@@ -66,34 +67,38 @@ class ForecastFacts(unittest.TestCase):
                                     ("20260401", "20260414"), ("20260416", "20260430"),
                                     ("20261001", "20261030"))):
             b.upload(str(i) + ".ofx", stmt(a, z, [("d" + str(i), a + "120000", -10, "Shop", "Продукты")]))
-        locked = self.tile(self.screen(b, "2026", period="year"), "forecast")["lock"]
+        forecast = self.tile(self.screen(b, "2026", period="year"), "forecast")
+        locked = forecast["lock"]
         self.assertEqual(2, locked["available"])
-        self.assertIn("январь 2026, март 2026", locked["text"])
-        self.assertIn("Месяцы без данных: февраль 2026", locked["text"])
-        self.assertIn("2026-04-15–2026-04-15", locked["text"])
+        self.assertIn("январь 2026, март 2026", forecast["help_text"])
+        self.assertIn("Месяцы без данных: февраль 2026", forecast["help_text"])
+        self.assertIn("2026-04-15–2026-04-15", forecast["help_text"])
 
     def test_complementary_files_count_once_and_current_month_is_unfinished(self):
         b = self.backend("2026-10-31T12:00:00+03:00")
         b.upload("a.ofx", stmt("20260901", "20260915", [("a", "20260910120000", -10, "Shop", "Продукты")]))
         b.upload("b.ofx", stmt("20260916", "20261031", [("b", "20261010120000", -10, "Shop", "Продукты")]))
-        locked = self.tile(self.screen(b, "2026", period="year"), "forecast")["lock"]
+        forecast = self.tile(self.screen(b, "2026", period="year"), "forecast")
+        locked = forecast["lock"]
         self.assertEqual(1, locked["available"])
-        self.assertIn("Учтены полные месяцы: сентябрь 2026.", locked["text"])
-        self.assertIn("месяц ещё не завершён", locked["text"])
+        self.assertIn("Учтены полные месяцы: сентябрь 2026.", forecast["help_text"])
+        self.assertIn("месяц ещё не завершён", forecast["help_text"])
 
     def test_explanation_stays_within_actual_uploaded_history(self):
         b = self.backend("2026-10-05T12:00:00+03:00")
         b.upload("a.ofx", stmt("20260901", "20260925", [("a", "20260910120000", -10, "Shop", "Продукты")]))
-        locked = self.tile(self.screen(b, "2026", period="year"), "forecast")["lock"]
-        self.assertIn("сентябрь 2026", locked["text"])
-        self.assertNotIn("октябрь 2026", locked["text"])
+        forecast = self.tile(self.screen(b, "2026", period="year"), "forecast")
+        locked = forecast["lock"]
+        self.assertIn("сентябрь 2026", forecast["help_text"])
+        self.assertNotIn("октябрь 2026", forecast["help_text"])
 
     def test_long_empty_history_is_grouped_without_inventing_covered_months(self):
         b = self.backend("2026-10-31T12:00:00+03:00")
         b.upload("old.ofx", stmt("20200101", "20200131", [("a", "20200110120000", -10, "Shop", "Продукты")]))
         b.upload("new.ofx", stmt("20260901", "20261030", [("b", "20261010120000", -10, "Shop", "Продукты")]))
-        locked = self.tile(self.screen(b, "2026", period="year"), "forecast")["lock"]
+        forecast = self.tile(self.screen(b, "2026", period="year"), "forecast")
+        locked = forecast["lock"]
         self.assertEqual(2, locked["available"])
-        self.assertIn("Учтены полные месяцы: январь 2020, сентябрь 2026.", locked["text"])
-        self.assertIn("Месяцы без данных: февраль 2020 — август 2026.", locked["text"])
-        self.assertNotIn("март 2020", locked["text"])
+        self.assertIn("Учтены полные месяцы: январь 2020, сентябрь 2026.", forecast["help_text"])
+        self.assertIn("Месяцы без данных: февраль 2020 — август 2026.", forecast["help_text"])
+        self.assertNotIn("март 2020", forecast["help_text"])

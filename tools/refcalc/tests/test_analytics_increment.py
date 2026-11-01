@@ -153,7 +153,7 @@ class AnalyticsIncrement(unittest.TestCase):
             self.assertEqual(["expense", "income", "balance"], [t["id"] for t in groups[0]["tiles"]])
             self.assertEqual("Дополнительные показатели", groups[1]["title"])
             self.assertEqual("Средние расходы в день", groups[1]["tiles"][0]["title"])
-            self.assertIn("не позже сегодня", groups[1]["tiles"][0]["caption"])
+            self.assertIn("не позже сегодня", groups[1]["tiles"][0]["help_text"])
             self.assertEqual({t["id"]: t.get("value") for t in old_tiles["data"]["tiles"]},
                              {t["id"]: t.get("value") for g in groups for t in g["tiles"]})
             self.assertNotIn("caption", groups[0])
@@ -165,7 +165,7 @@ class AnalyticsIncrement(unittest.TestCase):
         s = b.analytics("all_time", supports=SUPPORTS)
         daily = self.block(s, "tiles")[0]["data"]["groups"][1]["tiles"][0]
         self.assertEqual(310, daily["value"])
-        self.assertIn("не позже сегодня", daily["caption"])
+        self.assertIn("не позже сегодня", daily["help_text"])
         self.assertEqual("complete", s["period"]["coverage"])
         self.assertEqual("complete", b.periods("all_time")["periods"][0]["coverage"])
 

@@ -47,7 +47,10 @@ type Block struct {
 	// Числа Struct — double: целые точны до 2^53 − 1, сумма по модулю больше в data не кладётся (api.md «Блоки»).
 	Data *structpb.Struct `protobuf:"bytes,9,opt,name=data,proto3,oneof" json:"data,omitempty"`
 	// Действие по нажатию на блок.
-	Action        *BlockAction `protobuf:"bytes,10,opt,name=action,proto3,oneof" json:"action,omitempty"`
+	Action *BlockAction `protobuf:"bytes,10,opt,name=action,proto3,oneof" json:"action,omitempty"`
+	// Вспомогательное пояснение, не основной текст/значение/краткая причина блокировки.
+	// Клиент открывает по отдельному действию; отсутствие/пустой текст — без пояснения.
+	HelpText      *string `protobuf:"bytes,11,opt,name=help_text,json=helpText,proto3,oneof" json:"help_text,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -150,6 +153,13 @@ func (x *Block) GetAction() *BlockAction {
 		return x.Action
 	}
 	return nil
+}
+
+func (x *Block) GetHelpText() string {
+	if x != nil && x.HelpText != nil {
+		return *x.HelpText
+	}
+	return ""
 }
 
 // Почему блок закрыт.
@@ -388,7 +398,7 @@ var File_finassist_common_v1_blocks_proto protoreflect.FileDescriptor
 
 const file_finassist_common_v1_blocks_proto_rawDesc = "" +
 	"\n" +
-	" finassist/common/v1/blocks.proto\x12\x13finassist.common.v1\x1a finassist/common/v1/common.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9d\x03\n" +
+	" finassist/common/v1/blocks.proto\x12\x13finassist.common.v1\x1a finassist/common/v1/common.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcd\x03\n" +
 	"\x05Block\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\f\n" +
@@ -401,13 +411,16 @@ const file_finassist_common_v1_blocks_proto_rawDesc = "" +
 	"empty_text\x18\b \x01(\tH\x03R\temptyText\x88\x01\x01\x120\n" +
 	"\x04data\x18\t \x01(\v2\x17.google.protobuf.StructH\x04R\x04data\x88\x01\x01\x12=\n" +
 	"\x06action\x18\n" +
-	" \x01(\v2 .finassist.common.v1.BlockActionH\x05R\x06action\x88\x01\x01B\a\n" +
+	" \x01(\v2 .finassist.common.v1.BlockActionH\x05R\x06action\x88\x01\x01\x12 \n" +
+	"\thelp_text\x18\v \x01(\tH\x06R\bhelpText\x88\x01\x01B\a\n" +
 	"\x05_lockB\b\n" +
 	"\x06_titleB\v\n" +
 	"\t_alt_textB\r\n" +
 	"\v_empty_textB\a\n" +
 	"\x05_dataB\t\n" +
-	"\a_action\"\xf1\x01\n" +
+	"\a_actionB\f\n" +
+	"\n" +
+	"_help_text\"\xf1\x01\n" +
 	"\tBlockLock\x12\x16\n" +
 	"\x06reason\x18\x01 \x01(\tR\x06reason\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\x12\x1f\n" +

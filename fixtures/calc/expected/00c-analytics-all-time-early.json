@@ -85,7 +85,8 @@
                 "status": "ready",
                 "value": 3745521,
                 "value_kind": "amount",
-                "caption": "<ignored>"
+                "caption": "<ignored>",
+                "help_text": "<ignored>"
               }
             ]
           }
@@ -126,7 +127,8 @@
             "tone": "primary"
           }
         ]
-      }
+      },
+      "help_text": "<ignored>"
     },
     {
       "id": "expense_categories",
