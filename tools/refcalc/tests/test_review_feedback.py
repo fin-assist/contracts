@@ -278,3 +278,41 @@ class ReviewFeedback(unittest.TestCase):
             b.import_config('1994-12-31', '1994-12-31')
         self.assertEqual((400, 'VALIDATION_ERROR'), (caught.exception.status, caught.exception.code))
         self.assertEqual([{'field': 'period_to', 'code': 'OUT_OF_RANGE'}], caught.exception.details)
+
+    def test_single_and_split_uploads_have_same_coverage_across_skipped_day(self):
+        schema = SchemaCheck(ROOT + '/openapi/openapi.yaml')
+        before = ('before', '19941230120000', -10, 'Shop', 'Продукты')
+        after = ('after', '19950101120000', -3, 'Shop', 'Продукты')
+        first = spec.stmt('19941201', '19941230', [before]).replace('[+3:MSK]', '[-10]')
+        second = spec.stmt('19950101', '19950102', [after]).replace('[+3:MSK]', '[+14]')
+        whole = spec.stmt('19941201', '19950102', [before, after]).replace('[+3:MSK]', '[-10]')
+        whole = whole.replace('19950101120000.000[-10]', '19950101120000.000[+14]')
+        whole = whole.replace('19950102235959.000[-10]', '19950102235959.000[+14]')
+        backends = []
+        for statements in ([whole], [first, second]):
+            b = self.backend('1995-01-03T12:00:00+14:00')
+            b.zone = b.ledger.zone = ZoneInfo('Pacific/Kiritimati')
+            for i, statement in enumerate(statements):
+                b.upload(str(i), statement)
+            backends.append(b)
+        single, split = backends
+        self.assertEqual([(op.fitid, op.at, op.amount) for op in single.ledger.ops.values()],
+                         [(op.fitid, op.at, op.amount) for op in split.ledger.ops.values()])
+        for b in backends:
+            cov = b.ledger.coverage(b.today)
+            self.assertEqual([(dt.date(1994, 12, 1), dt.date(1995, 1, 2))], cov.days)
+            self.assertEqual([], cov.gaps())
+            self.assertTrue(cov.full_month(dt.date(1994, 12, 1)))
+            self.assertEqual(31, cov.count_days(dt.date(1994, 12, 1), dt.date(1995, 1, 1)))
+            self.assertEqual(33, cov.count_days(dt.date(1994, 12, 1), dt.date(1995, 1, 3)))
+            with self.assertRaises(ApiError):
+                b.import_config('1994-12-31', '1994-12-31')
+        for period, date, expected_sum in [('month', '1994-12', 1000), ('all_time', None, 1300)]:
+            left, right = [b.analytics(period, date) for b in backends]
+            self.assertEqual(left['period'], right['period'])
+            self.assertEqual('complete', right['period']['coverage'])
+            self.assertEqual([], right['period']['gaps'])
+            self.assertEqual(left['state'], right['state'])
+            for response in (left, right):
+                self.assertEqual(expected_sum, self.tile(response, 'expense')['value'])
+                self.assertEqual([], schema.errors('/v1/analytics', response))

@@ -72,7 +72,14 @@ class Coverage:
         self.zone = zone
         merged = []
         for a, b in sorted(ranges):
-            if merged and a <= merged[-1][1] + dt.timedelta(days=1):
+            joins = False
+            if merged:
+                after_previous = merged[-1][1] + dt.timedelta(days=1)
+                joins = a <= after_previous or (
+                    start_of_day(a, zone).astimezone(dt.timezone.utc) <=
+                    start_of_day(after_previous, zone).astimezone(dt.timezone.utc))
+            # A skipped civil day has zero width: equivalent physical boundaries still adjoin.
+            if joins:
                 merged[-1] = (merged[-1][0], max(merged[-1][1], b))
             else:
                 merged.append((a, b))
