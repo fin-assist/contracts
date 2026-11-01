@@ -34,10 +34,11 @@ FEATURES = [  # (code, name, threshold kind, required) — spec section 7
 
 
 class ApiError(Exception):
-    def __init__(self, status: int, code: str, details=None):
+    def __init__(self, status: int, code: str, details=None, retryable=None):
         super().__init__(code)
         self.status, self.code = status, code
         self.details = details
+        self.retryable = retryable
 
 
 class Backend:
@@ -49,6 +50,8 @@ class Backend:
         self._chart_owner = uuid.uuid4().hex
         self._chart_cursors = {}
         self._regular_snapshots = {}
+        self._regular_absent = set()
+        self._regular_references = {}
         self.recalculation = Recalculation(self._publish_regular_snapshots)
 
     @property
@@ -327,7 +330,12 @@ class Backend:
         """Opaque selections the reference responses hand out: «Без категории», commissions, a regular payment, all
         regular payments of a card, a group of small frequent spendings."""
         if sel in self.ledger.selections:
-            return self.ledger.selections[sel]
+            selection = self.ledger.selections[sel]
+            if isinstance(selection, tuple) and selection[0] == 'regular_all':
+                block = self._source_regular_block(selection[1], selection[2])
+                names = {row['title'] for row in (block or {}).get('data', {}).get('items', [])}
+                return lambda o: o.is_debit and o.name in names
+            return selection
         if sel == selection_id("uncategorized"):
             return lambda o: o.category.id == UNCATEGORIZED or (o.is_refund and o.target.id == UNCATEGORIZED)
         if sel == selection_id("bank_fees"):
@@ -372,6 +380,23 @@ class Backend:
         self.recalculation.calculate_now()
         return {"items": items, "replaced_id": replaced}
 
+    def _source_regular_block(self, date, mode):
+        """Source recognition shared by the producer and live operation search, never Apply."""
+        source = Analytics(self.ledger, self.now, regular_limit=None)
+        if not self.ledger.ops or source.cov.empty:
+            return None
+        start, end, period_key = period_bounds('month', dt.date.fromisoformat(date + '-01'))
+        if source.cov.bounds(start, end) is None:
+            return None
+        scope = Scope(self.ledger, mode)
+        visible = scope.visible()
+        ctx = Ctx(source, 'month', start, end, period_key, mode, scope, visible,
+                  scope.in_days(visible, start, end), {'coverage': source.coverage_of('month', start, end)})
+        block = ctx.regular_payments()
+        for row in block['data'].get('items', []):
+            self._regular_references[row['button']['payment_id']] = row['title']
+        return block
+
     def _store_regular_snapshot(self, date, mode, version=None):
         """Reference publisher: retain the full metric before limiting its displayed rows."""
         key = date, mode
@@ -379,31 +404,29 @@ class Backend:
         existing = self._regular_snapshots.get(key)
         if existing and existing['version'] == version:
             return
-        source = Analytics(self.ledger, self.now, regular_limit=None)
-        if not self.ledger.ops or source.cov.empty:
+        block = self._source_regular_block(date, mode)
+        if block is None:
             self._regular_snapshots.pop(key, None)
+            self._regular_absent.add(key)
             return
-        start, end, period_key = period_bounds('month', dt.date.fromisoformat(date + '-01'))
-        scope = Scope(self.ledger, mode)
-        visible = scope.visible()
-        ctx = Ctx(source, 'month', start, end, period_key, mode, scope, visible,
-                  scope.in_days(visible, start, end), {'coverage': source.coverage_of('month', start, end)})
-        block = ctx.regular_payments()
+        self._regular_absent.discard(key)
         self._regular_snapshots[key] = {'version': version,
-            'params': {'period': 'month', 'date': period_key, 'transfer_mode': mode},
+            'params': {'period': 'month', 'date': date, 'transfer_mode': mode},
             'currency': 'RUB', 'time_zone': str(self.zone), 'block': block}
 
     def _publish_regular_snapshots(self, version):
         # Existing producer delivery installs new bases before final; Apply never invokes this.
-        for date, mode in list(self._regular_snapshots):
+        for date, mode in set(self._regular_snapshots) | self._regular_absent:
             self._store_regular_snapshot(date, mode, version)
 
     def apply_regular_dismissal(self, payment_id, target, date, mode, fail_compose=False):
         """Own saved metric only. Failure rolls back analytics, never the source assignment."""
         def compose(excluded):
             saved = self._regular_snapshots.get((date, mode))
+            if saved is None and (date, mode) in self._regular_absent:
+                raise ApiError(400, 'VALIDATION_ERROR', [{'field': 'date', 'code': 'OUT_OF_RANGE'}], retryable=False)
             if fail_compose or saved is None:
-                raise ApiError(500, 'INTERNAL_ERROR')
+                raise ApiError(500, 'INTERNAL_ERROR', retryable=True)
             return {**{k: deepcopy(saved[k]) for k in ('params', 'currency', 'time_zone')},
                     'required_calc_version': target, 'blocks': [compose_regular(saved['block'], excluded)]}
         return self.recalculation.apply_dismissal(payment_id, target, compose)
@@ -418,7 +441,9 @@ class Backend:
                     raise ApiError(400, 'VALIDATION_ERROR', [{'field': field, 'code': 'REQUIRED' if (date if field == 'date' else mode) is None else 'INVALID_FORMAT'}])
         if not re.fullmatch(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", payment_id):
             raise ApiError(400, "VALIDATION_ERROR", [{"field": "id", "code": "INVALID_FORMAT"}])
-        name = next((o.name for o in self.ledger.ops.values() if stable_id("payment", o.name) == payment_id), None)
+        name = self._regular_references.get(payment_id)
+        if name is None:
+            name = next((o.name for o in self.ledger.ops.values() if stable_id("payment", o.name) == payment_id), None)
         if name is None:
             raise ApiError(404, "NOT_FOUND")
         if dismissed:
@@ -436,9 +461,8 @@ class Backend:
         else:
             self.ledger.dismissed.discard(name)
         result = self.apply_regular_dismissal(payment_id, target, date, mode, fail_compose) if dismissed else None
-        if changed and not defer_calculation:
-            self.recalculation.start()
-            self.recalculation.finish()
+        if not defer_calculation:
+            self.recalculation.run_pending()
         return result
 
     # ---- 5.1, 6.1, 6.2 ----

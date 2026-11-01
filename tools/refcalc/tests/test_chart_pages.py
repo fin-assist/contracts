@@ -204,6 +204,25 @@ class ChartPages(unittest.TestCase):
         self.assertEqual([], self.schema.errors('/v1/analytics/periods', {'periods': []}))
         self.assertEqual([], self.schema.errors('/v1/operations', {'items': []}))
 
+    def test_server_valid_zone_unknown_to_device_stops_refresh_and_preserves_verified_cache(self):
+        from zoneinfo import ZoneInfoNotFoundError
+        from refcalc.calendar_context import calendar_context
+        source = {'time_zone': 'Europe/Kyiv', 'has_data': True}
+        self.assertEqual('Europe/Kyiv', ZoneInfo(source['time_zone']).key)  # Valid on the server.
+        def old_device_lookup(name):
+            if name == 'Europe/Kyiv':
+                raise ZoneInfoNotFoundError(name)
+            return ZoneInfo(name)
+        cache = {'time_zone': 'Europe/Kiev', 'blocks': ['previous verified result']}
+        for verified in (None, cache):
+            result = calendar_context(source, lookup=old_device_lookup, verified_cache=verified)
+            self.assertEqual('unsupported_time_zone', result['state'])
+            self.assertFalse(result['refresh'])
+            self.assertIs(verified, result['cache'])
+            self.assertIn('не поддерживает', result['text'])
+        self.assertEqual('invalid_response', calendar_context({'time_zone': ''})['state'])
+        self.assertEqual('ready', calendar_context({'has_data': False}, has_calendar_data=False)['state'])
+
     def test_manual_own_transfer_and_refund_changes_invalidate_pages(self):
         b = self.history()
         for category, amount in (('cat_own_transfer', 0), ('cat_supermarkets', 1000)):

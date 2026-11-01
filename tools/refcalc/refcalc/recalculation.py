@@ -16,6 +16,7 @@ class Recalculation:
         self.ready_version = 0
         self.overlays = {}
         self.jobs = set()
+        self.calculation_pending = False
 
     def assign(self, payment, dismissed, acknowledged=True):
         if self.deleted:
@@ -27,6 +28,7 @@ class Recalculation:
             target = self.current + 1  # Prediction only: the producer counter is unchanged.
             self.assignments[payment] = (dismissed, target)
             self.jobs.add(target)
+            self.calculation_pending = True
         if acknowledged and target:
             self.ack_marker(target)
         return {'status': 'accepted' if acknowledged or target == 0 else 'pending',
@@ -45,6 +47,7 @@ class Recalculation:
         if self.deleted:
             raise LookupError('deleted user')
         self.assignments[payment] = (False, 0)
+        self.calculation_pending = True
 
     def ack_marker(self, version):
         self.mark(version)
@@ -93,6 +96,13 @@ class Recalculation:
         if self.on_publish is not None:
             self.on_publish(self.current)
         self.apply_state(self.current, False)
+        self.calculation_pending = False
+
+    def run_pending(self):
+        """Independent durable calculation queue, separate from marker delivery/Apply."""
+        if self.calculation_pending and not self.deleted:
+            self.start()
+            self.finish()
 
     def calculate_now(self):
         self.start(False)
@@ -110,3 +120,4 @@ class Recalculation:
         self.overlays.clear()
         self.assignments.clear()
         self.jobs.clear()
+        self.calculation_pending = False

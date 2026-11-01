@@ -213,3 +213,15 @@ class ReviewFeedback(unittest.TestCase):
         self.assertEqual(start, dt.datetime.fromisoformat(result["suggested_period"]["from"]))
         self.assertEqual(end, dt.datetime.fromisoformat(result["suggested_period"]["to"]))
         self.assertGreater(end, start)
+
+    def test_download_partial_midnight_gap_uses_first_real_instant(self):
+        b = self.history()
+        b.zone = ZoneInfo('America/Toronto')
+        result = b.import_config('1919-03-31', '1919-03-31')
+        start = dt.datetime.fromisoformat(result['suggested_period']['from'])
+        self.assertEqual('1919-03-31T00:30:00-04:00', start.isoformat())
+        instant = start.astimezone(dt.timezone.utc)
+        self.assertEqual(dt.date(1919, 3, 30), (instant - dt.timedelta(seconds=1)).astimezone(b.zone).date())
+        self.assertEqual('1919-04-01T00:00:00-04:00', result['suggested_period']['to'])
+        query = parse_qs(urlsplit(result['download_url']).query)
+        self.assertEqual(int(instant.timestamp() * 1000), int(query['start'][0]))

@@ -534,9 +534,9 @@ class Ctx:
         if not payments:
             return self.card("regular_payments", "none", data, empty_text="Регулярных платежей не нашли")
         payments.sort(key=lambda p: (-p[1], p[0]))
-        names = {p[0] for p in payments}
         all_sel = selection_id("regular_all", self.key, self.mode)
-        self.a.ledger.selections[all_sel] = lambda o, names=names: o.is_debit and o.name in names
+        # The source search resolves recognition/assignments live, not names frozen by presentation.
+        self.a.ledger.selections[all_sel] = ("regular_all", self.key, self.mode)
         rows = [{"title": n, "sublabel": "число", **value(med),
                  "action": self.open(self.filt(selection=selection_id("regular", n), selection_name=n)),
                  "button": {"type": "dismiss_regular_payment", "payment_id": stable_id("payment", n),

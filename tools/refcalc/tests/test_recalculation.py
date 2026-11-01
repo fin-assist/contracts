@@ -170,6 +170,38 @@ class RecalculationContract(unittest.TestCase):
         same = b.apply_regular_dismissal(stable_id('payment', 'E'), target, '2026-10', 'with')
         self.assertEqual(retry, same)
 
+    def test_failed_apply_keeps_durable_calculation_for_retry_or_independent_worker(self):
+        for retry_first in (True, False):
+            with self.subTest(retry_first=retry_first):
+                b = self.regular_backend(2)
+                with self.assertRaises(ApiError):
+                    self.put(b, 'A', fail_compose=True)  # No defer flag.
+                target = b.recalculation.assignments[stable_id('payment', 'A')][1]
+                self.assertTrue(b.recalculation.calculation_pending)
+                if not retry_first:
+                    b.recalculation.run_pending()  # Worker does not require a successful Apply.
+                retry = self.put(b, 'A')
+                self.assertEqual(target, retry['required_calc_version'])
+                ready = b.analytics('month', '2026-10')
+                self.assertFalse(ready['calculation']['recalculating'])
+                self.assertGreaterEqual(ready['calculation']['calc_version'], target)
+                self.assertFalse(b.recalculation.calculation_pending)
+                self.assertEqual(['B'], [row['title'] for row in self.block(ready, 'regular_payments')[0]['data']['items']])
+
+    def test_updated_actions_search_live_assignments_without_get_or_background(self):
+        b = self.regular_backend(2)
+        update = self.put(b, 'A', defer_calculation=True)
+        block = update['blocks'][0]
+        found = b.search(block['action']['filter'])
+        self.assertEqual(['B'], [row['title'] for row in found['items']])
+        self.assertEqual(block['data']['value'], sum(row['amount'] for row in found['items']))
+        for row in block['data']['items']:
+            own = b.search(row['action']['filter'])
+            self.assertEqual([row['title']], [op['title'] for op in own['items']])
+            self.assertEqual(row['value'], sum(op['amount'] for op in own['items']))
+        self.assertTrue(b.recalculation.calculation_pending)
+        self.assertLess(b.recalculation.state_version, update['required_calc_version'])
+
     def test_old_apply_after_ready_restore_new_pending_and_out_of_order_false(self):
         r = Recalculation()
         r.current = 3
@@ -227,15 +259,45 @@ class RecalculationContract(unittest.TestCase):
         self.assertEqual((500, 'INTERNAL_ERROR'), (caught.exception.status, caught.exception.code))
         self.assertEqual(set(), b.ledger.dismissed)
 
-    def test_old_future_month_locked_and_exact_context_are_preserved(self):
+    def test_nonexistent_month_reports_nonretryable_context_after_source_commit(self):
         b = self.regular_backend(1)
         for date in ('2026-01', '2027-01'):
-            before = self.block(b.analytics('month', date, 'without'), 'regular_payments')[0]
-            update = b.dismiss(stable_id('payment', 'A'), date=date, mode='without', defer_calculation=True)
-            self.assertEqual({'period': 'month', 'date': date, 'transfer_mode': 'without'}, update['params'])
-            self.assertEqual('Europe/Moscow', update['time_zone'])
-            if before['status'] == 'locked':
-                self.assertEqual(before, update['blocks'][0])
+            with self.assertRaises(ApiError) as caught:
+                b.dismiss(stable_id('payment', 'A'), date=date, mode='without', defer_calculation=True)
+            self.assertEqual((400, 'VALIDATION_ERROR', False),
+                             (caught.exception.status, caught.exception.code, caught.exception.retryable))
+            self.assertEqual([{'field': 'date', 'code': 'OUT_OF_RANGE'}], caught.exception.details)
+            self.assertIn('A', b.ledger.dismissed)
+            self.assertNotIn((date, 'without'), b._regular_snapshots)
+
+    def test_deleted_snapshot_between_get_and_put_and_temporary_missing_are_distinct(self):
+        b = self.regular_backend(1)
+        b.analytics('month', '2026-10')
+        payment = stable_id('payment', 'A')
+        b.delete_upload('regular')
+        with self.assertRaises(ApiError) as caught:
+            self.put(b, 'A')
+        self.assertEqual((400, False), (caught.exception.status, caught.exception.retryable))
+        self.assertIn('A', b.ledger.dismissed)  # Error does not roll back the source assignment.
+        b.recalculation.run_pending()
+        self.assertFalse(b.analytics()['has_data'])
+        b = self.regular_backend(1)
+        b.analytics('month', '2026-10')
+        b._regular_snapshots.pop(('2026-10', 'with'))  # Valid context, metric delivery is pending.
+        target = b.recalculation.assign(payment, True)['calc_version']
+        with self.assertRaises(ApiError) as caught:
+            b.apply_regular_dismissal(payment, target, '2026-10', 'with')
+        self.assertEqual((500, 'INTERNAL_ERROR', True),
+                         (caught.exception.status, caught.exception.code, caught.exception.retryable))
+
+    def test_existing_covered_month_preserves_lock_and_response_context(self):
+        b = self.regular_backend(1)
+        before = self.block(b.analytics('month', '2026-08', 'without'), 'regular_payments')[0]
+        update = b.dismiss(stable_id('payment', 'A'), date='2026-08', mode='without', defer_calculation=True)
+        self.assertEqual('locked', before['status'])
+        self.assertEqual(before, update['blocks'][0])
+        self.assertEqual({'period': 'month', 'date': '2026-08', 'transfer_mode': 'without'}, update['params'])
+        self.assertEqual('Europe/Moscow', update['time_zone'])
 
     def test_update_schema_bounds_duplicates_and_required_empty_metadata(self):
         b = self.regular_backend(1)
