@@ -41,7 +41,8 @@ type AnalyticsServiceClient interface {
 	ListPeriods(ctx context.Context, in *ListPeriodsRequest, opts ...grpc.CallOption) (*ListPeriodsResponse, error)
 	// Страница monthly_chart: максимум 60 полных календарных месяцев, только по выданному cursor.
 	// Вызывающий — только bank-bff с проверяемым токеном пользователя; системные вызовы не разрешены.
-	// GET /v1/analytics/charts/monthly_chart. Ошибки cursor и согласованность — api.md6.4.
+	// GET /v1/analytics/charts/monthly_chart. Как GetAnalytics: primary, одна согласованная проверка/выборка.
+	// Ошибки cursor и согласованность — api.md6.4.
 	GetChartPage(ctx context.Context, in *GetChartPageRequest, opts ...grpc.CallOption) (*GetChartPageResponse, error)
 }
 
@@ -100,7 +101,8 @@ type AnalyticsServiceServer interface {
 	ListPeriods(context.Context, *ListPeriodsRequest) (*ListPeriodsResponse, error)
 	// Страница monthly_chart: максимум 60 полных календарных месяцев, только по выданному cursor.
 	// Вызывающий — только bank-bff с проверяемым токеном пользователя; системные вызовы не разрешены.
-	// GET /v1/analytics/charts/monthly_chart. Ошибки cursor и согласованность — api.md6.4.
+	// GET /v1/analytics/charts/monthly_chart. Как GetAnalytics: primary, одна согласованная проверка/выборка.
+	// Ошибки cursor и согласованность — api.md6.4.
 	GetChartPage(context.Context, *GetChartPageRequest) (*GetChartPageResponse, error)
 	mustEmbedUnimplementedAnalyticsServiceServer()
 }

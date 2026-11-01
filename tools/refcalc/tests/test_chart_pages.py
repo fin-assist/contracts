@@ -143,6 +143,32 @@ class ChartPages(unittest.TestCase):
         self.assertEqual({'from': '1899-12-31T21:29:43+00:00', 'to': '1900-01-01T21:29:43+00:00'}, result['suggested_period'])
         self.assertEqual([], self.schema.errors('/v1/statements/config', result))
 
+    def test_historical_calendar_labels_decode_in_profile_iana_zone(self):
+        b = self.backend('2026-11-01T12:00:00+03:00')
+        b.upload('january', spec.stmt('19000101', '19000131', [
+            ('x', '19000102120000', -1, 'Shop', 'Продукты')]))
+        screen = b.analytics('month', '1900-01')
+        chart = self.block(screen, 'monthly_chart')[0]['data']
+        point = chart['points'][chart['highlight_index']]
+        # Independent consumer decoding: don't use the producer's iso/day_of helpers.
+        zone = ZoneInfo('Europe/Moscow')
+        for bounds in (screen['period']['range'], point['range']):
+            start = dt.datetime.fromisoformat(bounds['from'])
+            end = dt.datetime.fromisoformat(bounds['to'])
+            self.assertEqual(dt.date(1899, 12, 31), start.date())
+            first = start.astimezone(zone).date()
+            last = end.astimezone(zone).date() - dt.timedelta(days=1)
+            self.assertEqual('01.01.1900–31.01.1900',
+                             first.strftime('%d.%m.%Y') + '–' + last.strftime('%d.%m.%Y'))
+            self.assertEqual('1900-01', first.strftime('%Y-%m'))
+            self.assertEqual(point['action']['date'], first.strftime('%Y-%m'))
+        for field, expected in [('data_from', dt.date(1900, 1, 1)), ('data_to', dt.date(1900, 1, 31))]:
+            instant = dt.datetime.fromisoformat(screen['period'][field])
+            self.assertEqual(expected, instant.astimezone(zone).date())
+        download = b.import_config('1900-01-01', '1900-01-01')['suggested_period']
+        self.assertEqual(dt.date(1900, 1, 1), dt.datetime.fromisoformat(download['from']).astimezone(zone).date())
+        self.assertEqual(dt.date(1900, 1, 1), dt.datetime.fromisoformat(download['to']).astimezone(zone).date() - dt.timedelta(days=1))
+
     def test_manual_own_transfer_and_refund_changes_invalidate_pages(self):
         b = self.history()
         for category, amount in (('cat_own_transfer', 0), ('cat_supermarkets', 1000)):
