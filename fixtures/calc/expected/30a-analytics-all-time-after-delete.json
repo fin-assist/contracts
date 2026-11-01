@@ -1338,5 +1338,9 @@
     "unread_lines_count": 0,
     "calculated_at": "<ignored>",
     "recalculating": false
+  },
+  "calculation": {
+    "calc_version": 42,
+    "recalculating": false
   }
 }

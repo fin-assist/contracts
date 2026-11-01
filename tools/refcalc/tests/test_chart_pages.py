@@ -116,7 +116,7 @@ class ChartPages(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(ApiError) as caught:
                 b.chart_page(page['previous'])
             self.assertEqual([{'field': 'cursor', 'code': 'OUT_OF_RANGE'}], caught.exception.details)
-        self.assertEqual({'has_data': False}, b.analytics())
+        self.assertEqual({'has_data': False, 'calculation': b.recalculation.state()}, b.analytics())
 
     def test_page_schema_and_comparison_keep_bound_and_required_opaque_metadata(self):
         b = self.history()

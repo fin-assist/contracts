@@ -346,7 +346,36 @@
       "name": "dismiss",
       "do": "dismiss_regular_payment",
       "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with",
-      "title": "РБК"
+      "title": "РБК",
+      "expect": "expected/18a-dismiss-receipt.json",
+      "marker_ack": false,
+      "defer_calculation": true
+    },
+    {
+      "name": "dismiss-before-marker",
+      "do": "get",
+      "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with",
+      "expect": "expected/18b-dismiss-before-marker.json"
+    },
+    {
+      "name": "dismiss-marker-ack",
+      "do": "ack_recalculation",
+      "version_from": {
+        "step": "dismiss",
+        "path": [
+          "calc_version"
+        ]
+      }
+    },
+    {
+      "name": "dismiss-recalculating",
+      "do": "get",
+      "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with",
+      "expect": "expected/18c-dismiss-recalculating.json"
+    },
+    {
+      "name": "dismiss-finish",
+      "do": "finish_recalculation"
     },
     {
       "name": "after-dismiss",
@@ -568,13 +597,32 @@
     {
       "name": "fin418-page-older",
       "do": "get",
-      "cursor_from": {"step": "fin418-chart-return", "path": ["blocks", {"id": "monthly_chart"}, "data", "page", "previous"]},
+      "cursor_from": {
+        "step": "fin418-chart-return",
+        "path": [
+          "blocks",
+          {
+            "id": "monthly_chart"
+          },
+          "data",
+          "page",
+          "previous"
+        ]
+      },
       "expect": "expected/fin418-page-older.json"
     },
     {
       "name": "fin418-page-newer",
       "do": "get",
-      "cursor_from": {"step": "fin418-page-older", "path": ["block", "data", "page", "next"]},
+      "cursor_from": {
+        "step": "fin418-page-older",
+        "path": [
+          "block",
+          "data",
+          "page",
+          "next"
+        ]
+      },
       "expect": "expected/fin418-page-newer.json"
     },
     {
@@ -585,7 +633,18 @@
     {
       "name": "fin418-page-stale",
       "do": "get",
-      "cursor_from": {"step": "fin418-chart-return", "path": ["blocks", {"id": "monthly_chart"}, "data", "page", "previous"]},
+      "cursor_from": {
+        "step": "fin418-chart-return",
+        "path": [
+          "blocks",
+          {
+            "id": "monthly_chart"
+          },
+          "data",
+          "page",
+          "previous"
+        ]
+      },
       "expect": "expected/fin418-page-stale.json"
     },
     {

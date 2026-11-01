@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package finassist.common.v1;
+
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/common/v1;commonv1";
+
+// Квитанция принятого изменения, не готовый финансовый результат (FIN-418).
+message CalculationReceipt {
+  // Открытый код: accepted — маркер подтверждён analytics (включая уже завершённый),
+  // pending — подтверждение пока не получено, надёжная доставка продолжится.
+  // Неизвестный код трактуется как pending; показывается text.
+  string status = 1;
+  // Целевая версия следующей публикации из существующей последовательности BSD.
+  // 0 допустим только для no-op исходного, никогда не изменявшегося assignment.
+  int32 calc_version = 2;
+  // Готовое пояснение статуса, без финансовых значений и описания операции.
+  string text = 3;
+}
+
+// Состояние существующего фонового расчёта, в том числе до появления финансовых данных.
+message CalculationState {
+  // Версия применённого UserDataState; 0, если состояния ещё нет. Не версия маркера.
+  int32 calc_version = 1;
+  // Сохранённый признак OR marker_version > calc_version; FIN-418.
+  // false и calc_version >= версии квитанции подтверждают готовность для клиента.
+  bool recalculating = 2;
+}

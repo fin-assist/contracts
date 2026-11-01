@@ -82,7 +82,7 @@ class ReviewFeedback(unittest.TestCase):
                 self.assertIn("help_text", balance)
                 self.assertNotIn("caption", balance["data"])
         b.delete_upload("one")
-        self.assertEqual({"has_data": False}, b.analytics("month", supports=SUPPORTS))
+        self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("month", supports=SUPPORTS))
 
     def test_history_chart_does_not_change_selected_rolling_facts(self):
         b = self.history()

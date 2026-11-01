@@ -95,7 +95,7 @@ class RollingPeriods(unittest.TestCase):
         self.assertEqual("ready", self.block(short, "monthly_chart")[0]["status"])
         self.assertEqual("2026-09-01T00:00:00+03:00", short["period"]["range"]["to"])
         b.delete_upload("a.ofx")
-        self.assertEqual({"has_data": False}, b.analytics("rolling_quarter"))
+        self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("rolling_quarter"))
         self.assertEqual({"periods": []}, b.periods("rolling_quarter"))
 
     def test_quarter_keeps_minor_units_and_opens_the_full_edge_month(self):
@@ -154,5 +154,5 @@ class RollingPeriods(unittest.TestCase):
     def test_only_empty_statements_preserve_empty_screen_with_coverage_period_list(self):
         b = self.backend("2026-10-31T12:00:00+03:00")
         b.upload("empty.ofx", spec.stmt("20261001", "20261030", []))
-        self.assertEqual({"has_data": False}, b.analytics("rolling_year"))
+        self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("rolling_year"))
         self.assertEqual(1, len(b.periods("rolling_year")["periods"]))

@@ -3,6 +3,7 @@ syntax = "proto3";
 package finassist.analytics.v1;
 
 import "finassist/common/v1/blocks.proto";
+import "finassist/common/v1/calculation.proto";
 import "finassist/common/v1/common.proto";
 import "finassist/common/v1/data_revision.proto";
 import "google/protobuf/timestamp.proto";
@@ -32,11 +33,14 @@ service AnalyticsService {
   rpc GetChartPage(GetChartPageRequest) returns (GetChartPageResponse);
 }
 
-// Вызывающий: только bank-statement-data (воркер outbox). Идемпотентный upsert с версиями.
+// Вызывающий: только системный bank-statement-data (post-commit доставка маркера / фон). Идемпотентные версии.
 service MetricsIngestService {
   // Записать готовые метрики пользователя: состояние данных и полные снимки периодов, удалить
   // периоды без данных. Применяется по версии расчёта, повторы безопасны.
   rpc UpsertUserMetrics(UpsertUserMetricsRequest) returns (UpsertUserMetricsResponse);
+  // Только bank-statement-data: короткая попытка после commit или повтор надёжного задания.
+  // Записывает отдельную монотонную границу, не UserDataState/финансовые снимки.
+  rpc MarkRecalculating(MarkRecalculatingRequest) returns (MarkRecalculatingResponse);
 }
 
 // ---------------------------------------------------------------- Модель метрики
@@ -214,8 +218,8 @@ message MonthlyPoint {
   // Только для ROLLING_*: пересечение календарного месяца range с интервалом снимка.
   // Суммы и bounds относятся только к этому пересечению; при отсутствии — ко всему range.
   // Краевой отрезок всегда PARTIAL, даже если каждый его день покрыт; без покрытых дней — NO_DATA.
-  // analytics использует calculation_range как REST ChartPoint.range, а month — как ключ перехода
-  // к полному календарному месяцу. Нельзя расширять отрезок при композиции или считать суммы из месячных снимков.
+  // calculation_range относится к фактам/notes выбранного периода; навигационный REST monthly_chart
+  // использует полные календарные месяцы согласованной истории, страницами по 60 (FIN-418).
   optional finassist.common.v1.TimeRange calculation_range = 6;
 }
 
@@ -439,6 +443,8 @@ message ScreenState {
   // Идёт пересчёт, вызванный действием пользователя (импорт выписки, смена категории, удаление
   // загрузки, смена пояса, исключение платежа из регулярных): цифры могут измениться, клиенту стоит запросить
   // аналитику позже. Пересчёт по новой версии реестра признак не ставит (FIN-196).
+  // Равно calculation.recalculating: сохранённый флаг OR marker_version > state.calc_version.
+  // При true клиент сохраняет весь последний готовый ответ того же контекста.
   bool recalculating = 8;
 }
 
@@ -483,6 +489,8 @@ message GetAnalyticsResponse {
   // Поле внутреннее: bank-bff не переносит его в REST, assistant не передаёт
   // его модели в промпте, результатах инструментов или текстах блоков.
   repeated finassist.common.v1.DataRevision data_revisions = 14;
+  // Есть и при has_data=false. Читается согласованно с остальным ответом; FIN-418.
+  finassist.common.v1.CalculationState calculation = 15;
 }
 
 // Запрос списка периодов с данными.
@@ -619,6 +627,16 @@ message UserDataState {
   repeated finassist.common.v1.DataRevision data_revisions = 10;
 }
 
+// Только системный bank-statement-data. Неверный user_id/версия — голый INVALID_ARGUMENT.
+message MarkRecalculatingRequest {
+  string user_id = 1;
+  // 1..2147483647; target = текущий BSD calc_version + 1 под user lock, без увеличения счётчика.
+  int32 calc_version = 2;
+}
+
+// ACK: маркер применён либо уже покрыт состоянием; tombstone — ACK без записи. Задание true завершено.
+message MarkRecalculatingResponse {}
+
 // Пакет готовых метрик пользователя от bank-statement-data.
 // analytics сохраняет только известные его выпуску поля: новое поле запроса или вложенных сообщений
 // (UserDataState, PeriodSnapshot, PeriodRef, Metric и другие) или новый вариант details — сначала
@@ -652,6 +670,7 @@ message UpsertUserMetricsRequest {
   // ограничен, grpc-api.md 6.1). Одна calc_version для (период, ключ) — снимок или удаление, не оба:
   // ключ и в periods, и в removed_periods одного вызова — отказ голым INVALID_ARGUMENT.
   repeated PeriodRef removed_periods = 5;
+
 }
 
 // Что из пакета применено.

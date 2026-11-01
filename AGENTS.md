@@ -344,7 +344,7 @@ tile_group@2 sections. REST keeps tile_group@1 when supports is absent or its ma
 include both versions and all_time; schema/coverage choose block data by type and version. Consumers are
 FIN-398/400/403; backend consumers wait for merge and an owner-created immutable gen/go tag.
 
-FIN-413 adds singleton rolling_year/rolling_quarter and optional MonthlyPoint.calculation_range for exact edge slices. Keep month/range calendar identity separate from the calculation interval; compose REST point.range from calculation_range and navigate by month. FIN-411 owns runtime/Android/mock after merge and an owner-created gen/go tag. Reference tests/fixtures cover clamps, coverage anchors, short history and gaps; docs/calc.md12 and docs/grpc-api.md define rollout.
+FIN-413 adds singleton rolling_year/rolling_quarter and optional MonthlyPoint.calculation_range for exact edge slices. Keep month/range calendar identity separate from the calculation interval; use calculation_range for selected facts/notes; FIN-418 navigation uses full calendar points. FIN-411 owns runtime/Android/mock after merge and an owner-created gen/go tag. Reference tests/fixtures cover clamps, coverage anchors, short history and gaps; docs/calc.md12 and docs/grpc-api.md define rollout.
 
 
 FIN-418: `monthly_chart` версии 1 открывает всю историю во всех вкладках страницами по 60 месяцев (api.md6.4);
@@ -353,3 +353,9 @@ GET /v1/statements/config принимает необязательную пар
 GetChartPage и page.revision ограничивают выдачу, сохраняют tenant/revision-согласованность;
 calc.md13 и grpc-api.md определяют правила и согласованный rollout альфы (FIN-416), без новой версии chart.
 После merge владелец выпускает новый gen/go-тег до зависимых сервисных PR; merge/тег здесь не выполняются.
+
+FIN-418 также меняет dismissal 204→202: квитанция версии вместо готового блока, post-commit
+MarkRecalculating для доставки true; существующий фоновый final снимает флаг. GET читает marker и снимки согласованно
+с primary; клиент сохраняет весь готовый ответ до подтверждённой версии и отбрасывает GET до mutation.
+Нет live-read BSD или Temporal runtime (FIN-419 отдельно). Альфа требует согласованного rollout;
+REST breaking принимает только владелец меткой breaking-accepted. Правила: api.md6.3, grpc-api.md FIN-418.

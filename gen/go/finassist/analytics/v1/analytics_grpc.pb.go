@@ -222,17 +222,21 @@ var AnalyticsService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	MetricsIngestService_UpsertUserMetrics_FullMethodName = "/finassist.analytics.v1.MetricsIngestService/UpsertUserMetrics"
+	MetricsIngestService_MarkRecalculating_FullMethodName = "/finassist.analytics.v1.MetricsIngestService/MarkRecalculating"
 )
 
 // MetricsIngestServiceClient is the client API for MetricsIngestService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Вызывающий: только bank-statement-data (воркер outbox). Идемпотентный upsert с версиями.
+// Вызывающий: только системный bank-statement-data (post-commit доставка маркера / фон). Идемпотентные версии.
 type MetricsIngestServiceClient interface {
 	// Записать готовые метрики пользователя: состояние данных и полные снимки периодов, удалить
 	// периоды без данных. Применяется по версии расчёта, повторы безопасны.
 	UpsertUserMetrics(ctx context.Context, in *UpsertUserMetricsRequest, opts ...grpc.CallOption) (*UpsertUserMetricsResponse, error)
+	// Только bank-statement-data: короткая попытка после commit или повтор надёжного задания.
+	// Записывает отдельную монотонную границу, не UserDataState/финансовые снимки.
+	MarkRecalculating(ctx context.Context, in *MarkRecalculatingRequest, opts ...grpc.CallOption) (*MarkRecalculatingResponse, error)
 }
 
 type metricsIngestServiceClient struct {
@@ -253,15 +257,28 @@ func (c *metricsIngestServiceClient) UpsertUserMetrics(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *metricsIngestServiceClient) MarkRecalculating(ctx context.Context, in *MarkRecalculatingRequest, opts ...grpc.CallOption) (*MarkRecalculatingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkRecalculatingResponse)
+	err := c.cc.Invoke(ctx, MetricsIngestService_MarkRecalculating_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MetricsIngestServiceServer is the server API for MetricsIngestService service.
 // All implementations must embed UnimplementedMetricsIngestServiceServer
 // for forward compatibility.
 //
-// Вызывающий: только bank-statement-data (воркер outbox). Идемпотентный upsert с версиями.
+// Вызывающий: только системный bank-statement-data (post-commit доставка маркера / фон). Идемпотентные версии.
 type MetricsIngestServiceServer interface {
 	// Записать готовые метрики пользователя: состояние данных и полные снимки периодов, удалить
 	// периоды без данных. Применяется по версии расчёта, повторы безопасны.
 	UpsertUserMetrics(context.Context, *UpsertUserMetricsRequest) (*UpsertUserMetricsResponse, error)
+	// Только bank-statement-data: короткая попытка после commit или повтор надёжного задания.
+	// Записывает отдельную монотонную границу, не UserDataState/финансовые снимки.
+	MarkRecalculating(context.Context, *MarkRecalculatingRequest) (*MarkRecalculatingResponse, error)
 	mustEmbedUnimplementedMetricsIngestServiceServer()
 }
 
@@ -274,6 +291,9 @@ type UnimplementedMetricsIngestServiceServer struct{}
 
 func (UnimplementedMetricsIngestServiceServer) UpsertUserMetrics(context.Context, *UpsertUserMetricsRequest) (*UpsertUserMetricsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpsertUserMetrics not implemented")
+}
+func (UnimplementedMetricsIngestServiceServer) MarkRecalculating(context.Context, *MarkRecalculatingRequest) (*MarkRecalculatingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkRecalculating not implemented")
 }
 func (UnimplementedMetricsIngestServiceServer) mustEmbedUnimplementedMetricsIngestServiceServer() {}
 func (UnimplementedMetricsIngestServiceServer) testEmbeddedByValue()                              {}
@@ -314,6 +334,24 @@ func _MetricsIngestService_UpsertUserMetrics_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetricsIngestService_MarkRecalculating_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkRecalculatingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetricsIngestServiceServer).MarkRecalculating(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetricsIngestService_MarkRecalculating_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetricsIngestServiceServer).MarkRecalculating(ctx, req.(*MarkRecalculatingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MetricsIngestService_ServiceDesc is the grpc.ServiceDesc for MetricsIngestService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -324,6 +362,10 @@ var MetricsIngestService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpsertUserMetrics",
 			Handler:    _MetricsIngestService_UpsertUserMetrics_Handler,
+		},
+		{
+			MethodName: "MarkRecalculating",
+			Handler:    _MetricsIngestService_MarkRecalculating_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

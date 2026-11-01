@@ -10,6 +10,8 @@ from referencing.jsonschema import DRAFT4
 
 SCHEMAS = {
     "upload": "ImportResult",
+    "dismiss_regular_payment": "CalculationReceipt",
+    "restore_regular_payment": "CalculationReceipt",
     "/v1/statements/config": "ImportConfig",
     "/v1/operations": "OperationsList",
     "/v1/categories": "CategoriesList",

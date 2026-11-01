@@ -4,6 +4,7 @@ package finassist.statementdata.v1;
 
 import "buf/validate/validate.proto";
 import "finassist/common/v1/common.proto";
+import "finassist/common/v1/calculation.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/fin-assist/contracts/gen/go/finassist/statementdata/v1;statementdatav1";
@@ -285,13 +286,17 @@ message DismissRegularPaymentRequest {
   string regular_payment_id = 1;
 }
 
-// Пустой ответ: отметка поставлена, пересчёт запущен.
-message DismissRegularPaymentResponse {}
+// Изменение принято локально; финансовый результат приходит через обычный async pipeline.
+message DismissRegularPaymentResponse {
+  finassist.common.v1.CalculationReceipt receipt = 1;
+}
 
 // Вернуть платёж в регулярные.
 message RestoreRegularPaymentRequest {
   string regular_payment_id = 1;
 }
 
-// Пустой ответ: отметка снята, пересчёт запущен.
-message RestoreRegularPaymentResponse {}
+// Повтор того же assignment возвращает его версию без нового изменения/задания.
+message RestoreRegularPaymentResponse {
+  finassist.common.v1.CalculationReceipt receipt = 1;
+}

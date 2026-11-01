@@ -14,6 +14,7 @@ import uuid
 
 from .analytics import Analytics, Ctx, SINGLETONS, parse_supports, period_bounds
 from .ledger import Ledger, stable_id
+from .recalculation import Recalculation
 from .registry import OWN_TRANSFER, REFUND, TRANSFERS_NAME, UNCATEGORIZED, Registry
 from .util import add_months, day_of, end_of_day, iso, month_key, month_start, parse_iso, start_of_day
 from .views import Scope, account, details, item, records, selection_id
@@ -45,6 +46,7 @@ class Backend:
         self.now: dt.datetime = None
         self._chart_owner = uuid.uuid4().hex
         self._chart_cursors = {}
+        self.recalculation = Recalculation()
 
     @property
     def today(self) -> dt.date:
@@ -116,6 +118,7 @@ class Backend:
         before = self.ledger.coverage(self.today)
         is_first = not self.ledger.uploads
         up, added, duplicates = self.ledger.add_upload(file_name, text, self.now)
+        self.recalculation.calculate_now()
         after = self.ledger.coverage(self.today)
         doc = up.doc
         scope = Scope(self.ledger, "with")
@@ -191,6 +194,7 @@ class Backend:
     def delete_upload(self, file_name: str) -> None:
         up = next(u for u in self.ledger.uploads if u.file_name == file_name)
         self.ledger.remove_upload(up.id)
+        self.recalculation.calculate_now()
 
     # ---- 4.1 ----
 
@@ -361,14 +365,29 @@ class Backend:
         for kind, k in recs:
             rid = k if kind == "pair" else self.ledger.ops[k].id
             items.append(details(by_id[rid]))
+        self.recalculation.calculate_now()
         return {"items": items, "replaced_id": replaced}
 
-    def dismiss(self, payment_id: str) -> None:
-        """6.3 PUT: the payment is bound to its key, the description."""
+    def dismiss(self, payment_id: str, dismissed=True, marker_ack=True, defer_calculation=False) -> dict:
+        """6.3 assignment + receipt; tests may defer the existing background calculation."""
+        if not re.fullmatch(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", payment_id):
+            raise ApiError(400, "VALIDATION_ERROR", [{"field": "id", "code": "INVALID_FORMAT"}])
         name = next((o.name for o in self.ledger.ops.values() if stable_id("payment", o.name) == payment_id), None)
         if name is None:
             raise ApiError(404, "NOT_FOUND")
-        self.ledger.dismissed.add(name)
+        changed = (name in self.ledger.dismissed) != dismissed
+        try:
+            receipt = self.recalculation.assign(payment_id, dismissed, marker_ack)
+        except OverflowError:
+            raise ApiError(500, "INTERNAL_ERROR")
+        if dismissed:
+            self.ledger.dismissed.add(name)
+        else:
+            self.ledger.dismissed.discard(name)
+        if changed and not defer_calculation:
+            self.recalculation.start()
+            self.recalculation.finish()
+        return receipt
 
     # ---- 5.1, 6.1, 6.2 ----
 
@@ -385,8 +404,15 @@ class Backend:
         except ValueError:
             raise ApiError(400, "VALIDATION_ERROR", [{"field": "supports", "code": "INVALID_FORMAT",
                                                      "message": "has invalid format"}])
-        return Analytics(self.ledger, self.now, lambda anchor: self._chart_page(mode, anchor=anchor)).screen(
+        out = Analytics(self.ledger, self.now, lambda anchor: self._chart_page(mode, anchor=anchor)).screen(
             period, date, mode, supports)
+        # Reference financial responses are calculated immediately except explicit delayed-marker scenarios.
+        if out['has_data'] and self.recalculation.state_version == 0 and not self.recalculation.assignments:
+            self.recalculation.calculate_now()
+        out['calculation'] = self.recalculation.state()
+        if 'state' in out:
+            out['state']['recalculating'] = out['calculation']['recalculating']
+        return out
 
     def _chart_revision(self, mode):
         # A reference-only fingerprint, not a prescribed production token/storage scheme.

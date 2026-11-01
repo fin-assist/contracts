@@ -1207,5 +1207,9 @@
     "unread_lines_count": 2,
     "calculated_at": "<ignored>",
     "recalculating": false
+  },
+  "calculation": {
+    "calc_version": 24,
+    "recalculating": false
   }
 }

@@ -1420,7 +1420,7 @@ paths:
       summary: Аналитика за период
       description: |
         Экран — упорядоченный список блоков общего каталога (FIN-4). Пороги, блокировки, базы расчёта, устаревание и
-        тексты сервер вычисляет сам; клиент только рисует блоки. При `has_data: false` остальных полей нет.
+        тексты сервер вычисляет сам; клиент только рисует блоки. При has_data=false остаётся calculation; финансовых полей нет.
       parameters:
       - name: period
         in: query
@@ -1491,6 +1491,7 @@ paths:
               example:
                 {
                   "has_data": true,
+                  "calculation": {"calc_version": 3, "recalculating": false},
                   "params": {
                     "period": "month",
                     "date": "2026-09",
@@ -1784,15 +1785,19 @@ paths:
       operationId: dismissRegularPayment
       summary: «Не подписка»
       description: |
-        Платёж исчезает из карточки, итог пересчитывается. Отметка привязана к ключу платежа — описанию
-        операции из выписки (точное совпадение), а не к периоду. Пока итог не пересчитан, `getAnalytics` отдаёт `state.recalculating: true`.
+        Изменение принято; карточка заменяется только подтверждённым готовым результатом (api.md6.3). Отметка привязана к ключу платежа — описанию
+        операции из выписки (точное совпадение), а не к периоду. Квитанция различает подтверждённый маркер и ожидающую доставку; старый false не подтверждает готовность.
         Идемпотентно.
       parameters:
       - $ref: '#/components/parameters/XRequestId'
       - $ref: '#/components/parameters/XClientVersion'
       responses:
-        '204':
-          description: Отмечено
+        '202':
+          description: Изменение принято, завершение пересчёта проверяется по версии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculationReceipt'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1815,8 +1820,12 @@ paths:
       - $ref: '#/components/parameters/XRequestId'
       - $ref: '#/components/parameters/XClientVersion'
       responses:
-        '204':
-          description: Отметка снята
+        '202':
+          description: Снятие отметки принято, включая идемпотентный повтор
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculationReceipt'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -3832,12 +3841,51 @@ components:
           type: string
           nullable: true
           description: Подпись в выборе («не в тратах»); есть только у системных.
+    CalculationReceipt:
+      type: object
+      required: [status, calc_version, text]
+      description: Принятое изменение, не готовый результат; правила версии и повторов api.md6.3.
+      properties:
+        status:
+          type: string
+          minLength: 1
+          maxLength: 64
+          x-extensible-enum: [accepted, pending]
+          description: accepted — analytics подтвердил маркер или уже завершённую версию; pending — подтверждение ожидается. Неизвестный код — pending, показывается text.
+        calc_version:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 2147483647
+          description: Минимальная версия полного результата; 0 только для исходного никогда не изменённого assignment при no-op.
+        text:
+          type: string
+          minLength: 1
+          maxLength: 512
+          description: Готовое пояснение принятого изменения, без финансовых значений.
+    CalculationState:
+      type: object
+      required: [calc_version, recalculating]
+      description: Версия применённого UserDataState и эффективный признак пересчёта, согласованно с ответом; есть и без данных.
+      properties:
+        calc_version:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 2147483647
+          description: Версия применённого UserDataState; 0, если состояния ещё нет. Не версия маркера.
+        recalculating:
+          type: boolean
+          description: Сохранённый флаг OR marker_version больше применённой версии; false и версия не ниже квитанции подтверждают готовность.
     Analytics:
       type: object
-      description: 'Ответ экрана «Аналитика». При `has_data: false` остальных полей нет.'
+      description: 'Ответ экрана «Аналитика». При has_data=false остаётся calculation; финансовых полей нет.'
       required:
       - has_data
+      - calculation
       properties:
+        calculation:
+          $ref: '#/components/schemas/CalculationState'
         has_data:
           type: boolean
           description: Есть ли у пользователя хоть одна операция и хоть один покрытый выпиской день. `false` — пустое состояние

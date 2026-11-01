@@ -102,12 +102,19 @@ class Runner:
                 elif do == "change_category":
                     resp = self.backend.change_category(step["operation"]["account"], step["operation"]["fitid"],
                                                         step["category_id"])
-                elif do == "dismiss_regular_payment":
+                elif do in ("dismiss_regular_payment", "restore_regular_payment"):
                     # As an implementation does it: the payment_id of the row with this title in the card.
                     screen = self.get(step["request"].split(" ", 1)[1])
                     card = next(b for b in screen["blocks"] if b.get("id") == "regular_payments")
                     row = next(r for r in card["data"]["items"] if r["title"] == step["title"])
-                    self.backend.dismiss(row["button"]["payment_id"])
+                    resp = self.backend.dismiss(row["button"]["payment_id"], do == "dismiss_regular_payment",
+                                                step.get("marker_ack", True), step.get("defer_calculation", False))
+                elif do == "ack_recalculation":
+                    self.backend.recalculation.ack_marker(self.resolve(step["version_from"]))
+                    resp = None
+                elif do == "finish_recalculation":
+                    self.backend.recalculation.start()
+                    self.backend.recalculation.finish()
                     resp = None
                 elif do == "delete_upload":
                     self.backend.delete_upload(os.path.basename(step["file"]))

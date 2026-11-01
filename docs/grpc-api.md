@@ -30,6 +30,7 @@ assistant ──(системный)──► user.UserInternalService.GetAssist
           ──(системный)──► analytics.AnalyticsService               (инструменты LLM)
 
 bank-statement-data ──(системный, outbox)──► analytics.MetricsIngestService.UpsertUserMetrics
+bank-statement-data ──(системный, после commit / повтор)──► analytics.MetricsIngestService.MarkRecalculating
 
 user ──(системный, outbox)──► usersettings.SetUserTimezone на bank-statement-data, assistant
      ──(системный, outbox)──► userdeletion.PurgeUserData на bank-statement-data, analytics, assistant
@@ -37,7 +38,7 @@ user ──(системный, outbox)──► usersettings.SetUserTimezone н
 все сервисы ──► user.UserInternalService.GetSigningKeys  (JWKS, кэш)
 ```
 
-Циклов нет: `analytics` никого не вызывает, `bank-statement-data` вызывает только `analytics`. Синхронных вызовов «сервис → сервис» на пути запроса клиента два: проверка согласия в `assistant` и инструменты LLM (последние — в фоне генерации).
+Циклов нет: `analytics` никого не вызывает, `bank-statement-data` вызывает только `analytics`. FIN-418 добавляет короткий post-commit MarkRecalculating из BSD; аналитика из BSD не читается. Другие синхронные вызовы «сервис → сервис» на пути запроса клиента: проверка согласия в `assistant` и инструменты LLM (последние — в фоне генерации).
 
 Системные вызовы (`assistant → user`, `user → bank-statement-data / analytics / assistant`) нанесены на схему «Services v3» фиолетовым пунктиром 12.10.2026; `* → user` (JWKS) — стикером, а не стрелками.
 
@@ -81,7 +82,7 @@ user ──(системный, outbox)──► usersettings.SetUserTimezone н
 | `usersettings.UserSettingsSyncService/*` (на `bank-statement-data` и `assistant`) | `user` | системный |
 | `analytics.AnalyticsService/{GetAnalytics,ListPeriods}` | `bank-bff` / `assistant` | пользователь / системный |
 | `analytics.AnalyticsService/GetChartPage` | `bank-bff` | пользователь; системные вызовы запрещены |
-| `analytics.MetricsIngestService/*` | `bank-statement-data` | системный |
+| `analytics.MetricsIngestService/{UpsertUserMetrics,MarkRecalculating}` | `bank-statement-data` | системный |
 | `assistant.AssistantService/*` | `bank-bff` | пользователь |
 | `userdeletion.UserDeletionService/*` | `user` | системный |
 
@@ -303,11 +304,11 @@ Permission новой генерации остаётся в `AnswerError.retrya
 - Original StartPhoneVerification с dispatch-marker и terminal duplicate сохраняет429 до future retry_at, затем в обычном24h окне отдаёт terminal INTERNAL_ERROR false без confirm/нового receipt. Общее выполнение дубля после retry_at относится только к pre-dispatch keys; не к этому состоянию (7.1).
 - Хеш `UploadStatement` (FIN-297) — не по сериализации потока, а по формуле `request_hash = SHA-256(SHA-256(содержимое) ‖ file_name)`: первая часть — 32 байта SHA-256 всех байтов файла (конкатенация `chunk` в порядке потока), вторая — байты `UploadHeader.file_name` в UTF-8, `‖` — конкатенация без разделителя. Первая часть всегда ровно 32 байта, поэтому граница однозначна: разные пары «содержимое, имя» не дают одной строки на входе внешнего SHA-256. `file_name` берётся как передан в запросе, без нормализации (регистр, Unicode-нормализация, пробелы, расширение не меняются) — то самое значение, которое сохраняется и показывается в «Истории загрузок»; пустое имя — пустая вторая часть. Тот же ключ, то же содержимое, другое имя — `IDEMPOTENCY_CONFLICT`: иначе повтор вернул бы загрузку со старым именем. Хеш не зависит от схемы protobuf, поэтому ложного конфликта после деплоя у загрузки нет. Хеш известен только после последнего `chunk`, поэтому сохранённый исход ищется и хеш сверяется в конце потока: повтор с тем же ключом дочитывается, и сохранённый ответ (или `IDEMPOTENCY_CONFLICT`, `REQUEST_IN_PROGRESS`) отдаётся после последнего `chunk`. `FILE_TOO_LARGE` у `UploadStatement` — исключение из сохраняемых `413`: сервис отвечает им до конца потока (по `header.size_bytes` — до первого `chunk`), когда хеша ещё нет, и под ключом его не сохраняет; ключ при этом не проверяется. Повтор выполняется заново и так же дёшево получает тот же `413` — исход зависит только от размера.
 - Хеш — `proto.MarshalOptions{Deterministic: true}` + SHA-256. Детерминизм гарантирован только для одного бинаря; после деплоя с изменённой схемой сообщения хеш повтора может не совпасть → ложный `IDEMPOTENCY_CONFLICT`. Окно — 24 ч после релиза, затрагивает только повторы, пересёкшие деплой; принимаем (решено 14.10.2026: хеш считает сервис по protobuf; вариант с канонизированным телом REST в `bank-bff` отклонён как лишняя сложность).
-- Внутренние вызовы с эффектом идемпотентны по конструкции и ключа не требуют: `UpsertUserMetrics` (версии), `SetUserTimezone` (версия настроек), `PurgeUserData` (повтор — OK), `DismissRegularPayment` / `ChangeCategory` (присваивание).
+- Внутренние вызовы с эффектом идемпотентны по конструкции и ключа не требуют: `UpsertUserMetrics` / `MarkRecalculating` (версии), `SetUserTimezone` (версия настроек), `PurgeUserData` (повтор — OK), `DismissRegularPayment` / `ChangeCategory` (присваивание).
 
 ### 6.1 Outbox
 
-Решено 14.10.2026. Все фоновые вызовы между сервисами (`SetUserTimezone`, `PurgeUserData`, `UpsertUserMetrics`) идут через transactional outbox на PG, без брокера. Механизм один — общая Go-библиотека (рядом с библиотекой идемпотентности, FIN-78).
+Решено 14.10.2026. Все фоновые вызовы между сервисами (`SetUserTimezone`, `PurgeUserData`, `UpsertUserMetrics`, `MarkRecalculating`) идут через transactional outbox на PG, без брокера. Механизм один — общая Go-библиотека (рядом с библиотекой идемпотентности, FIN-78).
 
 - **Запись.** Изменение и событие фиксируются в одной транзакции БД производителя: например, `UPDATE profile SET timezone = …, settings_version = settings_version + 1` и `INSERT INTO outbox`. Либо оба, либо ничего; падение пода после `COMMIT` событие не теряет.
 - **Событие, а не вызов.** Строка outbox — тема (`user.timezone_changed`), ключ (`user_id`) и payload (protobuf). Список получателей темы и метод, которым доставлять, — в конфигурации доставщика, а не в коде производителя: новый получатель добавляется без правки производителя. Доставщик раскладывает событие на задания по получателям и доставляет их независимо.
@@ -578,6 +579,76 @@ RefreshTokens/закрытия заявки. Её refresh только из-за
 
 **Отказ метрики** (решение владельца 20.10.2026, FIN-196). `METRIC_STATUS_UNAVAILABLE` — только когда прежнего значения нет: снимка периода ещё нет или в сохранённом снимке нет нужной метрики (например, метрика новая в реестре, а период ещё не пересчитан). Смена версии определения в реестре (FIN-6) метрику не закрывает: релиз, меняющий реестр, ставит затронутые периоды на пересчёт, и до пересчёта `analytics` отдаёт прежний снимок периода как есть — `definition_version` сохранённых метрик с текущей версией реестра не сравнивается. Новые снимки периода (оба режима переводов) заменяют прежние целиком и атомарно, в одном вызове («Модель записи», «Версии»), поэтому старые и новые показатели в одном периоде не смешиваются — в том числе при переключении режима переводов. Межмесячные метрики («обычно», сравнение с прошлым периодом, `monthly_chart`) `bank-statement-data` считает по операциям, а не по сохранённым снимкам, так что новый снимок периода целиком по новым правилам; пока пересчёт идёт, расходиться могут только разные периоды — это допустимо. В REST `UNAVAILABLE` — открытое значение `unavailable`, текущий клиент покажет его как `locked` без подробностей — совместимо уже сейчас, до FIN-4.
 
+### FIN-418: доставка `recalculating:true` после принятого изменения
+
+REST6.3 по-прежнему идёт BFF → BSD RegularPaymentsService. Пользователь только из проверенного токена;
+системные Dismiss/Restore запрещены. Ответы содержат `common.CalculationReceipt receipt`; BFF разворачивает
+его в 202 JSON. Формат/границы/status/text — api.md6.3. Нет фасада в analytics, чтения аналитики из BSD,
+готового блока в ответе или изменения FIN-196 о целых снимках. Temporal — отдельная FIN-419.
+
+**Локальная транзакция и короткая доставка.** Под сериализацией пользователя BSD сохраняет assignment
+(dismiss/restore), исходную ревизию, очередь обычного фонового пересчёта и надёжное задание доставки true.
+В той же транзакции запоминает для assignment `target = user_state.calc_version + 1`, **не увеличивая**
+этот счётчик. После commit отдельная попытка `MarkRecalculating{user_id,calc_version:target}` длится не более
+1 секунды и остатка RPC deadline. ACK → accepted; ошибка/таймаут → pending без отката изменения.
+Задание повторяется надёжно и **завершается сразу после ACK маркера**, не ждёт расчёта/метрик/final false.
+Сам расчёт позже выполняется существующим воркером, доставляет снимки через прежний UpsertUserMetrics и
+снимает recalculating штатным финальным false. Нет сети внутри SQL-транзакции или нового final-протокола.
+При отмене запроса/падении процесса после commit задание остаётся; потеря ACK безопасна.
+
+**Почему target не резервирует номер.** user_state.calc_version уже покрывает все подготовленные
+pending/chunk/final версии. Сборка снимка, сохранение публикаций и Complete держат тот же user lock,
+что mutation. До Start target может равняться будущему pending(true); между Start и Build — parts(true),
+поскольку Build заново читает факты и очередь под lock; после Build/Complete target строго выше прежнего final.
+Несколько изменений до расчёта могут иметь общий target: публикация включает их все. Worker учитывает
+пользовательские строки всей очереди (включая ещё не due), поэтому daily/registry не теряет true.
+Подготовленным старым состояниям нельзя позднее присваивать новую версию/пересобирать их payload.
+Счётчик не расходуется маркером, разрывов нет: существующие зависимости clearing/частей/final и ACK-барьеры
+сохраняются. В частности, новый daily clearing(false) не обгоняет предыдущий пользовательский final.
+Новая схема заданий/таблиц/алгоритм delivery не предписываются.
+
+Повтор неизменного assignment возвращает **первоначальный сохранённый target**, не current+1 и не новый
+эффект/исходную ревизию/задание. Незавершённую доставку можно повторить; противоположное присваивание —
+новое изменение. No-op изначального never-written состояния допускает receipt=0, без marker.
+Конкурентные изменения сериализованы. До commit проверяется запас для всего штатного пути pending/parts/final
+(при current > 2147483644 новый assignment не принимается); переполнение/обнуление запрещены.
+Отказ — канонический INTERNAL без сохранения изменения, ревизии или задания.
+
+**MarkRecalculating.** Только системный bank-statement-data; пользовательский токен, bank-bff и assistant —
+голый PERMISSION_DENIED. user_id обязателен по общему системному формату; calc_version — 1…2147483647.
+Неверный запрос — голый INVALID_ARGUMENT до записи. Действуют проверенная service identity, allowlist,
+tombstone guard; удалённый пользователь — ACK без записи/восстановления. Задания удаляются при purge;
+поздний sender не воскрешает аккаунт. Новый аккаунт имеет другую идентичность.
+
+analytics атомарно повышает отдельную внутреннюю marker_version до max(прежняя,target); не меняет
+UserDataState.calc_version, calculated_at, пояс, границы, финансовые снимки или data_revisions.
+Effective recalculating = сохранённый UserDataState.recalculating OR marker_version > UserDataState.calc_version
+(нет state — его версия 0 и сохранённый флаг false). Старый false ниже marker оставляет true;
+части с версией не ниже marker содержат true; существующий финальный false с большей версией снимает его.
+Marker после готового результата — логический no-op/ACK, без нового пересчёта. FIN-283 «одинаковая версия
+ключа — одинаковое содержимое» не нарушается: marker не переписывает state этого ключа.
+
+**GET и клиент.** GetAnalytics читает marker, UserDataState и все использованные снимки/историю из одного
+согласованного снимка **primary**, независимо от x-read-primary. После ACK marker новый GET, включая cold start
+и другое устройство, не теряет true из-за реплики; новая версия не смешивается со старыми финансовыми данными
+другого чтения. Внутренний и REST `calculation` содержит только `{calc_version,recalculating}`;
+версия — применённый UserDataState или 0, флаг — effective. Объект есть при has_data=false, когда остального
+state нет. При наличии ScreenState его флаг равен calculation.recalculating. Эти служебные поля не передаются
+LLM. Эффективный true также учитывается существующей проверкой достоверности data_revisions; marker не
+сертифицирует старые источники и не даёт помощнику ложного source-freshness ACK.
+
+api.md6.3: клиент сохраняет готовый ответ целиком для user/params/timezone, при true меняет только notice,
+без cache показывает preparing. После pending старый false недостаточен: принимается только false с
+calc_version не ниже квитанции. GET, начатые до mutation, отбрасываются по request generation. Существующий ограниченный/retry-aware refresh (примерно раз в 3 секунды) работает при true или непокрытой версии квитанции; отдельного таймера нет. Мутации всего regular-блока сериализованы. Локального финансового пересчёта и удаления отдельной строки нет. Выход/смена пользователя очищает cache
+и ожидаемые версии; при сохранении cache между запусками сохраняется и квитанция.
+
+**Проверки runtime:** rollback до commit; сбой/таймаут/отмена после commit; ACK завершает только marker-job;
+потеря ACK и repeat changed=false; false старой версии/поздний marker; mutation до pending/между pending и Build/
+после Complete; concurrent assignment и coalescing target; daily/registry после user action; int32 exhaustion;
+purge и stale sender; accepted → immediate coherent GET при задержанной async-доставке; pending → старый false
+не обновляет cache; новый final и has_data=false; no-cache preparing и GET до mutation. Эталон моделирует эти
+наблюдаемые переходы; PostgreSQL/сеть проверяются отдельно в зависимых runtime PR FIN-416.
+
 ### 7.4 `assistant`
 
 REST 7.x один к одному. У `AskQuestion` и `RetryAnswer` сначала проверяется ключ идемпотентности: закреплённый ключ возвращает сохранённый ответ, даже при блокировке OFF_TOPIC или исчерпанном суточном лимите, без новой генерации и списания. Тот же ключ с другим телом — `IDEMPOTENCY_CONFLICT`. Новый ключ резервируется на 15 с (дедлайн unary-вызова `AskQuestion` 5 с из раздела 9 плюс 10 с запаса); повтор до истечения резерва — `REQUEST_IN_PROGRESS` с `RetryInfo` / `Retry-After`, равным остатку срока. Истёкший незакреплённый резерв можно занять заново.
@@ -734,3 +805,11 @@ MonthlyPoint.range остаётся полным календарным меся
 `AnalyticsService/GetChartPage` вызывается только bank-bff с исходным пользовательским токеном; сервис проверяет токен и берёт идентичность из sub. Системный вызов, включая assistant, не разрешён. `GetChartPageRequest.cursor` обязателен (1–2048 символов); `GetChartPageResponse.block` — тот же monthly_chart@1 со страницей до60 точек, без notes/highlight_index. Наблюдаемые границы, ошибки и порядок проверки владельца/ревизии — api.md6.4. BFF передаёт готовый Block без вычисления календаря/денег. Новые поля в protobuf для page не нужны: как points и notes, они внутри Block.data.
 
 Первая страница включается в GetAnalytics, отдельного первого RPC не появляется. Все страницы одной page.revision относятся к одному пользователю/режиму/поясу и согласованной истории; ревизия учитывает изменения покрытия при daily, не только data_revisions. Выбранные факты/notes сохраняют свой период. Как хранить или читать ограниченную страницу и проверять непрозрачный cursor, выбирает runtime; конкретная таблица, индекс, секрет или криптосхема контрактом не навязываются. После merge новый gen/go-тег владельца предшествует обновлению analytics/BFF и клиента FIN-416.
+
+Rollout FIN-418 после merge и нового gen/go-тега: сначала analytics принимает MarkRecalculating и выдаёт
+согласованный calculation; затем BSD включает задание true и receipt, BFF переносит202/receipt/calculation;
+Android/mock применяют freeze готового ответа и прежний refresh с проверкой версии. Альфа переключается
+согласованно, поддержки старого204 нет. При откате производителя сначала остановить новые mutation и
+доставить/сохранить задания; откат analytics без marker при активном новом BSD недопустим. Не отключать
+existing finalfalse/ACKбарьеры и не терять ожидающие задания при выкатке. oasdiff: удаление204 у PUT/DELETE
+требует owner breaking-accepted; агент метку не ставит.

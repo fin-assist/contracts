@@ -95,7 +95,7 @@ class AnalyticsIncrement(unittest.TestCase):
         b.delete_upload("month.ofx")
         b.now = dt.datetime.fromisoformat("2026-11-02T00:05:00+03:00")
         for mode in ("with", "without"):
-            self.assertEqual({"has_data": False}, b.analytics("all_time", mode=mode))
+            self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("all_time", mode=mode))
 
     def test_all_time_has_no_twelve_month_truncation_or_year_ambiguity(self):
         b = self.ledger()
@@ -113,13 +113,13 @@ class AnalyticsIncrement(unittest.TestCase):
         self.assertEqual("2026-10-01T00:00:00+03:00", s["period"]["range"]["from"])
         self.assertEqual(20000, self.tile(s, "expense")["value"])
         b.delete_upload("new.ofx")
-        self.assertEqual({"has_data": False}, b.analytics("all_time"))
+        self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("all_time"))
         self.assertEqual({"periods": []}, b.periods("all_time"))
 
     def test_all_time_empty_statement_does_not_fabricate_zero_fact(self):
         b = self.backend("2026-10-10T12:00:00+03:00")
         b.upload("empty.ofx", spec.stmt("20261001", "20261010", []))
-        self.assertEqual({"has_data": False}, b.analytics("all_time"))
+        self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("all_time"))
 
     def test_all_time_refund_uses_original_accounting(self):
         b = self.backend("2026-10-10T12:00:00+03:00")
