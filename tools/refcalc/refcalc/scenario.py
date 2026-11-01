@@ -108,7 +108,8 @@ class Runner:
                     card = next(b for b in screen["blocks"] if b.get("id") == "regular_payments")
                     row = next(r for r in card["data"]["items"] if r["title"] == step["title"])
                     resp = self.backend.dismiss(row["button"]["payment_id"], do == "dismiss_regular_payment",
-                                                step.get("marker_ack", True), step.get("defer_calculation", False))
+                                                step.get("marker_ack", True), step.get("defer_calculation", False),
+                                                screen["params"]["date"], screen["params"]["transfer_mode"])
                 elif do == "ack_recalculation":
                     self.backend.recalculation.ack_marker(self.resolve(step["version_from"]))
                     resp = None

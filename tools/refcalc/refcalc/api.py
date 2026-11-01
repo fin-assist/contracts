@@ -11,10 +11,12 @@ import hashlib
 import json
 from dataclasses import asdict
 import uuid
+from copy import deepcopy
 
 from .analytics import Analytics, Ctx, SINGLETONS, parse_supports, period_bounds
 from .ledger import Ledger, stable_id
 from .recalculation import Recalculation
+from .regular_projection import compose_regular
 from .registry import OWN_TRANSFER, REFUND, TRANSFERS_NAME, UNCATEGORIZED, Registry
 from .util import add_months, day_of, end_of_day, iso, month_key, month_start, parse_iso, start_of_day
 from .views import Scope, account, details, item, records, selection_id
@@ -46,7 +48,8 @@ class Backend:
         self.now: dt.datetime = None
         self._chart_owner = uuid.uuid4().hex
         self._chart_cursors = {}
-        self.recalculation = Recalculation()
+        self._regular_snapshots = {}
+        self.recalculation = Recalculation(self._publish_regular_snapshots)
 
     @property
     def today(self) -> dt.date:
@@ -369,26 +372,74 @@ class Backend:
         self.recalculation.calculate_now()
         return {"items": items, "replaced_id": replaced}
 
-    def dismiss(self, payment_id: str, dismissed=True, marker_ack=True, defer_calculation=False) -> dict:
-        """6.3 assignment + receipt; tests may defer the existing background calculation."""
+    def _store_regular_snapshot(self, date, mode, version=None):
+        """Reference publisher: retain the full metric before limiting its displayed rows."""
+        key = date, mode
+        version = self.recalculation.ready_version if version is None else version
+        existing = self._regular_snapshots.get(key)
+        if existing and existing['version'] == version:
+            return
+        source = Analytics(self.ledger, self.now, regular_limit=None)
+        if not self.ledger.ops or source.cov.empty:
+            self._regular_snapshots.pop(key, None)
+            return
+        start, end, period_key = period_bounds('month', dt.date.fromisoformat(date + '-01'))
+        scope = Scope(self.ledger, mode)
+        visible = scope.visible()
+        ctx = Ctx(source, 'month', start, end, period_key, mode, scope, visible,
+                  scope.in_days(visible, start, end), {'coverage': source.coverage_of('month', start, end)})
+        block = ctx.regular_payments()
+        self._regular_snapshots[key] = {'version': version,
+            'params': {'period': 'month', 'date': period_key, 'transfer_mode': mode},
+            'currency': 'RUB', 'time_zone': str(self.zone), 'block': block}
+
+    def _publish_regular_snapshots(self, version):
+        # Existing producer delivery installs new bases before final; Apply never invokes this.
+        for date, mode in list(self._regular_snapshots):
+            self._store_regular_snapshot(date, mode, version)
+
+    def apply_regular_dismissal(self, payment_id, target, date, mode, fail_compose=False):
+        """Own saved metric only. Failure rolls back analytics, never the source assignment."""
+        def compose(excluded):
+            saved = self._regular_snapshots.get((date, mode))
+            if fail_compose or saved is None:
+                raise ApiError(500, 'INTERNAL_ERROR')
+            return {**{k: deepcopy(saved[k]) for k in ('params', 'currency', 'time_zone')},
+                    'required_calc_version': target, 'blocks': [compose_regular(saved['block'], excluded)]}
+        return self.recalculation.apply_dismissal(payment_id, target, compose)
+
+    def dismiss(self, payment_id: str, dismissed=True, marker_ack=True, defer_calculation=False,
+                date=None, mode=None, fail_compose=False):
+        """PUT returns the full projection; DELETE retains its bodyless asynchronous result."""
+        if dismissed:
+            for field, valid in [('date', isinstance(date, str) and bool(re.fullmatch(r'[0-9]{4}-(0[1-9]|1[0-2])', date)) and date[:4] != '0000'),
+                                 ('transfer_mode', mode in ('with', 'without'))]:
+                if not valid:
+                    raise ApiError(400, 'VALIDATION_ERROR', [{'field': field, 'code': 'REQUIRED' if (date if field == 'date' else mode) is None else 'INVALID_FORMAT'}])
         if not re.fullmatch(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", payment_id):
             raise ApiError(400, "VALIDATION_ERROR", [{"field": "id", "code": "INVALID_FORMAT"}])
         name = next((o.name for o in self.ledger.ops.values() if stable_id("payment", o.name) == payment_id), None)
         if name is None:
             raise ApiError(404, "NOT_FOUND")
+        if dismissed:
+            self._store_regular_snapshot(date, mode)
         changed = (name in self.ledger.dismissed) != dismissed
         try:
-            receipt = self.recalculation.assign(payment_id, dismissed, marker_ack)
+            if dismissed:
+                target = self.recalculation.assign(payment_id, True, marker_ack)['calc_version']
+            elif changed:
+                self.recalculation.restore(payment_id)
         except OverflowError:
             raise ApiError(500, "INTERNAL_ERROR")
         if dismissed:
             self.ledger.dismissed.add(name)
         else:
             self.ledger.dismissed.discard(name)
+        result = self.apply_regular_dismissal(payment_id, target, date, mode, fail_compose) if dismissed else None
         if changed and not defer_calculation:
             self.recalculation.start()
             self.recalculation.finish()
-        return receipt
+        return result
 
     # ---- 5.1, 6.1, 6.2 ----
 
@@ -412,6 +463,14 @@ class Backend:
             self.recalculation.calculate_now()
         if out['has_data']:
             out['time_zone'] = str(self.zone)
+        if out['has_data'] and period == 'month':
+            selected = out['params']['date']
+            self._store_regular_snapshot(selected, mode)
+            saved = self._regular_snapshots.get((selected, mode))
+            if saved and self.recalculation.overlays:
+                for i, block in enumerate(out['blocks']):
+                    if block.get('id') == 'regular_payments':
+                        out['blocks'][i] = compose_regular(saved['block'], set(self.recalculation.overlays))
         out['calculation'] = self.recalculation.state()
         if 'state' in out:
             out['state']['recalculating'] = out['calculation']['recalculating']

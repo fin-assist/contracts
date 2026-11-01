@@ -188,11 +188,13 @@ GetChartPage и page.revision ограничивают выдачу, сохра�
 calc.md13 и grpc-api.md определяют правила и согласованный rollout альфы (FIN-416), без новой версии chart.
 После merge владелец выпускает новый gen/go-тег до зависимых сервисных PR; merge/тег здесь не выполняются.
 
-FIN-418 также меняет dismissal 204→202: квитанция версии вместо готового блока, post-commit
-MarkRecalculating для доставки true; существующий фоновый final снимает флаг. GET читает marker и снимки согласованно
-с primary; клиент сохраняет весь готовый ответ до подтверждённой версии и отбрасывает GET до mutation.
-Нет live-read BSD или Temporal runtime (FIN-419 отдельно). Альфа требует согласованного rollout;
-REST breaking принимает только владелец меткой breaking-accepted. Правила: api.md6.3, grpc-api.md FIN-418.
+FIN-418 PUT dismissal меняет 204→200 и требует показанный month/date+transfer_mode: полный AnalyticsBlockUpdate
+с required_calc_version. BFF → assignment в BSD/надёжная доставкаtrue → analytics.ApplyRegularPaymentDismissal
+из СОБСТВЕННОЙ БД (overlay над целым regular metric), без BSDlive-read. GET/фоновыйfalse сохраняют общий расчёт;
+клиент сразу заменяет полученные блоки, остальные готовые данные сохраняет до подтверждённой полной версии.
+DELETE остаётся прежним 204, восстановление UI/candidate pipeline не расширяется. Требование полного ответа
+не отменялось: прежняя трактовка receipt-only исключена. Temporal отдельно FIN-419. REST breaking принимает
+владелец меткой breaking-accepted; merge/tag здесь не выполняются. Правила: api.md 6.3/grpc-api.md FIN-418.
 
 FIN-418 time_zone: шесть REST-ответов с календарным контекстом передают фактический IANA-пояс источника
 (api.md «Пояс календарных данных ответа»), а не копию профиля клиента. GetChartPageResponse.time_zone2;

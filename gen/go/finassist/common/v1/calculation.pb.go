@@ -21,80 +21,13 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Квитанция принятого изменения, не готовый финансовый результат (FIN-418).
-type CalculationReceipt struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Открытый код: accepted — маркер подтверждён analytics (включая уже завершённый),
-	// pending — подтверждение пока не получено, надёжная доставка продолжится.
-	// Неизвестный код трактуется как pending; показывается text.
-	Status string `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	// Целевая версия следующей публикации из существующей последовательности BSD.
-	// 0 допустим только для no-op исходного, никогда не изменявшегося assignment.
-	CalcVersion int32 `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
-	// Готовое пояснение статуса, без финансовых значений и описания операции.
-	Text          string `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CalculationReceipt) Reset() {
-	*x = CalculationReceipt{}
-	mi := &file_finassist_common_v1_calculation_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CalculationReceipt) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CalculationReceipt) ProtoMessage() {}
-
-func (x *CalculationReceipt) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_common_v1_calculation_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CalculationReceipt.ProtoReflect.Descriptor instead.
-func (*CalculationReceipt) Descriptor() ([]byte, []int) {
-	return file_finassist_common_v1_calculation_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *CalculationReceipt) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *CalculationReceipt) GetCalcVersion() int32 {
-	if x != nil {
-		return x.CalcVersion
-	}
-	return 0
-}
-
-func (x *CalculationReceipt) GetText() string {
-	if x != nil {
-		return x.Text
-	}
-	return ""
-}
-
 // Состояние существующего фонового расчёта, в том числе до появления финансовых данных.
 type CalculationState struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Версия применённого UserDataState; 0, если состояния ещё нет. Не версия маркера.
 	CalcVersion int32 `protobuf:"varint,1,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
 	// Сохранённый признак OR marker_version > calc_version; FIN-418.
-	// false и calc_version >= версии квитанции подтверждают готовность для клиента.
+	// false и calc_version >= required_calc_version обновления блоков подтверждают готовность для клиента.
 	Recalculating bool `protobuf:"varint,2,opt,name=recalculating,proto3" json:"recalculating,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -102,7 +35,7 @@ type CalculationState struct {
 
 func (x *CalculationState) Reset() {
 	*x = CalculationState{}
-	mi := &file_finassist_common_v1_calculation_proto_msgTypes[1]
+	mi := &file_finassist_common_v1_calculation_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -114,7 +47,7 @@ func (x *CalculationState) String() string {
 func (*CalculationState) ProtoMessage() {}
 
 func (x *CalculationState) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_common_v1_calculation_proto_msgTypes[1]
+	mi := &file_finassist_common_v1_calculation_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -127,7 +60,7 @@ func (x *CalculationState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CalculationState.ProtoReflect.Descriptor instead.
 func (*CalculationState) Descriptor() ([]byte, []int) {
-	return file_finassist_common_v1_calculation_proto_rawDescGZIP(), []int{1}
+	return file_finassist_common_v1_calculation_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CalculationState) GetCalcVersion() int32 {
@@ -148,11 +81,7 @@ var File_finassist_common_v1_calculation_proto protoreflect.FileDescriptor
 
 const file_finassist_common_v1_calculation_proto_rawDesc = "" +
 	"\n" +
-	"%finassist/common/v1/calculation.proto\x12\x13finassist.common.v1\"c\n" +
-	"\x12CalculationReceipt\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\x12!\n" +
-	"\fcalc_version\x18\x02 \x01(\x05R\vcalcVersion\x12\x12\n" +
-	"\x04text\x18\x03 \x01(\tR\x04text\"[\n" +
+	"%finassist/common/v1/calculation.proto\x12\x13finassist.common.v1\"[\n" +
 	"\x10CalculationState\x12!\n" +
 	"\fcalc_version\x18\x01 \x01(\x05R\vcalcVersion\x12$\n" +
 	"\rrecalculating\x18\x02 \x01(\bR\rrecalculatingBEZCgithub.com/fin-assist/contracts/gen/go/finassist/common/v1;commonv1b\x06proto3"
@@ -169,10 +98,9 @@ func file_finassist_common_v1_calculation_proto_rawDescGZIP() []byte {
 	return file_finassist_common_v1_calculation_proto_rawDescData
 }
 
-var file_finassist_common_v1_calculation_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_finassist_common_v1_calculation_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_finassist_common_v1_calculation_proto_goTypes = []any{
-	(*CalculationReceipt)(nil), // 0: finassist.common.v1.CalculationReceipt
-	(*CalculationState)(nil),   // 1: finassist.common.v1.CalculationState
+	(*CalculationState)(nil), // 0: finassist.common.v1.CalculationState
 }
 var file_finassist_common_v1_calculation_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -193,7 +121,7 @@ func file_finassist_common_v1_calculation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finassist_common_v1_calculation_proto_rawDesc), len(file_finassist_common_v1_calculation_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

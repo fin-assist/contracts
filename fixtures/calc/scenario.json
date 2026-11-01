@@ -347,7 +347,7 @@
       "do": "dismiss_regular_payment",
       "request": "GET /v1/analytics?period=month&date=2026-09&transfer_mode=with",
       "title": "РБК",
-      "expect": "expected/18a-dismiss-receipt.json",
+      "expect": "expected/18a-dismiss-update.json",
       "marker_ack": false,
       "defer_calculation": true
     },
@@ -363,7 +363,7 @@
       "version_from": {
         "step": "dismiss",
         "path": [
-          "calc_version"
+          "required_calc_version"
         ]
       }
     },

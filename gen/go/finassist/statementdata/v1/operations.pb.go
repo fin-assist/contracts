@@ -1349,10 +1349,11 @@ func (x *DismissRegularPaymentRequest) GetRegularPaymentId() string {
 	return ""
 }
 
-// Изменение принято локально; финансовый результат приходит через обычный async pipeline.
+// Отметка сохранена; BFF затем получает полное обновление из собственной проекции analytics.
 type DismissRegularPaymentResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Receipt       *v1.CalculationReceipt `protobuf:"bytes,1,opt,name=receipt,proto3" json:"receipt,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Сохранённый target > 0 из последовательности BSD; повтор assignment возвращает тот же target.
+	CalcVersion   int32 `protobuf:"varint,1,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1387,11 +1388,11 @@ func (*DismissRegularPaymentResponse) Descriptor() ([]byte, []int) {
 	return file_finassist_statementdata_v1_operations_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *DismissRegularPaymentResponse) GetReceipt() *v1.CalculationReceipt {
+func (x *DismissRegularPaymentResponse) GetCalcVersion() int32 {
 	if x != nil {
-		return x.Receipt
+		return x.CalcVersion
 	}
-	return nil
+	return 0
 }
 
 // Вернуть платёж в регулярные.
@@ -1439,10 +1440,9 @@ func (x *RestoreRegularPaymentRequest) GetRegularPaymentId() string {
 	return ""
 }
 
-// Повтор того же assignment возвращает его версию без нового изменения/задания.
+// Прежнее асинхронное снятие отметки.
 type RestoreRegularPaymentResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Receipt       *v1.CalculationReceipt `protobuf:"bytes,1,opt,name=receipt,proto3" json:"receipt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1477,18 +1477,11 @@ func (*RestoreRegularPaymentResponse) Descriptor() ([]byte, []int) {
 	return file_finassist_statementdata_v1_operations_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *RestoreRegularPaymentResponse) GetReceipt() *v1.CalculationReceipt {
-	if x != nil {
-		return x.Receipt
-	}
-	return nil
-}
-
 var File_finassist_statementdata_v1_operations_proto protoreflect.FileDescriptor
 
 const file_finassist_statementdata_v1_operations_proto_rawDesc = "" +
 	"\n" +
-	"+finassist/statementdata/v1/operations.proto\x12\x1afinassist.statementdata.v1\x1a\x1bbuf/validate/validate.proto\x1a finassist/common/v1/common.proto\x1a%finassist/common/v1/calculation.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"E\n" +
+	"+finassist/statementdata/v1/operations.proto\x12\x1afinassist.statementdata.v1\x1a\x1bbuf/validate/validate.proto\x1a finassist/common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"E\n" +
 	"\vCategoryRef\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -1605,13 +1598,12 @@ const file_finassist_statementdata_v1_operations_proto_rawDesc = "" +
 	"categories\x18\x01 \x03(\v2$.finassist.statementdata.v1.CategoryR\n" +
 	"categories\"L\n" +
 	"\x1cDismissRegularPaymentRequest\x12,\n" +
-	"\x12regular_payment_id\x18\x01 \x01(\tR\x10regularPaymentId\"b\n" +
-	"\x1dDismissRegularPaymentResponse\x12A\n" +
-	"\areceipt\x18\x01 \x01(\v2'.finassist.common.v1.CalculationReceiptR\areceipt\"L\n" +
+	"\x12regular_payment_id\x18\x01 \x01(\tR\x10regularPaymentId\"B\n" +
+	"\x1dDismissRegularPaymentResponse\x12!\n" +
+	"\fcalc_version\x18\x01 \x01(\x05R\vcalcVersion\"L\n" +
 	"\x1cRestoreRegularPaymentRequest\x12,\n" +
-	"\x12regular_payment_id\x18\x01 \x01(\tR\x10regularPaymentId\"b\n" +
-	"\x1dRestoreRegularPaymentResponse\x12A\n" +
-	"\areceipt\x18\x01 \x01(\v2'.finassist.common.v1.CalculationReceiptR\areceipt*\x87\x01\n" +
+	"\x12regular_payment_id\x18\x01 \x01(\tR\x10regularPaymentId\"\x1f\n" +
+	"\x1dRestoreRegularPaymentResponse*\x87\x01\n" +
 	"\rOperationKind\x12\x1e\n" +
 	"\x1aOPERATION_KIND_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16OPERATION_KIND_EXPENSE\x10\x01\x12\x19\n" +
@@ -1677,7 +1669,6 @@ var file_finassist_statementdata_v1_operations_proto_goTypes = []any{
 	(*v1.AccountRef)(nil),                 // 23: finassist.common.v1.AccountRef
 	(*v1.TimeRange)(nil),                  // 24: finassist.common.v1.TimeRange
 	(*v1.OperationsFilter)(nil),           // 25: finassist.common.v1.OperationsFilter
-	(*v1.CalculationReceipt)(nil),         // 26: finassist.common.v1.CalculationReceipt
 }
 var file_finassist_statementdata_v1_operations_proto_depIdxs = []int32{
 	0,  // 0: finassist.statementdata.v1.Operation.kind:type_name -> finassist.statementdata.v1.OperationKind
@@ -1708,27 +1699,25 @@ var file_finassist_statementdata_v1_operations_proto_depIdxs = []int32{
 	4,  // 25: finassist.statementdata.v1.ChangeCategoryResponse.items:type_name -> finassist.statementdata.v1.Operation
 	2,  // 26: finassist.statementdata.v1.Category.kinds:type_name -> finassist.statementdata.v1.CategoryKind
 	15, // 27: finassist.statementdata.v1.ListCategoriesResponse.categories:type_name -> finassist.statementdata.v1.Category
-	26, // 28: finassist.statementdata.v1.DismissRegularPaymentResponse.receipt:type_name -> finassist.common.v1.CalculationReceipt
-	26, // 29: finassist.statementdata.v1.RestoreRegularPaymentResponse.receipt:type_name -> finassist.common.v1.CalculationReceipt
-	5,  // 30: finassist.statementdata.v1.OperationsService.ListFeed:input_type -> finassist.statementdata.v1.ListFeedRequest
-	9,  // 31: finassist.statementdata.v1.OperationsService.SearchOperations:input_type -> finassist.statementdata.v1.SearchOperationsRequest
-	11, // 32: finassist.statementdata.v1.OperationsService.GetOperation:input_type -> finassist.statementdata.v1.GetOperationRequest
-	13, // 33: finassist.statementdata.v1.OperationsService.ChangeCategory:input_type -> finassist.statementdata.v1.ChangeCategoryRequest
-	16, // 34: finassist.statementdata.v1.CategoriesService.ListCategories:input_type -> finassist.statementdata.v1.ListCategoriesRequest
-	18, // 35: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:input_type -> finassist.statementdata.v1.DismissRegularPaymentRequest
-	20, // 36: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:input_type -> finassist.statementdata.v1.RestoreRegularPaymentRequest
-	8,  // 37: finassist.statementdata.v1.OperationsService.ListFeed:output_type -> finassist.statementdata.v1.ListFeedResponse
-	10, // 38: finassist.statementdata.v1.OperationsService.SearchOperations:output_type -> finassist.statementdata.v1.SearchOperationsResponse
-	12, // 39: finassist.statementdata.v1.OperationsService.GetOperation:output_type -> finassist.statementdata.v1.GetOperationResponse
-	14, // 40: finassist.statementdata.v1.OperationsService.ChangeCategory:output_type -> finassist.statementdata.v1.ChangeCategoryResponse
-	17, // 41: finassist.statementdata.v1.CategoriesService.ListCategories:output_type -> finassist.statementdata.v1.ListCategoriesResponse
-	19, // 42: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:output_type -> finassist.statementdata.v1.DismissRegularPaymentResponse
-	21, // 43: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:output_type -> finassist.statementdata.v1.RestoreRegularPaymentResponse
-	37, // [37:44] is the sub-list for method output_type
-	30, // [30:37] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	5,  // 28: finassist.statementdata.v1.OperationsService.ListFeed:input_type -> finassist.statementdata.v1.ListFeedRequest
+	9,  // 29: finassist.statementdata.v1.OperationsService.SearchOperations:input_type -> finassist.statementdata.v1.SearchOperationsRequest
+	11, // 30: finassist.statementdata.v1.OperationsService.GetOperation:input_type -> finassist.statementdata.v1.GetOperationRequest
+	13, // 31: finassist.statementdata.v1.OperationsService.ChangeCategory:input_type -> finassist.statementdata.v1.ChangeCategoryRequest
+	16, // 32: finassist.statementdata.v1.CategoriesService.ListCategories:input_type -> finassist.statementdata.v1.ListCategoriesRequest
+	18, // 33: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:input_type -> finassist.statementdata.v1.DismissRegularPaymentRequest
+	20, // 34: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:input_type -> finassist.statementdata.v1.RestoreRegularPaymentRequest
+	8,  // 35: finassist.statementdata.v1.OperationsService.ListFeed:output_type -> finassist.statementdata.v1.ListFeedResponse
+	10, // 36: finassist.statementdata.v1.OperationsService.SearchOperations:output_type -> finassist.statementdata.v1.SearchOperationsResponse
+	12, // 37: finassist.statementdata.v1.OperationsService.GetOperation:output_type -> finassist.statementdata.v1.GetOperationResponse
+	14, // 38: finassist.statementdata.v1.OperationsService.ChangeCategory:output_type -> finassist.statementdata.v1.ChangeCategoryResponse
+	17, // 39: finassist.statementdata.v1.CategoriesService.ListCategories:output_type -> finassist.statementdata.v1.ListCategoriesResponse
+	19, // 40: finassist.statementdata.v1.RegularPaymentsService.DismissRegularPayment:output_type -> finassist.statementdata.v1.DismissRegularPaymentResponse
+	21, // 41: finassist.statementdata.v1.RegularPaymentsService.RestoreRegularPayment:output_type -> finassist.statementdata.v1.RestoreRegularPaymentResponse
+	35, // [35:42] is the sub-list for method output_type
+	28, // [28:35] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_finassist_statementdata_v1_operations_proto_init() }

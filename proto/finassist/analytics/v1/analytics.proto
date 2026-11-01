@@ -32,6 +32,9 @@ service AnalyticsService {
   // GET /v1/analytics/charts/monthly_chart. Как GetAnalytics: primary, одна согласованная проверка/выборка.
   // Ошибки cursor и согласованность — api.md6.4.
   rpc GetChartPage(GetChartPageRequest) returns (GetChartPageResponse);
+  // Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
+  // Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
+  rpc ApplyRegularPaymentDismissal(ApplyRegularPaymentDismissalRequest) returns (ApplyRegularPaymentDismissalResponse);
 }
 
 // Вызывающий: только системный bank-statement-data (post-commit доставка маркера / фон). Идемпотентные версии.
@@ -42,6 +45,28 @@ service MetricsIngestService {
   // Только bank-statement-data: короткая попытка после commit или повтор надёжного задания.
   // Записывает отдельную монотонную границу, не UserDataState/финансовые снимки.
   rpc MarkRecalculating(MarkRecalculatingRequest) returns (MarkRecalculatingResponse);
+}
+
+// Применить подтверждённое BSD исключение к сохранённой проекции регулярных платежей.
+message ApplyRegularPaymentDismissalRequest {
+  // UUID, уже проверенный BSD для того же пользователя; не описание операции.
+  string regular_payment_id = 1;
+  // Положительный target из DismissRegularPaymentResponse, не от внешнего клиента.
+  int32 calc_version = 2;
+  // Только MONTH, точный YYYY-MM и заданный режим переводов.
+  finassist.common.v1.AnalyticsParams params = 3;
+}
+
+// Полное содержимое изменившихся блоков; глобальная готовность расчёта не изменяется.
+message ApplyRegularPaymentDismissalResponse {
+  finassist.common.v1.AnalyticsParams params = 1;
+  string currency = 2;
+  // IANA-пояс собственной проекции, из которой собраны блоки.
+  string time_zone = 3;
+  // От 1 до 16 полных блоков с уникальными id; сейчас только regular_payments.
+  repeated finassist.common.v1.Block blocks = 4;
+  // Целевая версия полного фонового результата; 1..2147483647, не applied state version.
+  int32 required_calc_version = 5;
 }
 
 // ---------------------------------------------------------------- Модель метрики
@@ -447,7 +472,7 @@ message ScreenState {
   // загрузки, смена пояса, исключение платежа из регулярных): цифры могут измениться, клиенту стоит запросить
   // аналитику позже. Пересчёт по новой версии реестра признак не ставит (FIN-196).
   // Равно calculation.recalculating: сохранённый флаг OR marker_version > state.calc_version.
-  // При true клиент сохраняет весь последний готовый ответ того же контекста.
+  // При true сохраняются готовые данные; Apply заменяет только явно возвращённые блоки.
   bool recalculating = 8;
 }
 
@@ -674,7 +699,6 @@ message UpsertUserMetricsRequest {
   // ограничен, grpc-api.md 6.1). Одна calc_version для (период, ключ) — снимок или удаление, не оба:
   // ключ и в periods, и в removed_periods одного вызова — отказ голым INVALID_ARGUMENT.
   repeated PeriodRef removed_periods = 5;
-
 }
 
 // Что из пакета применено.

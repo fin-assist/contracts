@@ -1206,11 +1206,11 @@
     "full_months": 9,
     "unread_lines_count": 2,
     "calculated_at": "<ignored>",
-    "recalculating": false
+    "recalculating": true
   },
   "time_zone": "Europe/Moscow",
   "calculation": {
     "calc_version": 21,
-    "recalculating": false
+    "recalculating": true
   }
 }

@@ -1,15 +1,20 @@
 """Observable FIN-418 marker/assignment model; no database or network simulation."""
+from copy import deepcopy
+
 MAX_VERSION = 2_147_483_647
 
 
 class Recalculation:
-    def __init__(self):
+    def __init__(self, on_publish=None):
+        self.on_publish = on_publish
         self.current = 0
         self.state_version = 0
         self.stored_flag = False
         self.marker = 0
         self.deleted = False
         self.assignments = {}
+        self.ready_version = 0
+        self.overlays = {}
         self.jobs = set()
 
     def assign(self, payment, dismissed, acknowledged=True):
@@ -35,6 +40,12 @@ class Recalculation:
         if not self.deleted:
             self.marker = max(self.marker, version)
 
+    def restore(self, payment):
+        """Existing asynchronous DELETE; no new marker-delivery protocol."""
+        if self.deleted:
+            raise LookupError('deleted user')
+        self.assignments[payment] = (False, 0)
+
     def ack_marker(self, version):
         self.mark(version)
         self.jobs.discard(version)  # ACK ends this job; calculation has not run.
@@ -47,6 +58,25 @@ class Recalculation:
         if version == self.state_version and recalculating != self.stored_flag:
             raise ValueError('same state version must have identical content')
         self.state_version, self.stored_flag = version, recalculating
+        if not recalculating:
+            self.ready_version = max(self.ready_version, version)
+            self.overlays = {p: v for p, v in self.overlays.items() if v > self.ready_version}
+
+    def apply_dismissal(self, payment, target, compose):
+        """One local projection transaction. compose reads only the stored full metric."""
+        if self.deleted:
+            raise LookupError('deleted user')
+        if type(target) is not int or not 1 <= target <= MAX_VERSION:
+            raise ValueError('invalid target')
+        before = self.marker, deepcopy(self.overlays)
+        try:
+            if target > self.ready_version:
+                self.overlays[payment] = max(target, self.overlays.get(payment, 0))
+            self.mark(target)
+            return compose(set(self.overlays))
+        except Exception:
+            self.marker, self.overlays = before
+            raise
 
     def start(self, user_action=True):
         if self.current > MAX_VERSION - 3:
@@ -60,6 +90,8 @@ class Recalculation:
             raise OverflowError('calculation version exhausted')
         self.current += 2
         self.apply_state(self.current - 1, user_action)
+        if self.on_publish is not None:
+            self.on_publish(self.current)
         self.apply_state(self.current, False)
 
     def calculate_now(self):
@@ -74,5 +106,7 @@ class Recalculation:
         self.deleted = True
         self.current = self.state_version = self.marker = 0
         self.stored_flag = False
+        self.ready_version = 0
+        self.overlays.clear()
         self.assignments.clear()
         self.jobs.clear()

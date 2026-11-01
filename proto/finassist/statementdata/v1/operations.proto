@@ -4,7 +4,6 @@ package finassist.statementdata.v1;
 
 import "buf/validate/validate.proto";
 import "finassist/common/v1/common.proto";
-import "finassist/common/v1/calculation.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/fin-assist/contracts/gen/go/finassist/statementdata/v1;statementdatav1";
@@ -286,9 +285,10 @@ message DismissRegularPaymentRequest {
   string regular_payment_id = 1;
 }
 
-// Изменение принято локально; финансовый результат приходит через обычный async pipeline.
+// Отметка сохранена; BFF затем получает полное обновление из собственной проекции analytics.
 message DismissRegularPaymentResponse {
-  finassist.common.v1.CalculationReceipt receipt = 1;
+  // Сохранённый target > 0 из последовательности BSD; повтор assignment возвращает тот же target.
+  int32 calc_version = 1;
 }
 
 // Вернуть платёж в регулярные.
@@ -296,7 +296,5 @@ message RestoreRegularPaymentRequest {
   string regular_payment_id = 1;
 }
 
-// Повтор того же assignment возвращает его версию без нового изменения/задания.
-message RestoreRegularPaymentResponse {
-  finassist.common.v1.CalculationReceipt receipt = 1;
-}
+// Прежнее асинхронное снятие отметки.
+message RestoreRegularPaymentResponse {}

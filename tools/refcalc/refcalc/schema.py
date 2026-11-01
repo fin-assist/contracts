@@ -12,8 +12,7 @@ from referencing.jsonschema import DRAFT4
 
 SCHEMAS = {
     "upload": "ImportResult",
-    "dismiss_regular_payment": "CalculationReceipt",
-    "restore_regular_payment": "CalculationReceipt",
+    "dismiss_regular_payment": "AnalyticsBlockUpdate",
     "/v1/statements/config": "ImportConfig",
     "/v1/operations": "OperationsList",
     "/v1/categories": "CategoriesList",
@@ -37,8 +36,8 @@ class SchemaCheck:
         schema = {"$ref": f"openapi.yaml#/components/schemas/{name}"}
         errors = self._validate(schema, response, "")
         # Conditional context requirements mirror currency/has_data without inventing a fallback zone.
-        if isinstance(response, dict) and name in ("Analytics", "AnalyticsChartPage", "OperationsList", "AnalyticsPeriodsList", "ImportConfig", "ImportResult"):
-            needs_zone = (name in ("AnalyticsChartPage", "ImportConfig", "ImportResult") or
+        if isinstance(response, dict) and name in ("AnalyticsBlockUpdate", "Analytics", "AnalyticsChartPage", "OperationsList", "AnalyticsPeriodsList", "ImportConfig", "ImportResult"):
+            needs_zone = (name in ("AnalyticsBlockUpdate", "AnalyticsChartPage", "ImportConfig", "ImportResult") or
                           name == "Analytics" and response.get("has_data") or
                           name == "AnalyticsPeriodsList" and bool(response.get("periods")) or
                           name == "OperationsList" and bool(response.get("items") or response.get("summary") or response.get("range") or
@@ -52,9 +51,9 @@ class SchemaCheck:
                 except (ZoneInfoNotFoundError, ValueError, TypeError):
                     errors.append("time_zone: unknown IANA zone")
         # Block `data` is a free object in the envelope: check it against the schema of its primitive (FIN-157).
-        if name in ("Analytics", "AnalyticsChartPage") and isinstance(response, dict):
+        if name in ("AnalyticsBlockUpdate", "Analytics", "AnalyticsChartPage") and isinstance(response, dict):
             from .coverage import block_data_schema
-            blocks = (response.get("blocks") or []) if name == "Analytics" else (
+            blocks = (response.get("blocks") or []) if name in ("Analytics", "AnalyticsBlockUpdate") else (
                 [response["block"]] if isinstance(response.get("block"), dict) else [])
             for i, b in enumerate(blocks):
                 try:
@@ -65,6 +64,13 @@ class SchemaCheck:
                 if b.get("data") is not None:
                     data_schema = {"$ref": f"openapi.yaml#/components/schemas/{data_type}"}
                     errors += self._validate(data_schema, b["data"], f"blocks/{i}/data/")
+        if name == 'AnalyticsBlockUpdate' and isinstance(response, dict):
+            ids = [b.get('id') for b in response.get('blocks', []) if isinstance(b, dict)]
+            if not all(isinstance(i, str) and i for i in ids) or len(ids) != len(set(i for i in ids if isinstance(i, str))):
+                errors.append('blocks: missing or duplicate id')
+            params = response.get('params', {})
+            if params.get('period') != 'month':
+                errors.append('params: month required')
         return errors
 
     def _validate(self, schema, instance, prefix: str) -> list:

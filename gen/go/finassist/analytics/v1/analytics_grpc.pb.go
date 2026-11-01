@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AnalyticsService_GetAnalytics_FullMethodName = "/finassist.analytics.v1.AnalyticsService/GetAnalytics"
-	AnalyticsService_ListPeriods_FullMethodName  = "/finassist.analytics.v1.AnalyticsService/ListPeriods"
-	AnalyticsService_GetChartPage_FullMethodName = "/finassist.analytics.v1.AnalyticsService/GetChartPage"
+	AnalyticsService_GetAnalytics_FullMethodName                 = "/finassist.analytics.v1.AnalyticsService/GetAnalytics"
+	AnalyticsService_ListPeriods_FullMethodName                  = "/finassist.analytics.v1.AnalyticsService/ListPeriods"
+	AnalyticsService_GetChartPage_FullMethodName                 = "/finassist.analytics.v1.AnalyticsService/GetChartPage"
+	AnalyticsService_ApplyRegularPaymentDismissal_FullMethodName = "/finassist.analytics.v1.AnalyticsService/ApplyRegularPaymentDismissal"
 )
 
 // AnalyticsServiceClient is the client API for AnalyticsService service.
@@ -44,6 +45,9 @@ type AnalyticsServiceClient interface {
 	// GET /v1/analytics/charts/monthly_chart. Как GetAnalytics: primary, одна согласованная проверка/выборка.
 	// Ошибки cursor и согласованность — api.md6.4.
 	GetChartPage(ctx context.Context, in *GetChartPageRequest, opts ...grpc.CallOption) (*GetChartPageResponse, error)
+	// Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
+	// Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
+	ApplyRegularPaymentDismissal(ctx context.Context, in *ApplyRegularPaymentDismissalRequest, opts ...grpc.CallOption) (*ApplyRegularPaymentDismissalResponse, error)
 }
 
 type analyticsServiceClient struct {
@@ -84,6 +88,16 @@ func (c *analyticsServiceClient) GetChartPage(ctx context.Context, in *GetChartP
 	return out, nil
 }
 
+func (c *analyticsServiceClient) ApplyRegularPaymentDismissal(ctx context.Context, in *ApplyRegularPaymentDismissalRequest, opts ...grpc.CallOption) (*ApplyRegularPaymentDismissalResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApplyRegularPaymentDismissalResponse)
+	err := c.cc.Invoke(ctx, AnalyticsService_ApplyRegularPaymentDismissal_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnalyticsServiceServer is the server API for AnalyticsService service.
 // All implementations must embed UnimplementedAnalyticsServiceServer
 // for forward compatibility.
@@ -104,6 +118,9 @@ type AnalyticsServiceServer interface {
 	// GET /v1/analytics/charts/monthly_chart. Как GetAnalytics: primary, одна согласованная проверка/выборка.
 	// Ошибки cursor и согласованность — api.md6.4.
 	GetChartPage(context.Context, *GetChartPageRequest) (*GetChartPageResponse, error)
+	// Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
+	// Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
+	ApplyRegularPaymentDismissal(context.Context, *ApplyRegularPaymentDismissalRequest) (*ApplyRegularPaymentDismissalResponse, error)
 	mustEmbedUnimplementedAnalyticsServiceServer()
 }
 
@@ -122,6 +139,9 @@ func (UnimplementedAnalyticsServiceServer) ListPeriods(context.Context, *ListPer
 }
 func (UnimplementedAnalyticsServiceServer) GetChartPage(context.Context, *GetChartPageRequest) (*GetChartPageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetChartPage not implemented")
+}
+func (UnimplementedAnalyticsServiceServer) ApplyRegularPaymentDismissal(context.Context, *ApplyRegularPaymentDismissalRequest) (*ApplyRegularPaymentDismissalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApplyRegularPaymentDismissal not implemented")
 }
 func (UnimplementedAnalyticsServiceServer) mustEmbedUnimplementedAnalyticsServiceServer() {}
 func (UnimplementedAnalyticsServiceServer) testEmbeddedByValue()                          {}
@@ -198,6 +218,24 @@ func _AnalyticsService_GetChartPage_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AnalyticsService_ApplyRegularPaymentDismissal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApplyRegularPaymentDismissalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalyticsServiceServer).ApplyRegularPaymentDismissal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AnalyticsService_ApplyRegularPaymentDismissal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalyticsServiceServer).ApplyRegularPaymentDismissal(ctx, req.(*ApplyRegularPaymentDismissalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AnalyticsService_ServiceDesc is the grpc.ServiceDesc for AnalyticsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -216,6 +254,10 @@ var AnalyticsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetChartPage",
 			Handler:    _AnalyticsService_GetChartPage_Handler,
+		},
+		{
+			MethodName: "ApplyRegularPaymentDismissal",
+			Handler:    _AnalyticsService_ApplyRegularPaymentDismissal_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

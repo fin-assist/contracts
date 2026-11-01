@@ -83,7 +83,8 @@ def parse_key(key: str) -> dt.date:
 
 
 class Analytics:
-    def __init__(self, ledger: Ledger, now: dt.datetime, chart_page=None):
+    def __init__(self, ledger: Ledger, now: dt.datetime, chart_page=None, regular_limit=3):
+        self.regular_limit = regular_limit
         self.chart_page = chart_page
         self.ledger = ledger
         self.zone = ledger.zone
@@ -539,10 +540,10 @@ class Ctx:
         rows = [{"title": n, "sublabel": "число", **value(med),
                  "action": self.open(self.filt(selection=selection_id("regular", n), selection_name=n)),
                  "button": {"type": "dismiss_regular_payment", "payment_id": stable_id("payment", n),
-                            "label": "Не подписка"}} for n, med in payments[:3]]
+                            "label": "Не подписка"}} for n, med in payments[:self.a.regular_limit]]
         data.update({**value(sum(p[1] for p in payments)), "description": "в месяц", "items": rows})
-        if len(payments) > 3:
-            data["items_more"] = {"label": f"Ещё {len(payments) - 3}", **value(sum(p[1] for p in payments[3:]))}
+        if self.a.regular_limit is not None and len(payments) > self.a.regular_limit:
+            data["items_more"] = {"label": f"Ещё {len(payments) - self.a.regular_limit}", **value(sum(p[1] for p in payments[self.a.regular_limit:]))}
         if len(B) == 2:
             data["badge"] = "предварительно"
         return self.card("regular_payments", "tentative" if len(B) == 2 else "ready", data,
