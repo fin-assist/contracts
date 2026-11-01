@@ -7,8 +7,12 @@ from decimal import Decimal, InvalidOperation
 from typing import Optional
 from urllib.parse import urlencode
 import re
+import hashlib
+import json
+from dataclasses import asdict
+import uuid
 
-from .analytics import Analytics, SINGLETONS, parse_supports, period_bounds
+from .analytics import Analytics, Ctx, SINGLETONS, parse_supports, period_bounds
 from .ledger import Ledger, stable_id
 from .registry import OWN_TRANSFER, REFUND, TRANSFERS_NAME, UNCATEGORIZED, Registry
 from .util import add_months, day_of, end_of_day, iso, month_key, month_start, parse_iso, start_of_day
@@ -39,6 +43,8 @@ class Backend:
         self.zone = zone
         self.ledger = Ledger(registry, zone)
         self.now: dt.datetime = None
+        self._chart_owner = uuid.uuid4().hex
+        self._chart_cursors = {}
 
     @property
     def today(self) -> dt.date:
@@ -379,7 +385,74 @@ class Backend:
         except ValueError:
             raise ApiError(400, "VALIDATION_ERROR", [{"field": "supports", "code": "INVALID_FORMAT",
                                                      "message": "has invalid format"}])
-        return Analytics(self.ledger, self.now).screen(period, date, mode, supports)
+        return Analytics(self.ledger, self.now, lambda anchor: self._chart_page(mode, anchor=anchor)).screen(
+            period, date, mode, supports)
+
+    def _chart_revision(self, mode):
+        # A reference-only fingerprint, not a prescribed production token/storage scheme.
+        state = (self._chart_owner, mode, str(self.zone), self.today,
+                 self.ledger.coverage(self.today).days,
+                 [(key, asdict(op)) for key, op in sorted(self.ledger.ops.items())],
+                 sorted(self.ledger.manual.items()), sorted(self.ledger.unpaired), sorted(self.ledger.pairs.items()))
+        def encode(value):
+            if isinstance(value, (dt.date, dt.datetime)):
+                return value.isoformat()
+            if isinstance(value, (set, frozenset)):
+                return sorted(value)
+            raise TypeError(type(value).__name__)
+        wire = json.dumps(state, default=encode, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(wire.encode()).hexdigest()
+
+    def _chart_page(self, mode, anchor=None, index=None):
+        a = Analytics(self.ledger, self.now)
+        first, last = month_start(a.cov.first), month_start(a.cov.last)
+        distance = (last.year - first.year) * 12 + last.month - first.month
+        if index is None:
+            distance_to_anchor = 0 if anchor is None else (last.year - anchor.year) * 12 + last.month - anchor.month
+            index = min(distance // 60, max(0, distance_to_anchor // 60))
+        end = add_months(last, 1 - index * 60)
+        # Avoid computing a date before year 1 when the oldest page is short.
+        count = min(60, distance + 1 - index * 60)
+        start = add_months(end, -count)
+        scope = Scope(self.ledger, mode)
+        visible = scope.visible()
+        ctx = Ctx(a, "month", start, end, month_key(start), mode, scope, visible, [], {})
+        points = []
+        for i in range(count):
+            m = add_months(start, i)
+            e = add_months(m, 1)
+            covered = a.cov.bounds(m, e) is not None
+            amount = scope.expense(scope.in_days(visible, m, e)) if covered else None
+            point = ctx.point(m, amount)
+            if covered:
+                point["action"] = {"type": "select_analytics_period", "period": "month", "date": month_key(m)}
+            points.append(point)
+        revision = self._chart_revision(mode)
+        page = {"revision": revision}
+        for key, target in (("previous", index + 1), ("next", index - 1)):
+            if 0 <= target <= distance // 60:
+                cursor = uuid.uuid4().hex
+                self._chart_cursors[cursor] = (revision, mode, target)
+                page[key] = cursor
+        return {"id": "monthly_chart", "type": "chart", "v": 1, "title": "Расходы по месяцам",
+                "alt_text": "Расходы по месяцам всей загруженной истории", "status": "ready",
+                "data": {"kind": "bar", "value_kind": "amount", "points": points, "page": page},
+                "help_text": "Столбики показывают полные календарные месяцы всей загруженной истории. "
+                             "Прокрутите к краю графика, чтобы загрузить соседние месяцы. "
+                             "Нажмите на месяц с данными, чтобы открыть его аналитику. "
+                             "Итоги и выводы экрана относятся к выбранному периоду."}
+
+    def chart_page(self, cursor=None):
+        def invalid(code):
+            raise ApiError(400, "VALIDATION_ERROR", [{"field": "cursor", "code": code}])
+        if cursor is None or cursor == "":
+            invalid("REQUIRED")
+        if not isinstance(cursor, str) or len(cursor) > 2048 or cursor not in self._chart_cursors:
+            invalid("INVALID_FORMAT")
+        revision, mode, index = self._chart_cursors[cursor]
+        if revision != self._chart_revision(mode):
+            invalid("OUT_OF_RANGE")
+        return {"block": self._chart_page(mode, index=index)}
 
     def periods(self, period: str = "month") -> dict:
         return Analytics(self.ledger, self.now).periods(period)

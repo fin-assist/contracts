@@ -68,10 +68,19 @@ class ReviewFeedback(unittest.TestCase):
         self.assertTrue(feature["opened_now"])
         self.assertEqual(1, len(self.block(b.analytics("month"), "monthly_chart")))
         for period in ("month", "quarter", "year", "all_time", "rolling_year", "rolling_quarter"):
-            chart = self.block(b.analytics(period, supports=SUPPORTS), "monthly_chart")[0]
+            screen = b.analytics(period, supports=SUPPORTS)
+            chart = self.block(screen, "monthly_chart")[0]
             self.assertEqual("ready", chart["status"])
             self.assertEqual(1, len(chart["data"]["points"]))
             self.assertEqual("partial", chart["data"]["points"][0]["coverage"])
+            expected = [] if period == "month" else ["primary", "muted"] if period == "year" else ["primary"]
+            self.assertEqual(expected, [n["tone"] for n in chart["data"]["notes"]])
+            if period in ("month", "quarter"):
+                balance = self.block(screen, "balance")[0]
+                self.assertEqual([], balance["data"]["points"])
+                self.assertEqual(-100, balance["data"]["summary"]["value"])
+                self.assertIn("help_text", balance)
+                self.assertNotIn("caption", balance["data"])
         b.delete_upload("one")
         self.assertEqual({"has_data": False}, b.analytics("month", supports=SUPPORTS))
 
@@ -182,3 +191,25 @@ class ReviewFeedback(unittest.TestCase):
         with self.assertRaises(ApiError) as caught:
             runner.backend.import_config("9999-12-30", "9999-12-31")
         self.assertEqual([{"field": "period_to", "code": "OUT_OF_RANGE"}], caught.exception.details)
+
+    def test_quarter_forecast_uses_common_auxiliary_role_without_formula_change(self):
+        b = self.history()
+        forecast = self.tile(b.analytics("quarter", "2026-Q4"), "forecast")
+        self.assertEqual("Прогноз расходов", forecast["title"])
+        self.assertEqual("locked", forecast["status"])
+        self.assertEqual("Нужно 3 полных месяца, есть 1", forecast["lock"]["text"])
+        self.assertEqual((3, 1), (forecast["lock"]["required"], forecast["lock"]["available"]))
+        self.assertIn("Учтены полные месяцы", forecast["help_text"])
+        self.assertEqual("к концу периода", forecast["caption"])
+
+    def test_download_skipped_start_normalizes_but_keeps_nonempty_range(self):
+        b = self.history()
+        b.zone = ZoneInfo("Pacific/Apia")
+        result = b.import_config("2011-12-30", "2011-12-31")
+        self.assertEqual({"from": "2011-12-31T00:00:00+14:00", "to": "2012-01-01T00:00:00+14:00"},
+                         result["suggested_period"])
+        start = dt.datetime(2011, 12, 30, tzinfo=b.zone).astimezone(dt.timezone.utc)
+        end = dt.datetime(2012, 1, 1, tzinfo=b.zone).astimezone(dt.timezone.utc)
+        self.assertEqual(start, dt.datetime.fromisoformat(result["suggested_period"]["from"]))
+        self.assertEqual(end, dt.datetime.fromisoformat(result["suggested_period"]["to"]))
+        self.assertGreater(end, start)

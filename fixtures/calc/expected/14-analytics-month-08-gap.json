@@ -266,6 +266,9 @@
             }
           }
         ],
+        "page": {
+          "revision": "<opaque>"
+        },
         "notes": [
           {
             "text": "<ignored>",
@@ -1218,6 +1221,7 @@
       "status": "ready",
       "title": "<ignored>",
       "alt_text": "<ignored>",
+      "help_text": "<ignored>",
       "data": {
         "kind": "bar",
         "value_kind": "percent",
@@ -1279,7 +1283,6 @@
           "value": 101922317,
           "value_kind": "amount"
         },
-        "caption": "<ignored>",
         "highlight_index": 5
       }
     }

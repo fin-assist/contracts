@@ -40,6 +40,18 @@
       "expect": "expected/fin418-early-chart.json"
     },
     {
+      "name": "fin418-early-quarter",
+      "do": "get",
+      "request": "GET /v1/analytics?period=quarter&date=2025-Q4",
+      "expect": "expected/fin418-early-quarter.json"
+    },
+    {
+      "name": "fin418-early-year",
+      "do": "get",
+      "request": "GET /v1/analytics?period=year&date=2025",
+      "expect": "expected/fin418-early-year.json"
+    },
+    {
       "name": "fin418-config-loaded",
       "do": "get",
       "request": "GET /v1/statements/config",
@@ -554,9 +566,27 @@
       "expect": "expected/fin418-config-cross-year.json"
     },
     {
+      "name": "fin418-page-older",
+      "do": "get",
+      "cursor_from": {"step": "fin418-chart-return", "path": ["blocks", {"id": "monthly_chart"}, "data", "page", "previous"]},
+      "expect": "expected/fin418-page-older.json"
+    },
+    {
+      "name": "fin418-page-newer",
+      "do": "get",
+      "cursor_from": {"step": "fin418-page-older", "path": ["block", "data", "page", "next"]},
+      "expect": "expected/fin418-page-newer.json"
+    },
+    {
       "name": "rolling-delete-latest",
       "do": "delete_upload",
       "file": "statements/08-rolling-latest-2026-10.ofx"
+    },
+    {
+      "name": "fin418-page-stale",
+      "do": "get",
+      "cursor_from": {"step": "fin418-chart-return", "path": ["blocks", {"id": "monthly_chart"}, "data", "page", "previous"]},
+      "expect": "expected/fin418-page-stale.json"
     },
     {
       "name": "rolling-year-after-delete",

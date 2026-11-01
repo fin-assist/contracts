@@ -1,0 +1,578 @@
+{
+  "block": {
+    "id": "monthly_chart",
+    "type": "chart",
+    "v": 1,
+    "title": "<ignored>",
+    "alt_text": "<ignored>",
+    "status": "ready",
+    "data": {
+      "kind": "bar",
+      "value_kind": "amount",
+      "points": [
+        {
+          "range": {
+            "from": "2021-11-01T00:00:00+03:00",
+            "to": "2021-12-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2021-12-01T00:00:00+03:00",
+            "to": "2022-01-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-01-01T00:00:00+03:00",
+            "to": "2022-02-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-02-01T00:00:00+03:00",
+            "to": "2022-03-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-03-01T00:00:00+03:00",
+            "to": "2022-04-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-04-01T00:00:00+03:00",
+            "to": "2022-05-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-05-01T00:00:00+03:00",
+            "to": "2022-06-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-06-01T00:00:00+03:00",
+            "to": "2022-07-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-07-01T00:00:00+03:00",
+            "to": "2022-08-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-08-01T00:00:00+03:00",
+            "to": "2022-09-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-09-01T00:00:00+03:00",
+            "to": "2022-10-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-10-01T00:00:00+03:00",
+            "to": "2022-11-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-11-01T00:00:00+03:00",
+            "to": "2022-12-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2022-12-01T00:00:00+03:00",
+            "to": "2023-01-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-01-01T00:00:00+03:00",
+            "to": "2023-02-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-02-01T00:00:00+03:00",
+            "to": "2023-03-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-03-01T00:00:00+03:00",
+            "to": "2023-04-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-04-01T00:00:00+03:00",
+            "to": "2023-05-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-05-01T00:00:00+03:00",
+            "to": "2023-06-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-06-01T00:00:00+03:00",
+            "to": "2023-07-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-07-01T00:00:00+03:00",
+            "to": "2023-08-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-08-01T00:00:00+03:00",
+            "to": "2023-09-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-09-01T00:00:00+03:00",
+            "to": "2023-10-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-10-01T00:00:00+03:00",
+            "to": "2023-11-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-11-01T00:00:00+03:00",
+            "to": "2023-12-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2023-12-01T00:00:00+03:00",
+            "to": "2024-01-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-01-01T00:00:00+03:00",
+            "to": "2024-02-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-02-01T00:00:00+03:00",
+            "to": "2024-03-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-03-01T00:00:00+03:00",
+            "to": "2024-04-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-04-01T00:00:00+03:00",
+            "to": "2024-05-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-05-01T00:00:00+03:00",
+            "to": "2024-06-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-06-01T00:00:00+03:00",
+            "to": "2024-07-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-07-01T00:00:00+03:00",
+            "to": "2024-08-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-08-01T00:00:00+03:00",
+            "to": "2024-09-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-09-01T00:00:00+03:00",
+            "to": "2024-10-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-10-01T00:00:00+03:00",
+            "to": "2024-11-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-11-01T00:00:00+03:00",
+            "to": "2024-12-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2024-12-01T00:00:00+03:00",
+            "to": "2025-01-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2025-01-01T00:00:00+03:00",
+            "to": "2025-02-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2025-02-01T00:00:00+03:00",
+            "to": "2025-03-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2025-03-01T00:00:00+03:00",
+            "to": "2025-04-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2025-04-01T00:00:00+03:00",
+            "to": "2025-05-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2025-05-01T00:00:00+03:00",
+            "to": "2025-06-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2025-06-01T00:00:00+03:00",
+            "to": "2025-07-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2025-07-01T00:00:00+03:00",
+            "to": "2025-08-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2025-08-01T00:00:00+03:00",
+            "to": "2025-09-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2025-09-01T00:00:00+03:00",
+            "to": "2025-10-01T00:00:00+03:00"
+          },
+          "value": null,
+          "coverage": "no_data"
+        },
+        {
+          "range": {
+            "from": "2025-10-01T00:00:00+03:00",
+            "to": "2025-11-01T00:00:00+03:00"
+          },
+          "value": 63673873,
+          "coverage": "partial",
+          "data_from": "2025-10-15T00:00:00+03:00",
+          "data_to": "2025-10-31T21:06:35+03:00",
+          "note": "<ignored>",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2025-10"
+          }
+        },
+        {
+          "range": {
+            "from": "2025-11-01T00:00:00+03:00",
+            "to": "2025-12-01T00:00:00+03:00"
+          },
+          "value": 84853478,
+          "coverage": "complete",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2025-11"
+          }
+        },
+        {
+          "range": {
+            "from": "2025-12-01T00:00:00+03:00",
+            "to": "2026-01-01T00:00:00+03:00"
+          },
+          "value": 130271771,
+          "coverage": "complete",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2025-12"
+          }
+        },
+        {
+          "range": {
+            "from": "2026-01-01T00:00:00+03:00",
+            "to": "2026-02-01T00:00:00+03:00"
+          },
+          "value": 101020510,
+          "coverage": "complete",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2026-01"
+          }
+        },
+        {
+          "range": {
+            "from": "2026-02-01T00:00:00+03:00",
+            "to": "2026-03-01T00:00:00+03:00"
+          },
+          "value": 397023788,
+          "coverage": "complete",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2026-02"
+          }
+        },
+        {
+          "range": {
+            "from": "2026-03-01T00:00:00+03:00",
+            "to": "2026-04-01T00:00:00+03:00"
+          },
+          "value": 479880069,
+          "coverage": "complete",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2026-03"
+          }
+        },
+        {
+          "range": {
+            "from": "2026-04-01T00:00:00+03:00",
+            "to": "2026-05-01T00:00:00+03:00"
+          },
+          "value": 248700997,
+          "coverage": "complete",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2026-04"
+          }
+        },
+        {
+          "range": {
+            "from": "2026-05-01T00:00:00+03:00",
+            "to": "2026-06-01T00:00:00+03:00"
+          },
+          "value": 142959126,
+          "coverage": "complete",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2026-05"
+          }
+        },
+        {
+          "range": {
+            "from": "2026-06-01T00:00:00+03:00",
+            "to": "2026-07-01T00:00:00+03:00"
+          },
+          "value": 151255356,
+          "coverage": "complete",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2026-06"
+          }
+        },
+        {
+          "range": {
+            "from": "2026-07-01T00:00:00+03:00",
+            "to": "2026-08-01T00:00:00+03:00"
+          },
+          "value": 258194452,
+          "coverage": "complete",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2026-07"
+          }
+        },
+        {
+          "range": {
+            "from": "2026-08-01T00:00:00+03:00",
+            "to": "2026-09-01T00:00:00+03:00"
+          },
+          "value": 84765391,
+          "coverage": "partial",
+          "data_from": "2026-08-01T00:00:00+03:00",
+          "data_to": "2026-08-31T22:26:03+03:00",
+          "note": "<ignored>",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2026-08"
+          }
+        },
+        {
+          "range": {
+            "from": "2026-09-01T00:00:00+03:00",
+            "to": "2026-10-01T00:00:00+03:00"
+          },
+          "value": 393213763,
+          "coverage": "partial",
+          "data_from": "2026-09-01T00:00:00+03:00",
+          "data_to": "2026-09-25T22:36:53+03:00",
+          "note": "<ignored>",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2026-09"
+          }
+        },
+        {
+          "range": {
+            "from": "2026-10-01T00:00:00+03:00",
+            "to": "2026-11-01T00:00:00+03:00"
+          },
+          "value": 902,
+          "coverage": "partial",
+          "data_from": "2026-10-01T00:00:00+03:00",
+          "data_to": "2026-10-30T23:59:59+03:00",
+          "note": "<ignored>",
+          "action": {
+            "type": "select_analytics_period",
+            "period": "month",
+            "date": "2026-10"
+          }
+        }
+      ],
+      "page": {
+        "revision": "<opaque>",
+        "previous": "<opaque>"
+      }
+    },
+    "help_text": "<ignored>"
+  }
+}

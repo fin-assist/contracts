@@ -347,8 +347,9 @@ FIN-398/400/403; backend consumers wait for merge and an owner-created immutable
 FIN-413 adds singleton rolling_year/rolling_quarter and optional MonthlyPoint.calculation_range for exact edge slices. Keep month/range calendar identity separate from the calculation interval; compose REST point.range from calculation_range and navigate by month. FIN-411 owns runtime/Android/mock after merge and an owner-created gen/go tag. Reference tests/fixtures cover clamps, coverage anchors, short history and gaps; docs/calc.md12 and docs/grpc-api.md define rollout.
 
 
-FIN-418: `monthly_chart` версии 1 показывает полные календарные месяцы всей истории во всех вкладках;
+FIN-418: `monthly_chart` версии 1 открывает всю историю во всех вкладках страницами по 60 месяцев (api.md6.4);
 факты выбранного периода и календарный balance не меняются. Block/Tile.help_text — вспомогательные пояснения;
 GET /v1/statements/config принимает необязательную пару включительных календарных дат. api.md3.1/FIN-418,
+GetChartPage и page.revision ограничивают выдачу, сохраняют tenant/revision-согласованность;
 calc.md13 и grpc-api.md определяют правила и согласованный rollout альфы (FIN-416), без новой версии chart.
 После merge владелец выпускает новый gen/go-тег до зависимых сервисных PR; merge/тег здесь не выполняются.

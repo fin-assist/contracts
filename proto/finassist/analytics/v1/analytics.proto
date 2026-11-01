@@ -26,6 +26,10 @@ service AnalyticsService {
   // мог предложить выбор периода.
   // GET /v1/analytics/periods.
   rpc ListPeriods(ListPeriodsRequest) returns (ListPeriodsResponse);
+  // Страница monthly_chart: максимум 60 полных календарных месяцев, только по выданному cursor.
+  // Вызывающий — только bank-bff с проверяемым токеном пользователя; системные вызовы не разрешены.
+  // GET /v1/analytics/charts/monthly_chart. Ошибки cursor и согласованность — api.md6.4.
+  rpc GetChartPage(GetChartPageRequest) returns (GetChartPageResponse);
 }
 
 // Вызывающий: только bank-statement-data (воркер outbox). Идемпотентный upsert с версиями.
@@ -313,6 +317,18 @@ message SmallFrequent {
 }
 
 // ---------------------------------------------------------------- Чтение
+
+// Непрозрачный cursor, выданный тому же пользователю; владение проверяется сервисом по токену.
+message GetChartPageRequest {
+  // 1–2048 символов; режим, пояс, ревизия и позиция проверяются по серверному контексту cursor.
+  string cursor = 1;
+}
+
+// Только страница monthly_chart@1; data содержит kind/value_kind/points/page.
+message GetChartPageResponse {
+  // notes и highlight_index отсутствуют: они принадлежат ответу выбранного периода GetAnalytics.
+  finassist.common.v1.Block block = 1;
+}
 
 // Запрос аналитики за период.
 message GetAnalyticsRequest {

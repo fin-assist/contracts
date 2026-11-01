@@ -1525,14 +1525,14 @@ paths:
                             "title": "Доходы минус расходы",
                             "value": 7258000,
                             "value_kind": "amount",
-                            "caption": "46% дохода · по выписке"
+                            "caption": "46% дохода"
                           },
                           {
                             "id": "expense",
                             "title": "Расходы",
                             "value": 8432000,
                             "value_kind": "amount",
-                            "caption": "по выписке за 1–25 сентября",
+                            "caption": "1–25 сентября",
                             "action": {
                               "type": "open_operations",
                               "filter": {
@@ -1548,7 +1548,7 @@ paths:
                             "title": "Расходы в день",
                             "value": 337280,
                             "value_kind": "amount",
-                            "caption": "в среднем за 1–25 сентября"
+                            "caption": "в среднем за 1–25 сентября", "help_text": "Расходы делим на покрытые дни не позже сегодня; пропуски не учитываются"
                           },
                           {
                             "id": "income",
@@ -1665,6 +1665,43 @@ paths:
                     "recalculating": false
                   }
                 }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/analytics/charts/monthly_chart:
+    get:
+      tags:
+      - analytics
+      operationId: getAnalyticsChartPage
+      summary: Следующая или предыдущая страница месячного графика
+      description: |
+        Максимум 60 календарных месяцев. Cursor проверяется для пользователя из токена и исходных режима,
+        пояса и ревизии. Ответ не меняет выбранный период, его notes или выделение. Правила — api.md6.4.
+      parameters:
+      - name: cursor
+        in: query
+        required: true
+        description: Непрозрачный previous или next из page; клиент не разбирает и не изменяет.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 2048
+      - $ref: '#/components/parameters/XRequestId'
+      - $ref: '#/components/parameters/XClientVersion'
+      responses:
+        '200':
+          description: Страница согласованной истории
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsChartPage'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -4348,17 +4385,66 @@ components:
           nullable: true
         action:
           $ref: '#/components/schemas/BlockAction'
+    ChartPage:
+      type: object
+      required: [revision]
+      properties:
+        revision:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Непрозрачная ревизия полной истории в контексте пользователя, режима и пояса; включает daily-изменения точек.
+        previous:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: Cursor страницы более ранних месяцев; отсутствует у начала истории.
+        next:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: Cursor страницы более поздних месяцев; отсутствует у конца истории.
+    MonthlyChartData:
+      allOf:
+      - $ref: '#/components/schemas/ChartData'
+      - type: object
+        required: [page]
+        properties:
+          points:
+            type: array
+            minItems: 1
+            maxItems: 60
+            items:
+              $ref: '#/components/schemas/ChartPoint'
+      description: Ограничение относится только к monthly_chart аналитики, не к другим chart.
+    AnalyticsChartPage:
+      type: object
+      required: [block]
+      properties:
+        block:
+          allOf:
+          - $ref: '#/components/schemas/Block'
+          - type: object
+            required: [id, status, data]
+            properties:
+              data:
+                $ref: '#/components/schemas/MonthlyChartData'
+          description: monthly_chart, chart@1, status ready; без notes/highlight_index. Клиент применяет только points/page.
     ChartData:
       type: object
       description: |
         chart v1 — столбцы с итогом и строками под графиком. Для monthly_chart экранной аналитики
-        points — полные календарные месяцы всей загруженной истории во всех типах периода (FIN-418).
+        points — страница до 60 полных календарных месяцев всей истории во всех типах периода (FIN-418).
         Факты выбранного/скользящего периода и другие графики не меняются. Notes называют выбранный период.
       required:
       - kind
       - value_kind
       - points
       properties:
+        page:
+          allOf:
+          - $ref: '#/components/schemas/ChartPage'
+          description: Обязательно для monthly_chart; курсоры всей истории по api.md6.4. У других графиков отсутствует.
         kind:
           type: string
           description: '`bar` — столбцы. Неизвестный — показать `alt_text`.'
@@ -4408,7 +4494,7 @@ components:
         range:
           allOf:
           - $ref: '#/components/schemas/Range'
-          description: Период точки; подпись оси клиент формирует из него с годом. В rolling_year/rolling_quarter — пересечение месяца с выбранным интервалом; действие открывает полный месяц.
+          description: Период точки; подпись оси клиент формирует из него с годом. У monthly_chart во всех вкладках это полный календарный месяц истории; действие открывает этот месяц. Факты и notes скользящего периода считаются отдельно в его точных границах.
         value:
           type: number
           format: double

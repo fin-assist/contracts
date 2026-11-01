@@ -60,6 +60,14 @@ class Runner:
             return b.categories()
         if url.path == "/v1/analytics":
             return b.analytics(q.get("period", "month"), q.get("date"), q.get("transfer_mode", "with"), q.get("supports"))
+        if url.path == "/v1/analytics/charts/monthly_chart":
+            for key, _ in parse_qsl(url.query, keep_blank_values=True):
+                if key != "cursor":
+                    raise ApiError(400, "VALIDATION_ERROR", [{"field": key, "code": "INVALID_FORMAT"}])
+            cursors = [v for k, v in parse_qsl(url.query, keep_blank_values=True) if k == "cursor"]
+            if len(cursors) > 1:
+                raise ApiError(400, "VALIDATION_ERROR", [{"field": "cursor", "code": "INVALID_FORMAT"}])
+            return b.chart_page(cursors[0] if cursors else None)
         if url.path == "/v1/analytics/periods":
             return b.periods(q.get("period", "month"))
         raise ValueError(f"unknown request {request}")
@@ -85,6 +93,8 @@ class Runner:
                         resp = self.backend.upload(os.path.basename(step["file"]), f.read())
                 elif do == "get":
                     request = step.get("request")
+                    if "cursor_from" in step:
+                        request = "GET /v1/analytics/charts/monthly_chart?" + urlencode({"cursor": self.resolve(step["cursor_from"])})
                     if "filter_from" in step:
                         f = filter_query(self.resolve(step["filter_from"]))
                         request = "GET /v1/operations?" + urlencode(f)

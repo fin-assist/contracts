@@ -275,6 +275,9 @@
             }
           }
         ],
+        "page": {
+          "revision": "<opaque>"
+        },
         "notes": [
           {
             "text": "<ignored>",

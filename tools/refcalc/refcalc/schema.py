@@ -14,6 +14,7 @@ SCHEMAS = {
     "/v1/operations": "OperationsList",
     "/v1/categories": "CategoriesList",
     "/v1/analytics": "Analytics",
+    "/v1/analytics/charts/monthly_chart": "AnalyticsChartPage",
     "/v1/analytics/periods": "AnalyticsPeriodsList",
     "change_category": "ChangeCategoryResponse",
 }
@@ -32,9 +33,11 @@ class SchemaCheck:
         schema = {"$ref": f"openapi.yaml#/components/schemas/{name}"}
         errors = self._validate(schema, response, "")
         # Block `data` is a free object in the envelope: check it against the schema of its primitive (FIN-157).
-        if name == "Analytics" and isinstance(response, dict):
+        if name in ("Analytics", "AnalyticsChartPage") and isinstance(response, dict):
             from .coverage import block_data_schema
-            for i, b in enumerate(response.get("blocks") or []):
+            blocks = (response.get("blocks") or []) if name == "Analytics" else (
+                [response["block"]] if isinstance(response.get("block"), dict) else [])
+            for i, b in enumerate(blocks):
                 try:
                     data_type = block_data_schema(b)
                 except ValueError as e:

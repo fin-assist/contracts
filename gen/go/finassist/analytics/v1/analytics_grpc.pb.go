@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	AnalyticsService_GetAnalytics_FullMethodName = "/finassist.analytics.v1.AnalyticsService/GetAnalytics"
 	AnalyticsService_ListPeriods_FullMethodName  = "/finassist.analytics.v1.AnalyticsService/ListPeriods"
+	AnalyticsService_GetChartPage_FullMethodName = "/finassist.analytics.v1.AnalyticsService/GetChartPage"
 )
 
 // AnalyticsServiceClient is the client API for AnalyticsService service.
@@ -38,6 +39,10 @@ type AnalyticsServiceClient interface {
 	// мог предложить выбор периода.
 	// GET /v1/analytics/periods.
 	ListPeriods(ctx context.Context, in *ListPeriodsRequest, opts ...grpc.CallOption) (*ListPeriodsResponse, error)
+	// Страница monthly_chart: максимум 60 полных календарных месяцев, только по выданному cursor.
+	// Вызывающий — только bank-bff с проверяемым токеном пользователя; системные вызовы не разрешены.
+	// GET /v1/analytics/charts/monthly_chart. Ошибки cursor и согласованность — api.md6.4.
+	GetChartPage(ctx context.Context, in *GetChartPageRequest, opts ...grpc.CallOption) (*GetChartPageResponse, error)
 }
 
 type analyticsServiceClient struct {
@@ -68,6 +73,16 @@ func (c *analyticsServiceClient) ListPeriods(ctx context.Context, in *ListPeriod
 	return out, nil
 }
 
+func (c *analyticsServiceClient) GetChartPage(ctx context.Context, in *GetChartPageRequest, opts ...grpc.CallOption) (*GetChartPageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetChartPageResponse)
+	err := c.cc.Invoke(ctx, AnalyticsService_GetChartPage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnalyticsServiceServer is the server API for AnalyticsService service.
 // All implementations must embed UnimplementedAnalyticsServiceServer
 // for forward compatibility.
@@ -83,6 +98,10 @@ type AnalyticsServiceServer interface {
 	// мог предложить выбор периода.
 	// GET /v1/analytics/periods.
 	ListPeriods(context.Context, *ListPeriodsRequest) (*ListPeriodsResponse, error)
+	// Страница monthly_chart: максимум 60 полных календарных месяцев, только по выданному cursor.
+	// Вызывающий — только bank-bff с проверяемым токеном пользователя; системные вызовы не разрешены.
+	// GET /v1/analytics/charts/monthly_chart. Ошибки cursor и согласованность — api.md6.4.
+	GetChartPage(context.Context, *GetChartPageRequest) (*GetChartPageResponse, error)
 	mustEmbedUnimplementedAnalyticsServiceServer()
 }
 
@@ -98,6 +117,9 @@ func (UnimplementedAnalyticsServiceServer) GetAnalytics(context.Context, *GetAna
 }
 func (UnimplementedAnalyticsServiceServer) ListPeriods(context.Context, *ListPeriodsRequest) (*ListPeriodsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPeriods not implemented")
+}
+func (UnimplementedAnalyticsServiceServer) GetChartPage(context.Context, *GetChartPageRequest) (*GetChartPageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChartPage not implemented")
 }
 func (UnimplementedAnalyticsServiceServer) mustEmbedUnimplementedAnalyticsServiceServer() {}
 func (UnimplementedAnalyticsServiceServer) testEmbeddedByValue()                          {}
@@ -156,6 +178,24 @@ func _AnalyticsService_ListPeriods_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AnalyticsService_GetChartPage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChartPageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalyticsServiceServer).GetChartPage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AnalyticsService_GetChartPage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalyticsServiceServer).GetChartPage(ctx, req.(*GetChartPageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AnalyticsService_ServiceDesc is the grpc.ServiceDesc for AnalyticsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +210,10 @@ var AnalyticsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPeriods",
 			Handler:    _AnalyticsService_ListPeriods_Handler,
+		},
+		{
+			MethodName: "GetChartPage",
+			Handler:    _AnalyticsService_GetChartPage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

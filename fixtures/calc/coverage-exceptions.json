@@ -8,6 +8,7 @@
     "OperationsFilter.amount_from": "Переходы 6.1 и итога импорта не фильтруют по сумме: выборки — через selection (docs/calc.md, раздел 5, «Выборки»); поиск по сумме проверяется запросами, а не ответами.",
     "OperationsFilter.amount_to": "То же, что amount_from.",
     "OperationsFilter.q": "Текстовый q для выборок не используется (docs/calc.md, раздел 5, «Выборки»).",
-    "RankedListData.empty_text": "Пустой список приходит блоком со status: none и текстом в empty_text оболочки, без data."
+    "RankedListData.empty_text": "Пустой список приходит блоком со status: none и текстом в empty_text оболочки, без data.",
+    "ChartData.caption": "У графиков аналитики пояснение перенесено в Block.help_text (FIN-418); содержательные notes сохраняются. Caption остаётся общим полем других графиков/помощника, которые не входят в расчётные fixtures 6.1."
   }
 }

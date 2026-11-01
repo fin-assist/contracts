@@ -83,7 +83,8 @@ def parse_key(key: str) -> dt.date:
 
 
 class Analytics:
-    def __init__(self, ledger: Ledger, now: dt.datetime):
+    def __init__(self, ledger: Ledger, now: dt.datetime, chart_page=None):
+        self.chart_page = chart_page
         self.ledger = ledger
         self.zone = ledger.zone
         self.now = now
@@ -163,7 +164,7 @@ class Analytics:
             blocks += [{"type": "heading", "v": 1, "data": {"text": "Регулярные платежи и заметные траты"}},
                        ctx.regular_payments(), *ctx.notable_spending(), ctx.bank_fees(), ctx.small_frequent()]
         if ptype != "year" and ptype not in SINGLETONS:
-            blocks.append(ctx.balance(selected_points))
+            blocks.append(ctx.balance())
         if supported is not None:
             blocks = [block for block in blocks if block["v"] <= supported.get(block["type"], 0)]
         unread = sum(1 for _, line in self.ledger.open_unread()
@@ -274,7 +275,8 @@ class Ctx:
         full = sorted(self.cov.full_months(), reverse=True)
         if len(full) < required:
             locked = lock("need_full_months", required, len(full))
-            locked["text"] = f"Нужно {required} полных месяцев, есть {len(full)}"
+            months = "месяца" if required == 3 else "месяцев"
+            locked["text"] = f"Нужно {required} полных {months}, есть {len(full)}"
             t["help_text"] = " ".join(filter(None, (t.get("help_text"), self.forecast_basis_text(required, full))))
             return {**t, "status": "locked", "lock": locked, "caption": caption}
         base = full[:required]
@@ -400,10 +402,8 @@ class Ctx:
             notes.append({"text": "обычно", "tone": "muted"})
         return notes
 
-    def selected_points(self) -> Optional[list]:
-        """Selected-period slices for notes and the separate calendar balance chart."""
-        if self.ptype not in SINGLETONS and len(self.cov.months_with_data()) < 2:
-            return None
+    def selected_points(self) -> list:
+        """Selected-period slices for visible notes, without a history-length gate."""
         points = []
         for m in self.chart_months():
             e = add_months(m, 1)
@@ -417,36 +417,23 @@ class Ctx:
             points.append(point)
         return points
 
-    def monthly_chart(self, selected: Optional[list]) -> dict:
+    def monthly_chart(self, selected: list) -> dict:
         """Navigate whole calendar history while notes keep the selected-period facts."""
-        points = []
-        month = month_start(self.cov.first)
-        while month <= month_start(self.cov.last):
-            end = add_months(month, 1)
-            covered = self.cov.bounds(month, end) is not None
-            amount = self.scope.expense(self.scope.in_days(self.V, month, end)) if covered else None
-            point = self.point(month, amount)
-            if covered:
-                point["action"] = {"type": "select_analytics_period", "period": "month", "date": month_key(month)}
-            points.append(point)
-            month = end
-        notes = self.chart_notes(selected) if selected is not None else []
-        data = {"kind": "bar", "value_kind": "amount", "points": points,
-                "notes": [{**note, "text": f"За выбранный период {self.key}: {note['text']}"} for note in notes]}
+        block = self.a.chart_page(self.month if self.ptype == "month" else None)
+        data = block["data"]
+        points = data["points"]
+        notes = self.chart_notes(selected)
+        data["notes"] = [{**note, "text": f"За выбранный период {self.key}: {note['text']}"} for note in notes]
         if self.ptype == "month":
             highlight = next((i for i, p in enumerate(points)
                              if p["range"]["from"] == self.a.at(self.month)), None)
             if highlight is not None:
                 data["highlight_index"] = highlight
-        return {"id": "monthly_chart", "type": "chart", "v": 1, "title": "Расходы по месяцам",
-                "alt_text": "Расходы по месяцам всей загруженной истории", "status": "ready", "data": data,
-                "help_text": "Столбики показывают полные календарные месяцы всей загруженной истории. "
-                             "Нажмите на месяц с данными, чтобы открыть его аналитику. "
-                             "Итоги и выводы экрана относятся к выбранному периоду."}
+        return block
 
-    def balance(self, selected: Optional[list]) -> dict:
+    def balance(self) -> dict:
         points = []
-        if selected is not None:
+        if len(self.cov.months_with_data()) >= 2:
             for m in self.chart_months():
                 e = add_months(m, 1)
                 ms = self.scope.in_days(self.V, m, e)
@@ -454,11 +441,11 @@ class Ctx:
                 val = (inc - exp) / inc if self.cov.has_data_month(m) and inc > 0 else None
                 points.append(self.point(m, val))
         data = {"kind": "bar", "value_kind": "percent", "points": points, "show_values": True,
-                "summary": value(self.I - self.E), "caption": "пояснение"}
+                "summary": value(self.I - self.E)}
         if points and self.highlight() is not None:
             data["highlight_index"] = self.highlight()
         return {"id": "balance", "type": "chart", "v": 1, "status": "ready", "title": "Доходы минус расходы",
-                "alt_text": "разница", "data": data}
+                "alt_text": "разница", "help_text": "пояснение", "data": data}
 
     # ---- categories ----
 

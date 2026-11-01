@@ -20,6 +20,8 @@ def round_half_up(x: Fraction) -> int:
 
 def iso(t: dt.datetime) -> str:
     """RFC 3339 with seconds and the offset of `t` (`2026-09-25T21:40:00+03:00`)."""
+    if t.utcoffset() is not None and t.utcoffset().total_seconds() % 60:
+        t = t.astimezone(dt.timezone.utc)
     return t.replace(microsecond=0).isoformat()
 
 
