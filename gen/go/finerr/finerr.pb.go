@@ -158,7 +158,7 @@ func RetryNotAllowed() error {
 	return build("RETRY_NOT_ALLOWED", codes.FailedPrecondition, nil)
 }
 
-// AnalyticsContextUnavailable returns ANALYTICS_CONTEXT_UNAVAILABLE: The assignment was saved, but its requested analytics context is no longer available. ApplyRegularPaymentDismissal only; RequestRetryInfo explicitly forbids repeating the same context.
+// AnalyticsContextUnavailable returns ANALYTICS_CONTEXT_UNAVAILABLE: Присваивание сохранено, но запрошенный контекст аналитики больше недоступен. Только ApplyRegularPaymentDismissal; RequestRetryInfo явно запрещает повтор в том же контексте.
 func AnalyticsContextUnavailable() error {
 	return build("ANALYTICS_CONTEXT_UNAVAILABLE", codes.FailedPrecondition, nil)
 }

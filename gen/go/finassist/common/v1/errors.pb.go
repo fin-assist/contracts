@@ -81,8 +81,8 @@ const (
 	ErrorReason_CATEGORY_NOT_ASSIGNABLE ErrorReason = 18
 	// Повтор ответа помощника недоступен.
 	ErrorReason_RETRY_NOT_ALLOWED ErrorReason = 19
-	// The assignment was saved, but its requested analytics context is no longer available.
-	// ApplyRegularPaymentDismissal only; RequestRetryInfo explicitly forbids repeating the same context.
+	// Присваивание сохранено, но запрошенный контекст аналитики больше недоступен.
+	// Только ApplyRegularPaymentDismissal; RequestRetryInfo явно запрещает повтор в том же контексте.
 	ErrorReason_ANALYTICS_CONTEXT_UNAVAILABLE ErrorReason = 25
 	// Превышен лимит запросов; retry_at (RFC 3339) — когда можно повторить.
 	ErrorReason_RATE_LIMITED ErrorReason = 20

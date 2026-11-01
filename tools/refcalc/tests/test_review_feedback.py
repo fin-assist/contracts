@@ -253,3 +253,28 @@ class ReviewFeedback(unittest.TestCase):
         self.assertEqual(dt.date(1988, 10, 30), (utc_last + dt.timedelta(seconds=1)).astimezone(zone).date())
         with self.assertRaises(ValueError):
             end_of_day(dt.date(2011, 12, 30), ZoneInfo('Pacific/Apia'))
+
+    def test_month_bounds_skip_missing_last_day_inside_covered_upload(self):
+        schema = SchemaCheck(ROOT + '/openapi/openapi.yaml')
+        for operation_day in (29, 30):
+            with self.subTest(operation_day=operation_day):
+                b = self.backend('1995-01-03T12:00:00+14:00')
+                b.zone = b.ledger.zone = ZoneInfo('Pacific/Kiritimati')
+                statement = spec.stmt('19941201', '19950102', [
+                    ('old', f'199412{operation_day}120000', -10, 'Shop', 'Продукты')])
+                statement = statement.replace('[+3:MSK]', '[-10]')
+                statement = statement.replace('19950102235959.000[-10]', '19950102235959.000[+14]')
+                b.upload('history', statement)
+                response = b.analytics('month', '1994-12')
+                self.assertEqual('Pacific/Kiritimati', response['time_zone'])
+                last = dt.datetime.fromisoformat(response['period']['data_to']).astimezone(b.zone)
+                self.assertEqual(dt.date(1994, 12, 30), last.date())
+                self.assertEqual('12:00:00' if operation_day == 30 else '23:59:59', last.strftime('%H:%M:%S'))
+                self.assertEqual(1000, self.tile(response, 'expense')['value'])
+                self.assertEqual([], schema.errors('/v1/analytics', response))
+                # Only the nonexistent day contributes no displayable bound; no invented instant.
+                self.assertIsNone(b.ledger.coverage(b.today).bounds(dt.date(1994, 12, 31), dt.date(1995, 1, 1)))
+        with self.assertRaises(ApiError) as caught:
+            b.import_config('1994-12-31', '1994-12-31')
+        self.assertEqual((400, 'VALIDATION_ERROR'), (caught.exception.status, caught.exception.code))
+        self.assertEqual([{'field': 'period_to', 'code': 'OUT_OF_RANGE'}], caught.exception.details)

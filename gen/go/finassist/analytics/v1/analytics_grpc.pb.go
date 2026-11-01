@@ -47,8 +47,8 @@ type AnalyticsServiceClient interface {
 	GetChartPage(ctx context.Context, in *GetChartPageRequest, opts ...grpc.CallOption) (*GetChartPageResponse, error)
 	// Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
 	// Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
-	// Confirmed absent context: ANALYTICS_CONTEXT_UNAVAILABLE, FAILED_PRECONDITION, RequestRetryInfo=false.
-	// Temporary metric delivery/composition failure: existing INTERNAL/UNAVAILABLE with request retry advice.
+	// Достоверно отсутствующий контекст: ANALYTICS_CONTEXT_UNAVAILABLE, FAILED_PRECONDITION, RequestRetryInfo=false.
+	// Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
 	ApplyRegularPaymentDismissal(ctx context.Context, in *ApplyRegularPaymentDismissalRequest, opts ...grpc.CallOption) (*ApplyRegularPaymentDismissalResponse, error)
 }
 
@@ -122,8 +122,8 @@ type AnalyticsServiceServer interface {
 	GetChartPage(context.Context, *GetChartPageRequest) (*GetChartPageResponse, error)
 	// Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
 	// Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
-	// Confirmed absent context: ANALYTICS_CONTEXT_UNAVAILABLE, FAILED_PRECONDITION, RequestRetryInfo=false.
-	// Temporary metric delivery/composition failure: existing INTERNAL/UNAVAILABLE with request retry advice.
+	// Достоверно отсутствующий контекст: ANALYTICS_CONTEXT_UNAVAILABLE, FAILED_PRECONDITION, RequestRetryInfo=false.
+	// Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
 	ApplyRegularPaymentDismissal(context.Context, *ApplyRegularPaymentDismissalRequest) (*ApplyRegularPaymentDismissalResponse, error)
 	mustEmbedUnimplementedAnalyticsServiceServer()
 }

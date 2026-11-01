@@ -499,8 +499,8 @@ type DataBounds struct {
 	// операциям. data_from — первый существующий момент первого покрытого дня в периоде; нет — покрытых дней нет.
 	DataFrom *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=data_from,json=dataFrom,proto3,oneof" json:"data_from,omitempty"`
 	// Время последней операции, если она в последний покрытый день периода, иначе конец этого дня
-	// (last existing second; choose the later instant in a fold). A skipped day has no bound.
-	// Interpret the civil day in the response source time_zone, not the serialized offset.
+	// (последняя существующая секунда; при повторе — поздний момент). У пропущенного дня границы нет.
+	// Гражданский день определяется в исходном time_zone ответа, не по смещению транспортной строки.
 	DataTo *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=data_to,json=dataTo,proto3,oneof" json:"data_to,omitempty"`
 	// Дни внутри данных, которых нет ни в одной загрузке.
 	Gaps          []*TimeRange `protobuf:"bytes,4,rep,name=gaps,proto3" json:"gaps,omitempty"`

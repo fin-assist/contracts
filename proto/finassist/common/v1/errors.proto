@@ -127,8 +127,8 @@ enum ErrorReason {
     grpc_code: GRPC_CODE_FAILED_PRECONDITION
     http_status: 422
   }];
-  // The assignment was saved, but its requested analytics context is no longer available.
-  // ApplyRegularPaymentDismissal only; RequestRetryInfo explicitly forbids repeating the same context.
+  // Присваивание сохранено, но запрошенный контекст аналитики больше недоступен.
+  // Только ApplyRegularPaymentDismissal; RequestRetryInfo явно запрещает повтор в том же контексте.
   ANALYTICS_CONTEXT_UNAVAILABLE = 25 [(error_spec) = {
     grpc_code: GRPC_CODE_FAILED_PRECONDITION
     http_status: 422

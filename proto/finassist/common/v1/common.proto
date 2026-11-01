@@ -109,8 +109,8 @@ message DataBounds {
   // операциям. data_from — первый существующий момент первого покрытого дня в периоде; нет — покрытых дней нет.
   optional google.protobuf.Timestamp data_from = 2;
   // Время последней операции, если она в последний покрытый день периода, иначе конец этого дня
-  // (last existing second; choose the later instant in a fold). A skipped day has no bound.
-  // Interpret the civil day in the response source time_zone, not the serialized offset.
+  // (последняя существующая секунда; при повторе — поздний момент). У пропущенного дня границы нет.
+  // Гражданский день определяется в исходном time_zone ответа, не по смещению транспортной строки.
   optional google.protobuf.Timestamp data_to = 3;
   // Дни внутри данных, которых нет ни в одной загрузке.
   repeated TimeRange gaps = 4;
