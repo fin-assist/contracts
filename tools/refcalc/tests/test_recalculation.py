@@ -264,9 +264,9 @@ class RecalculationContract(unittest.TestCase):
         for date in ('2026-01', '2027-01'):
             with self.assertRaises(ApiError) as caught:
                 b.dismiss(stable_id('payment', 'A'), date=date, mode='without', defer_calculation=True)
-            self.assertEqual((400, 'VALIDATION_ERROR', False),
+            self.assertEqual((422, 'ANALYTICS_CONTEXT_UNAVAILABLE', False),
                              (caught.exception.status, caught.exception.code, caught.exception.retryable))
-            self.assertEqual([{'field': 'date', 'code': 'OUT_OF_RANGE'}], caught.exception.details)
+            self.assertIsNone(caught.exception.details)
             self.assertIn('A', b.ledger.dismissed)
             self.assertNotIn((date, 'without'), b._regular_snapshots)
 
@@ -277,7 +277,8 @@ class RecalculationContract(unittest.TestCase):
         b.delete_upload('regular')
         with self.assertRaises(ApiError) as caught:
             self.put(b, 'A')
-        self.assertEqual((400, False), (caught.exception.status, caught.exception.retryable))
+        self.assertEqual((422, 'ANALYTICS_CONTEXT_UNAVAILABLE', False),
+                         (caught.exception.status, caught.exception.code, caught.exception.retryable))
         self.assertIn('A', b.ledger.dismissed)  # Error does not roll back the source assignment.
         b.recalculation.run_pending()
         self.assertFalse(b.analytics()['has_data'])

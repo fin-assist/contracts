@@ -213,13 +213,24 @@ class ChartPages(unittest.TestCase):
             if name == 'Europe/Kyiv':
                 raise ZoneInfoNotFoundError(name)
             return ZoneInfo(name)
-        cache = {'time_zone': 'Europe/Kiev', 'blocks': ['previous verified result']}
+        cache = {'time_zone': 'Europe/Kiev', 'calculated_at': '2026-11-01T12:00:00+02:00',
+                 'blocks': ['previous verified result']}
         for verified in (None, cache):
             result = calendar_context(source, lookup=old_device_lookup, verified_cache=verified)
             self.assertEqual('unsupported_time_zone', result['state'])
             self.assertFalse(result['refresh'])
             self.assertIs(verified, result['cache'])
+            self.assertTrue(result['cache_stale'])
             self.assertIn('не поддерживает', result['text'])
+            # A new checked response, after an explicit retry/context change, clears the local state.
+            supported = {'time_zone': 'Europe/Kiev', 'blocks': ['new result']}
+            recovered = calendar_context(supported, lookup=old_device_lookup, verified_cache=result['cache'])
+            self.assertEqual('ready', recovered['state'])
+            self.assertIs(supported, recovered['response'])
+            self.assertNotIn('cache_stale', recovered)
+            self.assertNotIn('text', recovered)
+        self.assertEqual('2026-11-01T12:00:00+02:00', cache['calculated_at'])
+        self.assertEqual('Europe/Kiev', cache['time_zone'])
         self.assertEqual('invalid_response', calendar_context({'time_zone': ''})['state'])
         self.assertEqual('ready', calendar_context({'has_data': False}, has_calendar_data=False)['state'])
 

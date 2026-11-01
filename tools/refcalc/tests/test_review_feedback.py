@@ -225,3 +225,31 @@ class ReviewFeedback(unittest.TestCase):
         self.assertEqual('1919-04-01T00:00:00-04:00', result['suggested_period']['to'])
         query = parse_qs(urlsplit(result['download_url']).query)
         self.assertEqual(int(instant.timestamp() * 1000), int(query['start'][0]))
+
+    def test_data_to_uses_last_real_second_before_midnight_gap(self):
+        b = self.backend('1919-04-02T12:00:00-04:00')
+        b.zone = b.ledger.zone = ZoneInfo('America/Toronto')
+        statement = spec.stmt('19190301', '19190330', [
+            ('old', '19190329120000', -10, 'Shop', 'Продукты')])
+        statement = statement.replace('[+3:MSK]', '[-5:EST]').replace('19190330235959', '19190330232959')
+        b.upload('history', statement)
+        response = b.analytics('month', '1919-03')
+        at = dt.datetime.fromisoformat(response['period']['data_to'])
+        zone = ZoneInfo(response['time_zone'])
+        self.assertEqual('1919-03-30T23:29:59-05:00', at.astimezone(zone).isoformat())
+        self.assertEqual(dt.date(1919, 3, 30), at.astimezone(zone).date())
+        next_second = at.astimezone(dt.timezone.utc) + dt.timedelta(seconds=1)
+        self.assertEqual('1919-03-31T00:30:00-04:00', next_second.astimezone(zone).isoformat())
+
+    def test_end_of_day_chooses_later_fold_and_rejects_completely_skipped_day(self):
+        from refcalc.util import end_of_day, start_of_day
+        zone = ZoneInfo('America/Goose_Bay')
+        day = dt.date(1988, 10, 29)
+        last = end_of_day(day, zone)
+        self.assertEqual('1988-10-29T23:59:59-04:00', last.isoformat())
+        utc_last = last.astimezone(dt.timezone.utc)
+        # This rollback revisits yesterday after the earliest start of tomorrow.
+        self.assertGreater(utc_last, start_of_day(day + dt.timedelta(days=1), zone).astimezone(dt.timezone.utc))
+        self.assertEqual(dt.date(1988, 10, 30), (utc_last + dt.timedelta(seconds=1)).astimezone(zone).date())
+        with self.assertRaises(ValueError):
+            end_of_day(dt.date(2011, 12, 30), ZoneInfo('Pacific/Apia'))

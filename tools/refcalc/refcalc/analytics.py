@@ -102,7 +102,7 @@ class Analytics:
         return self.cov.empty or (self.today - self.cov.last).days > STALE_DAYS
 
     def data_to(self, start: dt.date, end: dt.date) -> Optional[str]:
-        """Time of the last operation inside the period if it is on the last covered day, else 23:59:59 of that day."""
+        """Last operation on the last covered day, otherwise that day's last real second."""
         b = self.cov.bounds(start, end)
         if b is None:
             return None

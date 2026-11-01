@@ -269,8 +269,8 @@ message ImportAccount {
 message IncompleteMonth {
   string month = 1;
   finassist.common.v1.TimeRange range = 2;
-  // Границы покрытых дней месяца, как DataBounds: 00:00 первого покрытого дня и время последней
-  // операции в последний покрытый день или 23:59:59 этого дня.
+  // Границы покрытых дней месяца, как DataBounds: первый существующий момент первого дня и время последней
+  // операции в последний покрытый день или последняя существующая секунда этого дня.
   google.protobuf.Timestamp data_from = 3;
   google.protobuf.Timestamp data_to = 4;
   // Дни без данных ни в одном файле.

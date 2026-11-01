@@ -424,7 +424,7 @@ class Backend:
         def compose(excluded):
             saved = self._regular_snapshots.get((date, mode))
             if saved is None and (date, mode) in self._regular_absent:
-                raise ApiError(400, 'VALIDATION_ERROR', [{'field': 'date', 'code': 'OUT_OF_RANGE'}], retryable=False)
+                raise ApiError(422, 'ANALYTICS_CONTEXT_UNAVAILABLE', retryable=False)
             if fail_compose or saved is None:
                 raise ApiError(500, 'INTERNAL_ERROR', retryable=True)
             return {**{k: deepcopy(saved[k]) for k in ('params', 'currency', 'time_zone')},

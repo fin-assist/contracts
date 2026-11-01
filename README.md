@@ -199,3 +199,9 @@ DELETE остаётся прежним 204, восстановление UI/cand
 FIN-418 time_zone: шесть REST-ответов с календарным контекстом передают фактический IANA-пояс источника
 (api.md «Пояс календарных данных ответа»), а не копию профиля клиента. GetChartPageResponse.time_zone2;
 остальные поля уже были в gRPC. Проверять подписи/кэш по response time_zone, включая исторический UTC.
+
+FIN-418 error edge: ANALYTICS_CONTEXT_UNAVAILABLE is an additive registry reason25 (FAILED_PRECONDITION/422),
+only after confirmed BSD assignment; explicit saved-change user_message and retryable=false, one context refresh.
+Malformed query remains400 before assignment; transient Apply failure remains500. Unsupported device tzdb always
+shows a notice, also over a stale verified cache, until a checked supported response. Historical data_to uses
+the last real second (later fold); no invented instant for a skipped day. See api.md6.3 and calendar notation.

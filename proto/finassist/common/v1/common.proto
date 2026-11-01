@@ -106,10 +106,11 @@ message AnalyticsParams {
 message DataBounds {
   Coverage coverage = 1;
   // Границы данных внутри периода — по дням, покрытым периодом выписки (DTSTART..DTEND), а не по
-  // операциям. data_from — начало (00:00) первого покрытого дня в периоде; нет — покрытых дней нет.
+  // операциям. data_from — первый существующий момент первого покрытого дня в периоде; нет — покрытых дней нет.
   optional google.protobuf.Timestamp data_from = 2;
   // Время последней операции, если она в последний покрытый день периода, иначе конец этого дня
-  // (23:59:59). Момент внутри дня, не граница: день берётся как есть.
+  // (last existing second; choose the later instant in a fold). A skipped day has no bound.
+  // Interpret the civil day in the response source time_zone, not the serialized offset.
   optional google.protobuf.Timestamp data_to = 3;
   // Дни внутри данных, которых нет ни в одной загрузке.
   repeated TimeRange gaps = 4;

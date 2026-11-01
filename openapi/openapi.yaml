@@ -1794,8 +1794,9 @@ paths:
         Отметка действует во всей истории; query задаёт показанный месяц для ответа. До записи проверяются параметры.
         BFF после BSD вызывает analytics для проекции из собственной БД; полного фонового расчёта не ждёт.
         Временный сбой после сохранения отметки —500 INTERNAL_ERROR с разрешением безопасного повтора.
-        Достоверно отсутствующий/удалённый месяц —400 VALIDATION_ERROR date/OUT_OF_RANGE, retryable=false;
-        assignment уже мог сохраниться, клиент один раз обновляет контекст GET вместо повтора прежнего PUT.
+        Достоверно отсутствующий/удалённый месяц после сохранённого assignment —422 ANALYTICS_CONTEXT_UNAVAILABLE,
+        retryable=false. user_message сообщает, что изменение сохранено; клиент удерживает известный результат
+        и один раз обновляет контекст GET вместо повтора прежнего PUT. Синтаксическая400 предшествует BSD/записи.
         Успех без blocks не возвращается. 503 остаётся только общим режимом MAINTENANCE.
       parameters:
       - name: date
@@ -1825,6 +1826,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -2394,7 +2397,8 @@ components:
     Unprocessable:
       description: |
         Запрос понят, но выполнить нельзя: `WRONG_FORMAT`, `CSV_NOT_ACCEPTED`, `WRONG_BANK`, `CONSENT_OUTDATED`,
-        `TOO_MANY_RESULTS`, `SELECTION_NOT_FOUND`, `CATEGORY_NOT_ASSIGNABLE`, `RETRY_NOT_ALLOWED`.
+        `TOO_MANY_RESULTS`, `SELECTION_NOT_FOUND`, `CATEGORY_NOT_ASSIGNABLE`, `RETRY_NOT_ALLOWED`, `ANALYTICS_CONTEXT_UNAVAILABLE`.
+        Последний код: assignment сохранён, но ответ выбранного периода недоступен; user_message/recovery — api.md6.3.
       headers:
         X-Request-Id:
           $ref: '#/components/headers/XRequestId'
@@ -2667,6 +2671,7 @@ components:
           - SELECTION_NOT_FOUND
           - CATEGORY_NOT_ASSIGNABLE
           - RETRY_NOT_ALLOWED
+          - ANALYTICS_CONTEXT_UNAVAILABLE
           - RATE_LIMITED
           - INTERNAL_ERROR
           - MAINTENANCE
@@ -3329,7 +3334,7 @@ components:
         data_to:
           type: string
           format: date-time
-          description: Время последней операции, если она в последний покрытый день месяца, иначе 23:59:59 этого дня.
+          description: Время последней операции, если она в последний покрытый день месяца, иначе последняя существующая секунда этого дня (при fold — поздний instant).
         gaps:
           type: array
           description: Дни без данных ни в одном файле. Пропуск, пересекающий месяц, приходит целиком (docs/calc.md, раздел 4).
@@ -3755,7 +3760,7 @@ components:
           format: date-time
           nullable: true
           description: Есть, если месяц неполный — конец данных по покрытым дням (docs/api.md, «Формат») — время последней
-            операции, если она в последний покрытый день, иначе 23:59:59 этого дня. Гражданский день берётся после перевода момента в IANA-пояс time_zone ответа, без вычитания суток («по 25
+            операции, если она в последний покрытый день, иначе последняя существующая секунда этого дня (при fold — поздний instant). Гражданский день берётся после перевода момента в IANA-пояс time_zone ответа, без вычитания суток («по 25
             сентября»); не граница дня, в отличие от `FeedState.data_to`.
     FeedState:
       type: object
@@ -3873,7 +3878,9 @@ components:
       description: >-
         Фактический IANA-пояс данных этого ответа, из того же снимка. Для календарной подписи datetime переводится в него.
         Не подменяется кэшем профиля. Валидная у сервера зона, неизвестная tzdb устройства, останавливает автоматические
-        повторы: проверенный cache или явная локальная несовместимость, не серверная 500 или бесконечный preparing.
+        повторы: всегда явная локальная несовместимость, включая показ проверенного cache с пометкой неактуальности
+        и прежними timestamp/source-zone. Следующий проверенный ответ с разрешимой зоной снимает это состояние;
+        явный повтор/новое открытие/изменение контекста допускают запрос, без автоматического цикла отказа.
     AnalyticsBlockUpdate:
       type: object
       required: [params, currency, time_zone, blocks, required_calc_version]
@@ -3981,7 +3988,7 @@ components:
           format: date-time
           nullable: true
           description: Конец данных внутри периода — время последней операции, если она в последний покрытый день, иначе
-            23:59:59 этого дня. Гражданский день берётся после перевода момента в IANA-пояс time_zone ответа, без вычитания суток («1–25 сентября»); не граница дня, в отличие от
+            последняя существующая секунда этого дня (при fold — поздний instant). Гражданский день берётся после перевода момента в IANA-пояс time_zone ответа, без вычитания суток («1–25 сентября»); не граница дня, в отличие от
             `AnalyticsState.data_to`.
         gaps:
           type: array

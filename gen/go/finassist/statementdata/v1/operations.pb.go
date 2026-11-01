@@ -509,7 +509,7 @@ type MonthSummary struct {
 	// Доходы, со знаком.
 	IncomeMinor int64 `protobuf:"varint,4,opt,name=income_minor,json=incomeMinor,proto3" json:"income_minor,omitempty"`
 	// Есть, если месяц неполный: конец данных по покрытым дням, как DataBounds.data_to (время
-	// последней операции в последний покрытый день или 23:59:59 этого дня).
+	// последней операции в последний покрытый день или последняя существующая секунда этого дня).
 	DataTo        *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=data_to,json=dataTo,proto3,oneof" json:"data_to,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

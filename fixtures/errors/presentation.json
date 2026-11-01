@@ -1,5 +1,10 @@
 [
   {
+    "name": "saved dismissal with unavailable analytics context",
+    "schema": "ErrorResponse",
+    "value": {"error": {"code": "ANALYTICS_CONTEXT_UNAVAILABLE", "message": "Analytics context unavailable after saved assignment", "user_message": "Изменение сохранено, но данные для этого периода недоступны. Обновите аналитику", "severity": "warning", "retryable": false}}
+  },
+  {
     "name": "unknown ordinary REST code",
     "schema": "ErrorResponse",
     "value": {"error": {"code": "NEW_ORDINARY_ERROR", "message": "Request rejected", "user_message": "Сейчас выполнить действие не получилось. Попробуйте позже.", "severity": "warning", "retryable": false}}

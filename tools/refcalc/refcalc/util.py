@@ -50,8 +50,18 @@ def start_of_day(d: dt.date, zone: ZoneInfo) -> dt.datetime:
 
 
 def end_of_day(d: dt.date, zone: ZoneInfo) -> dt.datetime:
-    """23:59:59 of the day in the zone (docs/calc.md, section 4)."""
-    return dt.datetime(d.year, d.month, d.day, 23, 59, 59, tzinfo=zone)
+    """Last real second of the civil day; reject a completely skipped day."""
+    last = dt.datetime(d.year, d.month, d.day, 23, 59, 59)
+    candidates = {last.replace(tzinfo=zone, fold=f).astimezone(dt.timezone.utc) for f in (0, 1)}
+    valid = [instant for instant in candidates if instant.astimezone(zone).replace(tzinfo=None) == last]
+    if valid:
+        # A rollback across midnight can revisit yesterday after tomorrow first started.
+        return max(valid).astimezone(zone)
+    instant = start_of_day(d + dt.timedelta(days=1), zone).astimezone(dt.timezone.utc)
+    result = (instant - dt.timedelta(seconds=1)).astimezone(zone)
+    if result.date() != d:
+        raise ValueError('civil day does not exist')
+    return result
 
 
 def day_of(t: dt.datetime, zone: ZoneInfo) -> dt.date:

@@ -496,10 +496,11 @@ type DataBounds struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Coverage Coverage               `protobuf:"varint,1,opt,name=coverage,proto3,enum=finassist.common.v1.Coverage" json:"coverage,omitempty"`
 	// Границы данных внутри периода — по дням, покрытым периодом выписки (DTSTART..DTEND), а не по
-	// операциям. data_from — начало (00:00) первого покрытого дня в периоде; нет — покрытых дней нет.
+	// операциям. data_from — первый существующий момент первого покрытого дня в периоде; нет — покрытых дней нет.
 	DataFrom *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=data_from,json=dataFrom,proto3,oneof" json:"data_from,omitempty"`
 	// Время последней операции, если она в последний покрытый день периода, иначе конец этого дня
-	// (23:59:59). Момент внутри дня, не граница: день берётся как есть.
+	// (last existing second; choose the later instant in a fold). A skipped day has no bound.
+	// Interpret the civil day in the response source time_zone, not the serialized offset.
 	DataTo *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=data_to,json=dataTo,proto3,oneof" json:"data_to,omitempty"`
 	// Дни внутри данных, которых нет ни в одной загрузке.
 	Gaps          []*TimeRange `protobuf:"bytes,4,rep,name=gaps,proto3" json:"gaps,omitempty"`

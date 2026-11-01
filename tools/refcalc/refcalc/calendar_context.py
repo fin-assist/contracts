@@ -12,7 +12,7 @@ def calendar_context(response, *, has_calendar_data=True, verified_cache=None, l
     try:
         zone = lookup(name)
     except ZoneInfoNotFoundError:
-        return {'state': 'unsupported_time_zone', 'refresh': False, 'cache': verified_cache,
+        return {'state': 'unsupported_time_zone', 'refresh': False, 'cache': verified_cache, 'cache_stale': True,
                 'text': 'Устройство не поддерживает часовой пояс этих данных'}
     except ValueError:
         return {'state': 'invalid_response', 'cache': verified_cache}
