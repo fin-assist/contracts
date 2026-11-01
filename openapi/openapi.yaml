@@ -1790,19 +1790,32 @@ paths:
       operationId: dismissRegularPayment
       summary: «Не подписка»
       description: |
-        Изменение принято; карточка заменяется только подтверждённым готовым результатом (api.md6.3). Отметка привязана к ключу платежа — описанию
-        операции из выписки (точное совпадение), а не к периоду. Квитанция различает подтверждённый маркер и ожидающую доставку; старый false не подтверждает готовность.
-        Идемпотентно.
+        Возвращает все данные изменившихся блоков сразу, включая итог, список и items_more (api.md6.3).
+        Отметка действует во всей истории; query задаёт показанный месяц для ответа. До записи проверяются параметры.
+        BFF после BSD вызывает analytics для проекции из собственной БД; полного фонового расчёта не ждёт.
+        Ошибка после сохранения отметки допускает идемпотентный повтор; успех без blocks не возвращается.
       parameters:
+      - name: date
+        in: query
+        required: true
+        description: Точный показанный календарный месяц; period фиксирован month.
+        schema:
+          type: string
+          pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$'
+      - name: transfer_mode
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/TransferMode'
       - $ref: '#/components/parameters/XRequestId'
       - $ref: '#/components/parameters/XClientVersion'
       responses:
-        '202':
-          description: Изменение принято, завершение пересчёта проверяется по версии
+        '200':
+          description: Полные обновлённые блоки выбранного месяца
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CalculationReceipt'
+                $ref: '#/components/schemas/AnalyticsBlockUpdate'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1825,12 +1838,8 @@ paths:
       - $ref: '#/components/parameters/XRequestId'
       - $ref: '#/components/parameters/XClientVersion'
       responses:
-        '202':
-          description: Снятие отметки принято, включая идемпотентный повтор
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CalculationReceipt'
+        '204':
+          description: Отметка снята; аналитика обновится асинхронно
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -3859,28 +3868,31 @@ components:
       minLength: 1
       maxLength: 128
       description: Фактический IANA-пояс данных этого ответа, из того же снимка. Для календарной подписи datetime переводится в него. Не подменяется кэшем профиля; неизвестная зона не подтверждает готовность.
-    CalculationReceipt:
+    AnalyticsBlockUpdate:
       type: object
-      required: [status, calc_version, text]
-      description: Принятое изменение, не готовый результат; правила версии и повторов api.md6.3.
+      required: [params, currency, time_zone, blocks, required_calc_version]
+      description: Полные изменившиеся блоки; не заменяет state/calculated_at или готовность остальных блоков. Правила api.md6.3.
       properties:
-        status:
+        params:
+          $ref: '#/components/schemas/AnalyticsParams'
+        currency:
           type: string
-          minLength: 1
-          maxLength: 64
-          x-extensible-enum: [accepted, pending]
-          description: accepted — analytics подтвердил маркер или уже завершённую версию; pending — подтверждение ожидается. Неизвестный код — pending, показывается text.
-        calc_version:
+          pattern: '^[A-Z]{3}$'
+        time_zone:
+          $ref: '#/components/schemas/SourceTimeZone'
+        blocks:
+          type: array
+          minItems: 1
+          maxItems: 16
+          description: Уникальные непустые id; сейчас regular_payments целиком, включая none. Клиент заменяет только перечисленные блоки.
+          items:
+            $ref: '#/components/schemas/Block'
+        required_calc_version:
           type: integer
           format: int32
-          minimum: 0
+          minimum: 1
           maximum: 2147483647
-          description: Минимальная версия полного результата; 0 только для исходного никогда не изменённого assignment при no-op.
-        text:
-          type: string
-          minLength: 1
-          maxLength: 512
-          description: Готовое пояснение принятого изменения, без финансовых значений.
+          description: Target BSD для последующего полного GET, не применённая версия всего экрана.
     CalculationState:
       type: object
       required: [calc_version, recalculating]
@@ -3894,7 +3906,7 @@ components:
           description: Версия применённого UserDataState; 0, если состояния ещё нет. Не версия маркера.
         recalculating:
           type: boolean
-          description: Сохранённый флаг OR marker_version больше применённой версии; false и версия не ниже квитанции подтверждают готовность.
+          description: Сохранённый флаг OR marker_version больше применённой версии; false и версия не ниже required_calc_version подтверждают готовность.
     Analytics:
       type: object
       description: 'Ответ экрана «Аналитика». time_zone обязателен при has_data=true. При has_data=false остаётся calculation, time_zone может отсутствовать; финансовых полей нет.'
