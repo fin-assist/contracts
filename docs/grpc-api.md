@@ -813,3 +813,21 @@ Android/mock применяют freeze готового ответа и преж
 доставить/сохранить задания; откат analytics без marker при активном новом BSD недопустим. Не отключать
 existing finalfalse/ACKбарьеры и не терять ожидающие задания при выкатке. oasdiff: удаление204 у PUT/DELETE
 требует owner breaking-accepted; агент метку не ставит.
+
+### Фактический пояс REST-ответа FIN-418
+
+BFF переносит существующий source.time_zone в верхнеуровневый REST time_zone без нового запроса профиля:
+GetImportConfig.time_zone7 → ImportConfig; WatchUpload.time_zone4 → complete ImportResult;
+ListFeed.time_zone6 / SearchOperations.time_zone5 → OperationsList;
+GetAnalytics.time_zone11 → Analytics; ListPeriods.time_zone2 → AnalyticsPeriodsList.
+GetChartPageResponse получает time_zone2, согласованный с той же page.revision/снимком, что block.
+Условия обязательности/пустого ответа, формат и ошибки — api.md «Пояс календарных данных ответа».
+Это пояс реального расчёта/чтения, не актуальный профиль поверх старого снимка; обязательный пустой или
+неизвестный IANA ID — INTERNAL_ERROR, без fallback на cached profile/default у BFF/клиента.
+При отсутствии state и has_data=false/пустом ListPeriods источник вправе не знать зону: поле отсутствует,
+а не вымышляется. При true клиент сохраняет уже показанный готовый снимок целиком с его собственным поясом;
+ready с новой зоной атомарно заменяет snapshot/zone и очищает page-cache. Подтверждённый пустой результат
+очищает готовый cache без требования зоны, а следующий непустой ready приносит собственную time_zone.
+Проверка runtime: профиль на устройстве Moscow, источник Vladivostok → сентябрь остаётся сентябрём;
+исторический UTC1900 → подпись в переданной Moscow; переход old-ready→new-zone true→new-zone ready и
+через has_data=false не меняет подписи старого cache до атомарного применения готового результата.

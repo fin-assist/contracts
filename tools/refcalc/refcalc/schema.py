@@ -3,6 +3,8 @@
 The responses are validated before redaction: an ignored text may be an array in the schema (`notes`)."""
 from __future__ import annotations
 
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
 import yaml
 from openapi_schema_validator import OAS30Validator
 from referencing import Registry, Resource
@@ -34,6 +36,21 @@ class SchemaCheck:
             name, response = "ErrorResponse", {"error": response["error"]}
         schema = {"$ref": f"openapi.yaml#/components/schemas/{name}"}
         errors = self._validate(schema, response, "")
+        # Conditional context requirements mirror currency/has_data without inventing a fallback zone.
+        if isinstance(response, dict) and name in ("Analytics", "AnalyticsChartPage", "OperationsList", "AnalyticsPeriodsList", "ImportConfig", "ImportResult"):
+            needs_zone = (name in ("AnalyticsChartPage", "ImportConfig", "ImportResult") or
+                          name == "Analytics" and response.get("has_data") or
+                          name == "AnalyticsPeriodsList" and bool(response.get("periods")) or
+                          name == "OperationsList" and bool(response.get("items") or response.get("summary") or response.get("range") or
+                              any((response.get("state") or {}).get(k) for k in ("data_to", "last_operation_at", "last_uploaded_at"))))
+            zone = response.get("time_zone")
+            if needs_zone and not zone:
+                errors.append("time_zone: required for the returned calendar/financial data")
+            if zone is not None:
+                try:
+                    ZoneInfo(zone)
+                except (ZoneInfoNotFoundError, ValueError, TypeError):
+                    errors.append("time_zone: unknown IANA zone")
         # Block `data` is a free object in the envelope: check it against the schema of its primitive (FIN-157).
         if name in ("Analytics", "AnalyticsChartPage") and isinstance(response, dict):
             from .coverage import block_data_schema

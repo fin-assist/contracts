@@ -333,6 +333,8 @@ message GetChartPageRequest {
 message GetChartPageResponse {
   // notes и highlight_index отсутствуют: они принадлежат ответу выбранного периода GetAnalytics.
   finassist.common.v1.Block block = 1;
+  // IANA-пояс страницы, согласованный с page.revision; переносится в REST.
+  string time_zone = 2;
 }
 
 // Запрос аналитики за период.
@@ -472,7 +474,8 @@ message GetAnalyticsResponse {
   optional Insights insights = 9 [deprecated = true];
   // Состояние данных.
   ScreenState state = 10;
-  // Пояс профиля (IANA), в котором bank-bff форматирует все моменты ответа.
+  // Фактический IANA-пояс прочитанного снимка. BFF переносит в REST time_zone;
+  // клиент использует его для календарных подписей, не копию профиля. При has_data=false может отсутствовать.
   string time_zone = 11;
   // Блоки экрана по порядку (FIN-4): состав, порядок и тексты собирает этот сервис (FIN-5). Поля tiles,
   // expense_categories, income_categories, monthly_chart, insights устарели: bank-bff их не читает; удалить

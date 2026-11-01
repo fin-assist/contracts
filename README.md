@@ -193,3 +193,7 @@ MarkRecalculating для доставки true; существующий фон�
 с primary; клиент сохраняет весь готовый ответ до подтверждённой версии и отбрасывает GET до mutation.
 Нет live-read BSD или Temporal runtime (FIN-419 отдельно). Альфа требует согласованного rollout;
 REST breaking принимает только владелец меткой breaking-accepted. Правила: api.md6.3, grpc-api.md FIN-418.
+
+FIN-418 time_zone: шесть REST-ответов с календарным контекстом передают фактический IANA-пояс источника
+(api.md «Пояс календарных данных ответа»), а не копию профиля клиента. GetChartPageResponse.time_zone2;
+остальные поля уже были в gRPC. Проверять подписи/кэш по response time_zone, включая исторический UTC.

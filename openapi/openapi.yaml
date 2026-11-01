@@ -775,6 +775,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ImportConfig'
               example:
+                time_zone: Europe/Moscow
                 download_url: https://www.tbank-online.com/...
                 login_url: https://www.tbank.ru/login/
                 max_file_size_bytes: 10485760
@@ -1149,6 +1150,7 @@ paths:
                 feed:
                   summary: Лента
                   value:
+                    time_zone: Europe/Moscow
                     items:
                     - id: 01a10812-a0e8-765b-89e4-a4314a43656f
                       kind: expense
@@ -1203,6 +1205,7 @@ paths:
                 search:
                   summary: Поиск (сокращено до одной записи)
                   value:
+                    time_zone: Europe/Moscow
                     items:
                     - id: 01a10812-a0f1-7b3c-9e2d-4a6f8c1e3b57
                       kind: expense
@@ -1491,6 +1494,7 @@ paths:
               example:
                 {
                   "has_data": true,
+                  "time_zone": "Europe/Moscow",
                   "calculation": {"calc_version": 3, "recalculating": false},
                   "params": {
                     "period": "month",
@@ -1747,6 +1751,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnalyticsPeriodsList'
               example:
+                time_zone: Europe/Moscow
                 periods:
                 - key: '2026-09'
                   range:
@@ -3043,12 +3048,15 @@ components:
     ImportConfig:
       type: object
       required:
+      - time_zone
       - download_url
       - login_url
       - max_file_size_bytes
       - accepted_formats
       - suggested_period
       properties:
+        time_zone:
+          $ref: '#/components/schemas/SourceTimeZone'
         download_url:
           type: string
           format: uri
@@ -3128,6 +3136,7 @@ components:
       type: object
       description: Терминальное событие `complete` — всё для экрана итога импорта.
       required:
+      - time_zone
       - operation_count
       - new_count
       - duplicate_count
@@ -3141,6 +3150,8 @@ components:
       - notices
       - currency
       properties:
+        time_zone:
+          $ref: '#/components/schemas/SourceTimeZone'
         operation_count:
           type: integer
           description: Операций прочитано из файла.
@@ -3672,10 +3683,12 @@ components:
       type: object
       description: |
         Лента: `items`, `summary`, `state`, `range`, `next_before`. Поиск: `items`, `total_count`, `range`,
-        `has_older_data`. Группировку по дням и месяцам клиент делает сам по `occurred_at` в поясе профиля.
+        `has_older_data`. Группировку по дням и месяцам клиент делает по occurred_at в time_zone ответа. Пояс обязателен при непустых items/summary или фактических range/state-датах; пустой ответ без дат может его не содержать.
       required:
       - items
       properties:
+        time_zone:
+          $ref: '#/components/schemas/SourceTimeZone'
         items:
           type: array
           items:
@@ -3730,7 +3743,7 @@ components:
           format: date-time
           nullable: true
           description: Есть, если месяц неполный — конец данных по покрытым дням (docs/api.md, «Формат») — время последней
-            операции, если она в последний покрытый день, иначе 23:59:59 этого дня. Гражданский день берётся после перевода момента в IANA-пояс профиля, без вычитания суток («по 25
+            операции, если она в последний покрытый день, иначе 23:59:59 этого дня. Гражданский день берётся после перевода момента в IANA-пояс time_zone ответа, без вычитания суток («по 25
             сентября»); не граница дня, в отличие от `FeedState.data_to`.
     FeedState:
       type: object
@@ -3841,6 +3854,11 @@ components:
           type: string
           nullable: true
           description: Подпись в выборе («не в тратах»); есть только у системных.
+    SourceTimeZone:
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: Фактический IANA-пояс данных этого ответа, из того же снимка. Для календарной подписи datetime переводится в него. Не подменяется кэшем профиля; неизвестная зона не подтверждает готовность.
     CalculationReceipt:
       type: object
       required: [status, calc_version, text]
@@ -3879,11 +3897,13 @@ components:
           description: Сохранённый флаг OR marker_version больше применённой версии; false и версия не ниже квитанции подтверждают готовность.
     Analytics:
       type: object
-      description: 'Ответ экрана «Аналитика». При has_data=false остаётся calculation; финансовых полей нет.'
+      description: 'Ответ экрана «Аналитика». time_zone обязателен при has_data=true. При has_data=false остаётся calculation, time_zone может отсутствовать; финансовых полей нет.'
       required:
       - has_data
       - calculation
       properties:
+        time_zone:
+          $ref: '#/components/schemas/SourceTimeZone'
         calculation:
           $ref: '#/components/schemas/CalculationState'
         has_data:
@@ -3943,7 +3963,7 @@ components:
           format: date-time
           nullable: true
           description: Конец данных внутри периода — время последней операции, если она в последний покрытый день, иначе
-            23:59:59 этого дня. Гражданский день берётся после перевода момента в IANA-пояс профиля, без вычитания суток («1–25 сентября»); не граница дня, в отличие от
+            23:59:59 этого дня. Гражданский день берётся после перевода момента в IANA-пояс time_zone ответа, без вычитания суток («1–25 сентября»); не граница дня, в отличие от
             `AnalyticsState.data_to`.
         gaps:
           type: array
@@ -4009,9 +4029,12 @@ components:
             признак не ставит: снимки заменяются молча, по месяцам (FIN-196).
     AnalyticsPeriodsList:
       type: object
+      description: time_zone обязателен при непустом periods; без периодов и состояния может отсутствовать.
       required:
       - periods
       properties:
+        time_zone:
+          $ref: '#/components/schemas/SourceTimeZone'
         periods:
           type: array
           description: Периоды с покрытыми выпиской днями, новые первыми. Пустой — данных нет.
@@ -4467,8 +4490,10 @@ components:
       description: Ограничение относится только к monthly_chart аналитики, не к другим chart.
     AnalyticsChartPage:
       type: object
-      required: [block]
+      required: [block, time_zone]
       properties:
+        time_zone:
+          $ref: '#/components/schemas/SourceTimeZone'
         block:
           allOf:
           - $ref: '#/components/schemas/Block'

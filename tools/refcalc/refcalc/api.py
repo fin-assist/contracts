@@ -104,7 +104,7 @@ class Backend:
             return delta.days * 86_400_000 + delta.seconds * 1_000 + delta.microseconds // 1000
         query = urlencode({"appName": "supreme", "appVersion": "0.0.1", "origin": "web,ib5,platform",
                            "start": millis(begin), "end": millis(finish), "format": "ofx"})
-        out = {"download_url": "https://www.tbank-online.com/mybank/api/operations/timeline/public/legacy/v1/export_operations?" + query,
+        out = {"time_zone": str(self.zone), "download_url": "https://www.tbank-online.com/mybank/api/operations/timeline/public/legacy/v1/export_operations?" + query,
                "login_url": "https://www.tbank.ru/login/", "max_file_size_bytes": 10485760, "accepted_formats": ["OFX"],
                "suggested_period": {"from": iso(begin), "to": iso(finish)}}
         if ats:
@@ -155,6 +155,7 @@ class Backend:
         elif not any(t.is_debit for t in doc.transactions):
             notices.append({"code": "no_expenses", "text": "В файле нет расходов"})
         result = {
+            "time_zone": str(self.zone),
             "operation_count": len(doc.transactions),
             "new_count": len(added),
             "duplicate_count": duplicates,
@@ -211,7 +212,7 @@ class Backend:
             "last_uploaded_at": iso(max(u.uploaded_at for u in self.ledger.uploads)) if self.ledger.uploads else None,
         }
         if not recs:
-            return {"items": [], "summary": [], "state": state}
+            return {"time_zone": str(self.zone), "items": [], "summary": [], "state": state}
         if before:
             end_month = month_start(day_of(parse_iso(before), self.zone) - dt.timedelta(days=1))
         else:
@@ -234,7 +235,7 @@ class Backend:
             if cov.coverage_of(m, me) == "partial":
                 row["data_to"] = a.data_to(m, me)
             summary.append(row)
-        return {"items": [item(r) for r in page], "summary": summary, "state": state,
+        return {"time_zone": str(self.zone), "items": [item(r) for r in page], "summary": summary, "state": state,
                 "range": {"from": iso(s), "to": iso(e)}, "next_before": iso(s) if older else None}
 
     def search(self, params: dict) -> dict:
@@ -285,7 +286,7 @@ class Backend:
             out.append(r)
         if len(out) > MAX_SEARCH:
             raise ApiError(422, "TOO_MANY_RESULTS")
-        res = {"items": [item(r) for r in out], "total_count": len(out)}
+        res = {"time_zone": str(self.zone), "items": [item(r) for r in out], "total_count": len(out)}
         if frm is not None and to is not None:
             res["range"] = {"from": iso(frm), "to": iso(to)}
         if default:
@@ -409,6 +410,8 @@ class Backend:
         # Reference financial responses are calculated immediately except explicit delayed-marker scenarios.
         if out['has_data'] and self.recalculation.state_version == 0 and not self.recalculation.assignments:
             self.recalculation.calculate_now()
+        if out['has_data']:
+            out['time_zone'] = str(self.zone)
         out['calculation'] = self.recalculation.state()
         if 'state' in out:
             out['state']['recalculating'] = out['calculation']['recalculating']
@@ -478,7 +481,10 @@ class Backend:
         revision, mode, index = self._chart_cursors[cursor]
         if revision != self._chart_revision(mode):
             invalid("OUT_OF_RANGE")
-        return {"block": self._chart_page(mode, index=index)}
+        return {"block": self._chart_page(mode, index=index), "time_zone": str(self.zone)}
 
     def periods(self, period: str = "month") -> dict:
-        return Analytics(self.ledger, self.now).periods(period)
+        out = Analytics(self.ledger, self.now).periods(period)
+        if out['periods']:
+            out['time_zone'] = str(self.zone)
+        return out

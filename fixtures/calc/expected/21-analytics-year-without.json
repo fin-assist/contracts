@@ -1309,6 +1309,7 @@
     "calculated_at": "<ignored>",
     "recalculating": false
   },
+  "time_zone": "Europe/Moscow",
   "calculation": {
     "calc_version": 21,
     "recalculating": false

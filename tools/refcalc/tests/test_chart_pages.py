@@ -151,7 +151,9 @@ class ChartPages(unittest.TestCase):
         chart = self.block(screen, 'monthly_chart')[0]['data']
         point = chart['points'][chart['highlight_index']]
         # Independent consumer decoding: don't use the producer's iso/day_of helpers.
-        zone = ZoneInfo('Europe/Moscow')
+        cached_profile = ZoneInfo('Asia/Vladivostok')
+        zone = ZoneInfo(screen['time_zone'])
+        self.assertNotEqual(cached_profile.key, zone.key)
         for bounds in (screen['period']['range'], point['range']):
             start = dt.datetime.fromisoformat(bounds['from'])
             end = dt.datetime.fromisoformat(bounds['to'])
@@ -168,6 +170,39 @@ class ChartPages(unittest.TestCase):
         download = b.import_config('1900-01-01', '1900-01-01')['suggested_period']
         self.assertEqual(dt.date(1900, 1, 1), dt.datetime.fromisoformat(download['from']).astimezone(zone).date())
         self.assertEqual(dt.date(1900, 1, 1), dt.datetime.fromisoformat(download['to']).astimezone(zone).date() - dt.timedelta(days=1))
+
+    def test_response_source_zone_wins_over_stale_client_profile_for_all_six_forms(self):
+        b = self.history()
+        cached_profile = ZoneInfo('Europe/Moscow')
+        b.zone = b.ledger.zone = ZoneInfo('Asia/Vladivostok')
+        imported = b.upload('zone', spec.stmt('20260901', '20260930', [
+            ('zone', '20260915120000', -1, 'Shop', 'Продукты')]))
+        screen = b.analytics('month', '2026-09')
+        page = b.chart_page(self.block(screen, 'monthly_chart')[0]['data']['page']['previous'])
+        responses = [('/v1/statements/config', b.import_config('2026-09-01', '2026-09-30')),
+                     ('upload', imported), ('/v1/operations', b.feed()),
+                     ('/v1/operations', b.search({'all_time': True})),
+                     ('/v1/analytics', screen), ('/v1/analytics/periods', b.periods()),
+                     ('/v1/analytics/charts/monthly_chart', page)]
+        for kind, response in responses:
+            with self.subTest(kind=kind):
+                self.assertEqual('Asia/Vladivostok', response['time_zone'])
+                self.assertEqual([], self.schema.errors(kind, response))
+                invalid = dict(response, time_zone='Not/A_Zone')
+                self.assertTrue(self.schema.errors(kind, invalid))
+                missing = {k: v for k, v in response.items() if k != 'time_zone'}
+                self.assertTrue(self.schema.errors(kind, missing))
+        source = ZoneInfo(screen['time_zone'])
+        start = dt.datetime.fromisoformat(screen['period']['range']['from'])
+        end = dt.datetime.fromisoformat(screen['period']['range']['to'])
+        self.assertEqual(dt.date(2026, 8, 31), start.astimezone(cached_profile).date())
+        self.assertEqual(dt.date(2026, 9, 1), start.astimezone(source).date())
+        self.assertEqual(dt.date(2026, 9, 30), end.astimezone(source).date() - dt.timedelta(days=1))
+        config = responses[0][1]
+        self.assertEqual(dt.date(2026, 9, 1), dt.datetime.fromisoformat(config['suggested_period']['from']).astimezone(ZoneInfo(config['time_zone'])).date())
+        self.assertEqual([], self.schema.errors('/v1/analytics', {'has_data': False, 'calculation': b.recalculation.state()}))
+        self.assertEqual([], self.schema.errors('/v1/analytics/periods', {'periods': []}))
+        self.assertEqual([], self.schema.errors('/v1/operations', {'items': []}))
 
     def test_manual_own_transfer_and_refund_changes_invalidate_pages(self):
         b = self.history()

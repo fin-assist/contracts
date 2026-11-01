@@ -1434,7 +1434,9 @@ func (x *GetChartPageRequest) GetCursor() string {
 type GetChartPageResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// notes и highlight_index отсутствуют: они принадлежат ответу выбранного периода GetAnalytics.
-	Block         *v1.Block `protobuf:"bytes,1,opt,name=block,proto3" json:"block,omitempty"`
+	Block *v1.Block `protobuf:"bytes,1,opt,name=block,proto3" json:"block,omitempty"`
+	// IANA-пояс страницы, согласованный с page.revision; переносится в REST.
+	TimeZone      string `protobuf:"bytes,2,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1474,6 +1476,13 @@ func (x *GetChartPageResponse) GetBlock() *v1.Block {
 		return x.Block
 	}
 	return nil
+}
+
+func (x *GetChartPageResponse) GetTimeZone() string {
+	if x != nil {
+		return x.TimeZone
+	}
+	return ""
 }
 
 // Запрос аналитики за период.
@@ -2039,7 +2048,8 @@ type GetAnalyticsResponse struct {
 	Insights *Insights `protobuf:"bytes,9,opt,name=insights,proto3,oneof" json:"insights,omitempty"`
 	// Состояние данных.
 	State *ScreenState `protobuf:"bytes,10,opt,name=state,proto3" json:"state,omitempty"`
-	// Пояс профиля (IANA), в котором bank-bff форматирует все моменты ответа.
+	// Фактический IANA-пояс прочитанного снимка. BFF переносит в REST time_zone;
+	// клиент использует его для календарных подписей, не копию профиля. При has_data=false может отсутствовать.
 	TimeZone string `protobuf:"bytes,11,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
 	// Блоки экрана по порядку (FIN-4): состав, порядок и тексты собирает этот сервис (FIN-5). Поля tiles,
 	// expense_categories, income_categories, monthly_chart, insights устарели: bank-bff их не читает; удалить
@@ -3153,9 +3163,10 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\rSmallFrequent\x12@\n" +
 	"\x05items\x18\x01 \x03(\v2*.finassist.analytics.v1.SmallFrequentGroupR\x05items\"-\n" +
 	"\x13GetChartPageRequest\x12\x16\n" +
-	"\x06cursor\x18\x01 \x01(\tR\x06cursor\"H\n" +
+	"\x06cursor\x18\x01 \x01(\tR\x06cursor\"e\n" +
 	"\x14GetChartPageResponse\x120\n" +
-	"\x05block\x18\x01 \x01(\v2\x1a.finassist.common.v1.BlockR\x05block\"\xd2\x03\n" +
+	"\x05block\x18\x01 \x01(\v2\x1a.finassist.common.v1.BlockR\x05block\x12\x1b\n" +
+	"\ttime_zone\x18\x02 \x01(\tR\btimeZone\"\xd2\x03\n" +
 	"\x13GetAnalyticsRequest\x127\n" +
 	"\x06period\x18\x01 \x01(\x0e2\x1f.finassist.common.v1.PeriodTypeR\x06period\x12\"\n" +
 	"\n" +
