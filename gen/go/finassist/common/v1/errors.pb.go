@@ -82,7 +82,7 @@ const (
 	// Повтор ответа помощника недоступен.
 	ErrorReason_RETRY_NOT_ALLOWED ErrorReason = 19
 	// Присваивание сохранено, но запрошенный контекст аналитики больше недоступен.
-	// Только DismissRegularPayment/ApplyRegularPaymentDismissal после подтверждённого assignment в BSD;
+	// Только DismissRegularPayment после подтверждённого assignment в BSD; Apply этот код не выдаёт.
 	// RequestRetryInfo явно запрещает повтор в том же контексте. До нового assignment — VALIDATION_ERROR.
 	ErrorReason_ANALYTICS_CONTEXT_UNAVAILABLE ErrorReason = 25
 	// Превышен лимит запросов; retry_at (RFC 3339) — когда можно повторить.

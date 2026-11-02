@@ -311,7 +311,7 @@ func (x *ApplyRegularPaymentDismissalResponse) GetRequiredCalcVersion() int32 {
 	return 0
 }
 
-// Одна метрика с достаточным контекстом представления, не снимок всего экрана.
+// Набор метрик с достаточным контекстом представления, не снимок всего экрана.
 // Максимум сериализованного payload 3 МиБ; полный список не усекается. Общий RPC-лимит 4 МиБ.
 // FIN-420 принимает только insights.regular_payments; money/status/lock/basis/filters считает BSD.
 type MetricProjection struct {
@@ -329,8 +329,10 @@ type MetricProjection struct {
 	// Оболочка покрытия источника для вспомогательных пояснений блокировок, полуинтервал.
 	// Это не глобальный UserDataState и не обещание свежести остальных метрик.
 	DataRange *v1.TimeRange `protobuf:"bytes,6,opt,name=data_range,json=dataRange,proto3" json:"data_range,omitempty"`
-	// Единственная полная метрика; definition_version и типизированные детали как при ingest.
-	Metric *MetricSnapshot `protobuf:"bytes,7,opt,name=metric,proto3" json:"metric,omitempty"`
+	// Полные метрики с уникальными id; definition_version и типизированные детали как при ingest.
+	// FIN-420: ровно один элемент insights.regular_payments; другой id/дубли/пустой набор — INVALID_ARGUMENT.
+	// Для READY/TENTATIVE items не содержат regular_payment_id из запроса Apply.
+	Metrics []*MetricSnapshot `protobuf:"bytes,7,rep,name=metrics,proto3" json:"metrics,omitempty"`
 	// Проверенный пользователь BSD. Analytics требует равенство verified sub вызова BFF.
 	// Не разрешает системный вызов и не выбирает пользователя вместо verified context.
 	UserId        string `protobuf:"bytes,8,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -410,9 +412,9 @@ func (x *MetricProjection) GetDataRange() *v1.TimeRange {
 	return nil
 }
 
-func (x *MetricProjection) GetMetric() *MetricSnapshot {
+func (x *MetricProjection) GetMetrics() []*MetricSnapshot {
 	if x != nil {
-		return x.Metric
+		return x.Metrics
 	}
 	return nil
 }
@@ -3335,7 +3337,7 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\bcurrency\x18\x02 \x01(\tR\bcurrency\x12\x1b\n" +
 	"\ttime_zone\x18\x03 \x01(\tR\btimeZone\x122\n" +
 	"\x06blocks\x18\x04 \x03(\v2\x1a.finassist.common.v1.BlockR\x06blocks\x122\n" +
-	"\x15required_calc_version\x18\x05 \x01(\x05R\x13requiredCalcVersion\"\x90\x03\n" +
+	"\x15required_calc_version\x18\x05 \x01(\x05R\x13requiredCalcVersion\"\x92\x03\n" +
 	"\x10MetricProjection\x12<\n" +
 	"\x06params\x18\x01 \x01(\v2$.finassist.common.v1.AnalyticsParamsR\x06params\x12\x1a\n" +
 	"\bcurrency\x18\x02 \x01(\tR\bcurrency\x12\x1b\n" +
@@ -3343,8 +3345,8 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\x05range\x18\x04 \x01(\v2\x1e.finassist.common.v1.TimeRangeR\x05range\x127\n" +
 	"\x06bounds\x18\x05 \x01(\v2\x1f.finassist.common.v1.DataBoundsR\x06bounds\x12=\n" +
 	"\n" +
-	"data_range\x18\x06 \x01(\v2\x1e.finassist.common.v1.TimeRangeR\tdataRange\x12>\n" +
-	"\x06metric\x18\a \x01(\v2&.finassist.analytics.v1.MetricSnapshotR\x06metric\x12\x17\n" +
+	"data_range\x18\x06 \x01(\v2\x1e.finassist.common.v1.TimeRangeR\tdataRange\x12@\n" +
+	"\ametrics\x18\a \x03(\v2&.finassist.analytics.v1.MetricSnapshotR\ametrics\x12\x17\n" +
 	"\auser_id\x18\b \x01(\tR\x06userId\"\x96\x02\n" +
 	"\n" +
 	"MetricLock\x12:\n" +
@@ -3700,7 +3702,7 @@ var file_finassist_analytics_v1_analytics_proto_depIdxs = []int32{
 	43,  // 5: finassist.analytics.v1.MetricProjection.range:type_name -> finassist.common.v1.TimeRange
 	44,  // 6: finassist.analytics.v1.MetricProjection.bounds:type_name -> finassist.common.v1.DataBounds
 	43,  // 7: finassist.analytics.v1.MetricProjection.data_range:type_name -> finassist.common.v1.TimeRange
-	32,  // 8: finassist.analytics.v1.MetricProjection.metric:type_name -> finassist.analytics.v1.MetricSnapshot
+	32,  // 8: finassist.analytics.v1.MetricProjection.metrics:type_name -> finassist.analytics.v1.MetricSnapshot
 	1,   // 9: finassist.analytics.v1.MetricLock.reason:type_name -> finassist.analytics.v1.LockReason
 	45,  // 10: finassist.analytics.v1.MetricLock.available_from:type_name -> google.protobuf.Timestamp
 	43,  // 11: finassist.analytics.v1.MetricBasis.range:type_name -> finassist.common.v1.TimeRange

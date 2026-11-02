@@ -649,9 +649,11 @@ BFF передаёт его без изменения в ApplyRequest.projection
 
 Все поля MetricProjection обязательны; user_id — канонический UUID, currency —3 символа,
 time_zone —1..128 символов с разрешимым IANA-именем (UTC допускается, специальный Go Local — нет).
-MetricProjection содержит ровно одну MetricSnapshot с id=insights.regular_payments и definition_version>0,
-её Metric (READY/TENTATIVE/LOCKED/NONE по прежним инвариантам), params, currency=RUB, фактический time_zone,
-range полного календарного месяца, bounds покрытия и data_range оболочки покрытия источника (полуинтервал).
+MetricProjection.metrics — набор MetricSnapshot с уникальными id; FIN-420 требует ровно один элемент
+с id=insights.regular_payments и definition_version>0; пустой набор/дубли/другой id — INVALID_ARGUMENT.
+Metric соблюдает прежние инварианты READY/TENTATIVE/LOCKED/NONE. Общий контекст содержит params, currency=RUB,
+фактический time_zone, range полного календарного месяца, bounds покрытия и data_range оболочки покрытия
+источника (полуинтервал).
 Metric.regular_payments.items — весь список, без top3-усечения; value_minor и count уже посчитаны BSD.
 Для READY/TENTATIVE оба числа и непустой details.regular_payments обязательны; UUID строк уникальны.
 Analytics переносит count и итог, не восстанавливает пропущенные значения финансовым расчётом.
@@ -664,7 +666,9 @@ LOCKED/NONE сохраняют прежние правила отсутстви�
 RequestRetryInfo=false до нового эффекта, не413. BFF не принимает projection/target/user_id от внешнего клиента и проверяет
 ответ BSD: params равны показанному запросу, target>0, projection.user_id равен verified sub. Analytics
 повторяет проверку binding, допустимого единственного metric_id/типизированных details, статуса/границ/валюты,
-IANA и размера; проверяет только используемые данные, не требует полного финансового снимка экрана.
+IANA и размера. Для READY/TENTATIVE проверяет, что regular_payment_id запроса отсутствует в items: это
+проверка связи команды с результатом, без пересчёта сумм. Проверяет только используемые данные, не требует
+полного финансового снимка экрана.
 Фильтры/UUID строк принадлежат тому же источнику/пользователю; имя операции, payload и токены не логируются.
 Неверный внутренний payload — INVALID_ARGUMENT (внешний безопасный500 по общему mapping), без изменений.
 
@@ -677,11 +681,15 @@ true снова; если позднее идёт новый true, старый 
 пользователя. Ни финансовые snapshots, ни UserDataState, calc_version, calculated_at или data_revisions
 от этой композиции не переписываются. Нет overlay/retired-through протокола или новой очереди final.
 
-ANALYTICS_CONTEXT_UNAVAILABLE разрешён только DismissRegularPayment/ApplyRegularPaymentDismissal после
-подтверждённого assignment BSD; нельзя использовать его для первого отказа до записи. Error_spec/status не меняются.
+ANALYTICS_CONTEXT_UNAVAILABLE разрешён только BSD.DismissRegularPayment после подтверждённого assignment BSD;
+нельзя использовать его для первого отказа до записи. Apply его не выдаёт: NONE/LOCKED корректны, отсутствие
+собственного snapshot не проверяется, неверный payload — голый INVALID_ARGUMENT. Error_spec/status не меняются.
 Ошибки контекста определяет BSD по данным той же транзакции: порядок и различие нового400 OUT_OF_RANGE
 до записи и422 ANALYTICS_CONTEXT_UNAVAILABLE после ранее сохранённого assignment — api.md6.3. Оба неповторяемы
-с прежними params (RequestRetryInfo=false);422 сохраняет правдивый saved-change текст. Временная ошибка
+с прежними params (RequestRetryInfo=false);422 сохраняет правдивый saved-change текст. Для400 BSD явно
+передаёт BadRequest.field_violations[{field:"date",reason:"OUT_OF_RANGE"}] и RequestRetryInfo=false:
+используется внешнее имя date, не params.date/params.period_key; BFF переносит поле без переименования.
+Клиент не меняет блок и один раз обновляет выбор/GET, не повторяет PUT и не показывает ошибку поля формы. Временная ошибка
 расчёта/композиции — INTERNAL_ERROR/REST500 с разрешением безопасного повтора, не MAINTENANCE503.
 Отсутствие собственного snapshot analytics не означает отсутствия контекста и не блокирует Apply.
 
@@ -694,7 +702,8 @@ Apply всё равно только оформляет этот payload и не
 существующий refresh для готового GET>=required target. Правила source-zone/cache/minversion — api.md6.3.
 
 Обычный GetAnalytics остаётся чтением асинхронного согласованного снимка с primary и effective marker;
-при true может вернуть прежний regular. Клиент сохраняет полный обновлённый блок PUT до готового полного GET.
+при true может вернуть прежний regular. Клиент сохраняет полный обновлённый блок PUT до готового полного GET;
+без подходящего ready-cache, в том числе на другом устройстве, показывает preparing, не старый список.
 Ревизии помощника остаются честным пересечением реально использованных сохранённых источников: свежая
 mutation-метрика не приписывается остальным блокам. Поиск regular_all/per-item в BSD сразу учитывает
 сохранённые assignments и прежнее окно; никакого удалённого вызова из транзакции analytics.

@@ -170,7 +170,7 @@ class RecalculationContract(unittest.TestCase):
         b.ledger.ops.clear()
         b._regular_snapshots.clear()
         b._source_regular_block = lambda *_: self.fail('composition read source')
-        same = b.apply_regular_dismissal(target, projection)
+        same = b.apply_regular_dismissal(target, projection, stable_id('payment', 'E'))
         self.assertEqual(retry, same)
 
     def test_calculation_or_payload_failure_rolls_back_new_assignment_and_jobs(self):
@@ -230,7 +230,7 @@ class RecalculationContract(unittest.TestCase):
         restored = b.analytics('month', '2026-10')
         b.recalculation.start()
         state = b.recalculation.state()
-        late = b.apply_regular_dismissal(4, projection)
+        late = b.apply_regular_dismissal(4, projection, stable_id('payment', 'A'))
         self.assertEqual(['B'], [row['title'] for row in late['blocks'][0]['data']['items']])
         self.assertEqual(state, b.recalculation.state())
         self.assertEqual(['B', 'A'], [row['title'] for row in self.block(restored, 'regular_payments')[0]['data']['items']])
@@ -238,22 +238,60 @@ class RecalculationContract(unittest.TestCase):
         self.assertEqual(state, b.recalculation.state())
         b.recalculation.purge()
         with self.assertRaises(LookupError):
-            b.apply_regular_dismissal(4, projection)
+            b.apply_regular_dismissal(4, projection, stable_id('payment', 'A'))
 
     def test_supplied_payload_is_bound_to_user_and_displayed_params(self):
         b = self.regular_backend(2)
         projection = b._fresh_regular_projection('2026-10', 'with')
         for field, value in [('user_id', 'other-user'), ('currency', 'USD'), ('time_zone', 'Local'), ('time_zone', 'Not/A_Zone'),
-                             ('full_block', {}), ('params', {'period': 'year'})]:
+                             ('metrics', []), ('metrics', [{'id': 'insights.regular_payments', 'full_block': {}}]), ('params', {'period': 'year'})]:
             bad = deepcopy(projection); bad[field] = value
             with self.assertRaises(ApiError) as caught:
-                b.apply_regular_dismissal(4, bad)
+                b.apply_regular_dismissal(4, bad, stable_id('payment', 'A'))
             self.assertEqual((500, False), (caught.exception.status, caught.exception.retryable))
             self.assertEqual(0, b.recalculation.marker)
         for bad in (None, {}, projection):
             with self.assertRaises(ApiError):
-                b.apply_regular_dismissal(4, bad, expected_params={'period': 'month', 'date': '2026-09', 'transfer_mode': 'without'})
+                b.apply_regular_dismissal(4, bad, stable_id('payment', 'A'), expected_params={'period': 'month', 'date': '2026-09', 'transfer_mode': 'without'})
         self.assertEqual(0, b.recalculation.marker)
+
+    def test_metric_collection_and_dismissed_id_binding_reject_invalid_without_effect(self):
+        b = self.regular_backend(2)
+        payment = stable_id('payment', 'A')
+        stale = b._fresh_regular_projection('2026-10', 'with')
+        for status in ('ready', 'tentative'):
+            payload = deepcopy(stale)
+            payload['metrics'][0]['full_block']['status'] = status
+            with self.assertRaises(ApiError) as caught:
+                b.apply_regular_dismissal(4, payload, payment)
+            self.assertEqual((500, False), (caught.exception.status, caught.exception.retryable))
+            self.assertEqual(0, b.recalculation.marker)
+        self.put(b, 'A', defer_calculation=True)
+        projection = b._fresh_regular_projection('2026-10', 'with')
+        for metrics in (None, [], projection['metrics'] * 2,
+                        [dict(projection['metrics'][0], id='future.metric')]):
+            invalid = deepcopy(projection)
+            invalid['metrics'] = metrics
+            before = b.recalculation.state()
+            with self.assertRaises(ApiError) as caught:
+                b.apply_regular_dismissal(4, invalid, payment)
+            self.assertEqual((500, False), (caught.exception.status, caught.exception.retryable))
+            self.assertEqual(before, b.recalculation.state())
+        valid = b.apply_regular_dismissal(4, projection, payment)
+        self.assertEqual(['B'], [row['title'] for row in valid['blocks'][0]['data']['items']])
+
+    def test_apply_none_and_locked_remain_valid_when_source_context_disappears(self):
+        for month, status in [('2026-08', 'locked'), ('2026-10', 'none')]:
+            b = self.regular_backend(1)
+            payment = stable_id('payment', 'A')
+            update = b.dismiss(payment, date=month, mode='with', defer_calculation=True)
+            projection = b._fresh_regular_projection(month, 'with')
+            b.delete_upload('regular')
+            b._regular_snapshots.clear()
+            result = b.apply_regular_dismissal(update['required_calc_version'], projection, payment)
+            self.assertEqual(status, result['blocks'][0]['status'])
+            self.assertEqual(update, result)
+            self.assertEqual([], self.schema.errors('dismiss_regular_payment', result))
 
     def test_invalid_context_before_assignment_foreign_id_and_exhaustion(self):
         b = self.regular_backend(1)

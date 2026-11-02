@@ -431,16 +431,25 @@ class Backend:
             return None
         return {'params': {'period': 'month', 'date': date, 'transfer_mode': mode},
                 'currency': 'RUB', 'time_zone': str(self.zone), 'user_id': self._chart_owner,
-                'full_block': block}
+                'metrics': [{'id': 'insights.regular_payments', 'full_block': block}]}
 
-    def apply_regular_dismissal(self, target, projection, fail_compose=False, expected_params=None):
+    def apply_regular_dismissal(self, target, projection, payment_id, fail_compose=False, expected_params=None):
         """Use only the supplied source payload. Failure never rolls back the BSD assignment."""
         if (not isinstance(projection, dict) or projection.get('user_id') != self._chart_owner or
                 projection.get('currency') != 'RUB' or not projection.get('time_zone') or
                 projection.get('time_zone') == 'Local' or
                 projection.get('params', {}).get('period') != 'month' or
-                (expected_params is not None and projection.get('params') != expected_params) or
-                projection.get('full_block', {}).get('id') != 'regular_payments'):
+                (expected_params is not None and projection.get('params') != expected_params)):
+            raise ApiError(500, 'INTERNAL_ERROR', retryable=False)
+        metrics = projection.get('metrics')
+        if (not isinstance(metrics, list) or len(metrics) != 1 or not isinstance(metrics[0], dict) or
+                metrics[0].get('id') != 'insights.regular_payments' or
+                metrics[0].get('full_block', {}).get('id') != 'regular_payments'):
+            raise ApiError(500, 'INTERNAL_ERROR', retryable=False)
+        full_block = metrics[0]['full_block']
+        if (full_block.get('status') in ('ready', 'tentative') and
+                any(row.get('button', {}).get('payment_id') == payment_id
+                    for row in full_block.get('data', {}).get('items', []))):
             raise ApiError(500, 'INTERNAL_ERROR', retryable=False)
         try:
             ZoneInfo(projection['time_zone'])
@@ -453,7 +462,7 @@ class Backend:
             if fail_compose:
                 raise ApiError(500, 'INTERNAL_ERROR', retryable=True)
             return {**{k: deepcopy(projection[k]) for k in ('params', 'currency', 'time_zone')},
-                    'required_calc_version': target, 'blocks': [compose_regular(projection['full_block'])]}
+                    'required_calc_version': target, 'blocks': [compose_regular(full_block)]}
         return self.recalculation.compose_dismissal(target, compose)
 
     def dismiss(self, payment_id: str, dismissed=True, marker_ack=True, defer_calculation=False,
@@ -506,7 +515,7 @@ class Backend:
         # The source transaction is committed. Everything below may fail independently.
         if marker_ack:
             self.recalculation.ack_marker(target)
-        result = self.apply_regular_dismissal(target, projection, fail_compose,
+        result = self.apply_regular_dismissal(target, projection, payment_id, fail_compose,
                                              {'period': 'month', 'date': date, 'transfer_mode': mode})
         if not defer_calculation:
             self.recalculation.run_pending()

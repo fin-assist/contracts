@@ -367,14 +367,18 @@ FIN-418 time_zone: шесть REST-ответов с календарным ко
 остальные поля уже были в gRPC. Проверять подписи/кэш по response time_zone, включая исторический UTC.
 
 FIN-418 error edge: ANALYTICS_CONTEXT_UNAVAILABLE is an additive registry reason25 (FAILED_PRECONDITION/422),
-only after confirmed BSD assignment; explicit saved-change user_message and retryable=false, one context refresh.
+only from BSD.Dismiss after confirmed assignment; Apply never returns this reason. Explicit saved-change
+user_message and retryable=false, one context refresh. First unavailable month returns400 date/OUT_OF_RANGE
+without assignment; refresh context once, no field-form error or same-params PUT retry.
 Malformed query remains400 before assignment; transient Apply failure remains500. Unsupported device tzdb always
 shows a notice, also over a stale verified cache, until a checked supported response. Historical data_to uses
 the last real second (later fold); no invented instant for a skipped day. See api.md6.3 and calendar notation.
 
 FIN-420 заменяет внутреннюю подготовку полного PUT200: BSD считает только fresh regular в той же локальной
 транзакции assignment; DismissRequest.params2, DismissResponse.projection2 и ApplyRequest.projection4.
-MetricProjection содержит одну typed metric и минимальный контекст/verified user binding (≤3 МиБ).
+MetricProjection.metrics — набор с уникальными id, сейчас ровно insights.regular_payments,
+и минимальный контекст/verified user binding (≤3 МиБ всего payload). Для ready/tentative исключённый id
+отсутствует в items; analytics проверяет эту связь без пересчёта финансовых значений.
 Analytics только компонует payload и принимает marker; не обновляет финансовые snapshots. REST/cache/true-job
 остаются FIN-418. После merge новый тег владельца и согласованная выкатка BSD/analytics/BFF до открытия PUT;
 старый overlay режим не поддерживается. Потребитель Android/mock — FIN-416, Temporal отдельно FIN-419.

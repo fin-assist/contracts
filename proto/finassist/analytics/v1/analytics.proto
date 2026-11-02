@@ -35,7 +35,8 @@ service AnalyticsService {
   // Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
   // Компонует переданную свежую метрику BSD; не читает собственную финансовую базу или BSD.
   // До успешного ответа принимает marker target. Нет overlay и пересчёта финансовых значений.
-  // ANALYTICS_CONTEXT_UNAVAILABLE допустим лишь после подтверждённого assignment BSD (api.md6.3).
+  // ANALYTICS_CONTEXT_UNAVAILABLE этот метод не выдаёт: контекст проверяет BSD до передачи payload.
+  // Неверный payload — голый INVALID_ARGUMENT; NONE/LOCKED сами по себе корректны.
   // Отсутствие собственного финансового snapshot analytics не является ошибкой этого метода.
   // Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
   rpc ApplyRegularPaymentDismissal(ApplyRegularPaymentDismissalRequest) returns (ApplyRegularPaymentDismissalResponse);
@@ -76,7 +77,7 @@ message ApplyRegularPaymentDismissalResponse {
   int32 required_calc_version = 5;
 }
 
-// Одна метрика с достаточным контекстом представления, не снимок всего экрана.
+// Набор метрик с достаточным контекстом представления, не снимок всего экрана.
 // Максимум сериализованного payload 3 МиБ; полный список не усекается. Общий RPC-лимит 4 МиБ.
 // FIN-420 принимает только insights.regular_payments; money/status/lock/basis/filters считает BSD.
 message MetricProjection {
@@ -93,8 +94,10 @@ message MetricProjection {
   // Оболочка покрытия источника для вспомогательных пояснений блокировок, полуинтервал.
   // Это не глобальный UserDataState и не обещание свежести остальных метрик.
   finassist.common.v1.TimeRange data_range = 6;
-  // Единственная полная метрика; definition_version и типизированные детали как при ingest.
-  MetricSnapshot metric = 7;
+  // Полные метрики с уникальными id; definition_version и типизированные детали как при ingest.
+  // FIN-420: ровно один элемент insights.regular_payments; другой id/дубли/пустой набор — INVALID_ARGUMENT.
+  // Для READY/TENTATIVE items не содержат regular_payment_id из запроса Apply.
+  repeated MetricSnapshot metrics = 7;
   // Проверенный пользователь BSD. Analytics требует равенство verified sub вызова BFF.
   // Не разрешает системный вызов и не выбирает пользователя вместо verified context.
   string user_id = 8;

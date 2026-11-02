@@ -48,7 +48,8 @@ type AnalyticsServiceClient interface {
 	// Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
 	// Компонует переданную свежую метрику BSD; не читает собственную финансовую базу или BSD.
 	// До успешного ответа принимает marker target. Нет overlay и пересчёта финансовых значений.
-	// ANALYTICS_CONTEXT_UNAVAILABLE допустим лишь после подтверждённого assignment BSD (api.md6.3).
+	// ANALYTICS_CONTEXT_UNAVAILABLE этот метод не выдаёт: контекст проверяет BSD до передачи payload.
+	// Неверный payload — голый INVALID_ARGUMENT; NONE/LOCKED сами по себе корректны.
 	// Отсутствие собственного финансового snapshot analytics не является ошибкой этого метода.
 	// Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
 	ApplyRegularPaymentDismissal(ctx context.Context, in *ApplyRegularPaymentDismissalRequest, opts ...grpc.CallOption) (*ApplyRegularPaymentDismissalResponse, error)
@@ -125,7 +126,8 @@ type AnalyticsServiceServer interface {
 	// Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
 	// Компонует переданную свежую метрику BSD; не читает собственную финансовую базу или BSD.
 	// До успешного ответа принимает marker target. Нет overlay и пересчёта финансовых значений.
-	// ANALYTICS_CONTEXT_UNAVAILABLE допустим лишь после подтверждённого assignment BSD (api.md6.3).
+	// ANALYTICS_CONTEXT_UNAVAILABLE этот метод не выдаёт: контекст проверяет BSD до передачи payload.
+	// Неверный payload — голый INVALID_ARGUMENT; NONE/LOCKED сами по себе корректны.
 	// Отсутствие собственного финансового snapshot analytics не является ошибкой этого метода.
 	// Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
 	ApplyRegularPaymentDismissal(context.Context, *ApplyRegularPaymentDismissalRequest) (*ApplyRegularPaymentDismissalResponse, error)
