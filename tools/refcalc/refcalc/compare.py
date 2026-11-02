@@ -10,12 +10,13 @@ import math
 import re
 
 IGNORED = "<ignored>"
+OPAQUE = "<opaque>"
 # Opaque values and moments that depend on the implementation or on the wall clock.
-OPAQUE_KEYS = {"id", "replaced_id", "upload_id", "payment_id", "selection", "calculated_at"}
+OPAQUE_KEYS = {"id", "replaced_id", "upload_id", "payment_id", "selection", "calculated_at", "download_url", "login_url"}
 # Texts the server writes for the client: shown, not compared (their numbers come in structured fields).
 TEXT_KEYS = {"selection_name", "type_name", "feature_name", "text", "alt_text", "empty_text", "title", "caption", "label",
              "note", "description", "badge", "sublabel", "value_suffix", "more_label", "spoken",
-             "note_details", "source_name", "message"}
+             "note_details", "source_name", "message", "help_text"}
 # Outside blocks these are data, not texts: an operation's description, a notice code's text is still a text.
 DATA_TITLE_OUTSIDE_BLOCKS = {"title", "note", "description"}
 RFC3339 = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$")
@@ -33,6 +34,8 @@ def redact(value, in_blocks: bool = False, parent_is_items: bool = False, key: s
         for k, v in value.items():
             if v is None:
                 out[k] = None
+            elif key == "page" and k in ("revision", "previous", "next"):
+                out[k] = OPAQUE
             elif k == "category_id":
                 out[k] = category_id(v)
             elif k in OPAQUE_KEYS:
@@ -43,7 +46,7 @@ def redact(value, in_blocks: bool = False, parent_is_items: bool = False, key: s
                 keep = in_blocks and k == "title" and parent_is_items
                 out[k] = v if keep else IGNORED
             else:
-                out[k] = redact(v, in_blocks or k == "blocks", False, k, known)
+                out[k] = redact(v, in_blocks or k in ("blocks", "block"), False, k, known)
         return out
     if isinstance(value, list):
         return [redact(v, in_blocks, key == "items", key, known) for v in value]
@@ -74,6 +77,9 @@ def compare(expected, actual, path: str = "$", in_blocks: bool = False, parent_i
     reference does not have must be absent or null in the actual response, unless it is a text or an opaque id."""
     if expected == IGNORED:
         return []
+    if expected == OPAQUE:
+        maximum = 128 if key == "revision" else 2048
+        return [] if isinstance(actual, str) and 1 <= len(actual) <= maximum else [f"{path}: expected a nonempty opaque string"]
     if isinstance(expected, dict):
         if not isinstance(actual, dict):
             return [f"{path}: expected an object, got {actual!r}"]
@@ -86,7 +92,7 @@ def compare(expected, actual, path: str = "$", in_blocks: bool = False, parent_i
                 continue
             if k not in expected and _extra_allowed(k, in_blocks, parent_is_items):
                 continue  # a text or an opaque id the reference does not have: not compared
-            diffs += compare(e, a, f"{path}.{k}", in_blocks or k == "blocks", False, k)
+            diffs += compare(e, a, f"{path}.{k}", in_blocks or k in ("blocks", "block"), False, k)
         return diffs
     if isinstance(expected, list):
         if not isinstance(actual, list):

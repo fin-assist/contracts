@@ -179,3 +179,29 @@ FIN-409 расширяет аналитику периодом `all_time`/клю
 Клиенты — FIN-398, FIN-400, FIN-403; сервисные PR ждут merge и неизменяемого gen/go-тега владельца.
 
 FIN-413 задаёт rolling_year/rolling_quarter: последние12/3 календарных месяца от покрытия выписок, точные краевые суммы и MonthlyPoint.calculation_range. Эталонный расчёт и fixtures закрепляют границы, короткую историю и разрывы. Сквозной клиент/producer/consumer — FIN-411 после merge и gen/go-тега владельца; порядок и запрет потери краевых диапазонов при откате — docs/grpc-api.md.
+
+
+FIN-418: `monthly_chart` версии 1 открывает всю историю во всех вкладках страницами по 60 месяцев (api.md6.4);
+факты выбранного периода и календарный balance не меняются. Block/Tile.help_text — вспомогательные пояснения;
+GET /v1/statements/config принимает необязательную пару включительных календарных дат. api.md3.1/FIN-418,
+GetChartPage и page.revision ограничивают выдачу, сохраняют tenant/revision-согласованность;
+calc.md13 и grpc-api.md определяют правила и согласованный rollout альфы (FIN-416), без новой версии chart.
+После merge владелец выпускает новый gen/go-тег до зависимых сервисных PR; merge/тег здесь не выполняются.
+
+FIN-418 PUT dismissal меняет 204→200 и требует показанный month/date+transfer_mode: полный AnalyticsBlockUpdate
+с required_calc_version. BFF → assignment в BSD/надёжная доставкаtrue → analytics.ApplyRegularPaymentDismissal
+из СОБСТВЕННОЙ БД (overlay над целым regular metric), без BSDlive-read. GET/фоновыйfalse сохраняют общий расчёт;
+клиент сразу заменяет полученные блоки, остальные готовые данные сохраняет до подтверждённой полной версии.
+DELETE остаётся прежним 204, восстановление UI/candidate pipeline не расширяется. Требование полного ответа
+не отменялось: прежняя трактовка receipt-only исключена. Temporal отдельно FIN-419. REST breaking принимает
+владелец меткой breaking-accepted; merge/tag здесь не выполняются. Правила: api.md 6.3/grpc-api.md FIN-418.
+
+FIN-418 time_zone: шесть REST-ответов с календарным контекстом передают фактический IANA-пояс источника
+(api.md «Пояс календарных данных ответа»), а не копию профиля клиента. GetChartPageResponse.time_zone2;
+остальные поля уже были в gRPC. Проверять подписи/кэш по response time_zone, включая исторический UTC.
+
+FIN-418 error edge: ANALYTICS_CONTEXT_UNAVAILABLE is an additive registry reason25 (FAILED_PRECONDITION/422),
+only after confirmed BSD assignment; explicit saved-change user_message and retryable=false, one context refresh.
+Malformed query remains400 before assignment; transient Apply failure remains500. Unsupported device tzdb always
+shows a notice, also over a stale verified cache, until a checked supported response. Historical data_to uses
+the last real second (later fold); no invented instant for a skipped day. See api.md6.3 and calendar notation.

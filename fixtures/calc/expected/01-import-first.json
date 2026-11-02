@@ -1,4 +1,5 @@
 {
+  "time_zone": "Europe/Moscow",
   "operation_count": 1261,
   "new_count": 1185,
   "duplicate_count": 76,
@@ -69,7 +70,7 @@
         "feature": "monthly_chart",
         "feature_name": "<ignored>",
         "open": true,
-        "opened_now": true
+        "opened_now": false
       },
       {
         "feature": "typical",

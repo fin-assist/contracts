@@ -60,12 +60,12 @@ class RollingPeriods(unittest.TestCase):
             self.assertEqual(amount // 365, self.tile(s, "daily_expense")["value"])
             chart = self.block(s, "monthly_chart")[0]["data"]
             points = chart["points"]
-            self.assertEqual(13, len(points))
-            self.assertEqual(amount, sum(p["value"] for p in points))
-            self.assertEqual("2025-10-31T00:00:00+03:00", points[0]["range"]["from"])
-            self.assertEqual("2026-10-31T00:00:00+03:00", points[-1]["range"]["to"])
-            self.assertEqual("partial", points[0]["coverage"])
-            self.assertEqual("2025-10", points[0]["action"]["date"])
+            self.assertEqual(25, len(points))
+            self.assertEqual(amount + 119900, sum(p["value"] for p in points))
+            self.assertEqual("2024-10-01T00:00:00+03:00", points[0]["range"]["from"])
+            self.assertEqual("2026-11-01T00:00:00+03:00", points[-1]["range"]["to"])
+            self.assertEqual("complete", points[0]["coverage"])
+            self.assertEqual("2024-10", points[0]["action"]["date"])
             self.assertEqual("2026-10", points[-1]["action"]["date"])
             self.assertNotIn("highlight_index", chart)
             self.assertNotIn("forecast", [t["id"] for t in self.block(s, "tiles")[0]["data"]["tiles"]])
@@ -86,16 +86,16 @@ class RollingPeriods(unittest.TestCase):
         self.assertEqual(3100 // 42, self.tile(s, "daily_expense")["value"])
         self.assertEqual([{"from": "2026-09-01T00:00:00+03:00", "to": "2026-10-01T00:00:00+03:00"}], s["period"]["gaps"])
         points = self.block(s, "monthly_chart")[0]["data"]["points"]
-        self.assertEqual([None, 3100, None, 0], [p["value"] for p in points])
-        self.assertEqual(["no_data", "partial", "no_data", "partial"], [p["coverage"] for p in points])
-        self.assertNotIn("action", points[0])
+        self.assertEqual([3100, None, 0], [p["value"] for p in points])
+        self.assertEqual(["partial", "no_data", "partial"], [p["coverage"] for p in points])
+        self.assertNotIn("action", points[1])
         self.assertEqual("2026-10", points[-1]["action"]["date"])
         b.delete_upload("empty.ofx")
         short = b.analytics("rolling_quarter")
         self.assertEqual("ready", self.block(short, "monthly_chart")[0]["status"])
         self.assertEqual("2026-09-01T00:00:00+03:00", short["period"]["range"]["to"])
         b.delete_upload("a.ofx")
-        self.assertEqual({"has_data": False}, b.analytics("rolling_quarter"))
+        self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("rolling_quarter"))
         self.assertEqual({"periods": []}, b.periods("rolling_quarter"))
 
     def test_quarter_keeps_minor_units_and_opens_the_full_edge_month(self):
@@ -109,10 +109,10 @@ class RollingPeriods(unittest.TestCase):
         self.assertEqual(3, self.tile(s, "expense")["value"])
         self.assertEqual(0, self.tile(s, "daily_expense")["value"])
         points = self.block(s, "monthly_chart")[0]["data"]["points"]
-        self.assertEqual([1, 1, 0, 1], [p["value"] for p in points])
-        self.assertEqual("2026-07-06T00:00:00+03:00", points[0]["range"]["from"])
-        self.assertEqual("2026-10-06T00:00:00+03:00", points[-1]["range"]["to"])
-        action = points[0]["action"]
+        self.assertEqual([0, 99901, 1, 0, 1], [p["value"] for p in points])
+        self.assertEqual("2026-06-01T00:00:00+03:00", points[0]["range"]["from"])
+        self.assertEqual("2026-11-01T00:00:00+03:00", points[-1]["range"]["to"])
+        action = points[1]["action"]
         month = b.analytics(action["period"], action["date"], s["params"]["transfer_mode"])
         self.assertEqual(99901, self.tile(month, "expense")["value"])
         self.assertEqual("2026-07-01T00:00:00+03:00", month["period"]["range"]["from"])
@@ -154,5 +154,5 @@ class RollingPeriods(unittest.TestCase):
     def test_only_empty_statements_preserve_empty_screen_with_coverage_period_list(self):
         b = self.backend("2026-10-31T12:00:00+03:00")
         b.upload("empty.ofx", spec.stmt("20261001", "20261030", []))
-        self.assertEqual({"has_data": False}, b.analytics("rolling_year"))
+        self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("rolling_year"))
         self.assertEqual(1, len(b.periods("rolling_year")["periods"]))

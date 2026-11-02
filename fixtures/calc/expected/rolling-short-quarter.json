@@ -61,7 +61,8 @@
             "status": "ready",
             "value": 3745521,
             "value_kind": "amount",
-            "caption": "<ignored>"
+            "caption": "<ignored>",
+            "help_text": "<ignored>"
           },
           {
             "id": "income",
@@ -96,22 +97,6 @@
         "points": [
           {
             "range": {
-              "from": "2025-08-01T00:00:00+03:00",
-              "to": "2025-09-01T00:00:00+03:00"
-            },
-            "value": null,
-            "coverage": "no_data"
-          },
-          {
-            "range": {
-              "from": "2025-09-01T00:00:00+03:00",
-              "to": "2025-10-01T00:00:00+03:00"
-            },
-            "value": null,
-            "coverage": "no_data"
-          },
-          {
-            "range": {
               "from": "2025-10-01T00:00:00+03:00",
               "to": "2025-11-01T00:00:00+03:00"
             },
@@ -127,13 +112,17 @@
             }
           }
         ],
+        "page": {
+          "revision": "<opaque>"
+        },
         "notes": [
           {
             "text": "<ignored>",
             "tone": "primary"
           }
         ]
-      }
+      },
+      "help_text": "<ignored>"
     },
     {
       "id": "expense_categories",
@@ -568,6 +557,11 @@
     "full_months": 0,
     "unread_lines_count": 0,
     "calculated_at": "<ignored>",
+    "recalculating": false
+  },
+  "time_zone": "Europe/Moscow",
+  "calculation": {
+    "calc_version": 9,
     "recalculating": false
   }
 }

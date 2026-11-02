@@ -8,7 +8,7 @@ from typing import Optional
 
 from . import ofx
 from .registry import OWN_TRANSFER, REFUND, REFUND_NAME, TRANSFERS_NAME, UNCATEGORIZED, Category, Registry
-from .util import add_months, day_of, month_start
+from .util import add_months, day_of, month_start, start_of_day
 
 SELF_TRANSFER_NAMES = {"Между своими счетами", "Себе в другой банк", "Себе из другого банка"}
 OWN_TRANSFER_NAME = "Между своими счетами"
@@ -67,11 +67,19 @@ class Upload:
 class Coverage:
     """Covered days: the union of the periods of all finished uploads (spec section 4)."""
 
-    def __init__(self, ranges: list, today: dt.date):
+    def __init__(self, ranges: list, today: dt.date, zone):
         self.today = today
+        self.zone = zone
         merged = []
         for a, b in sorted(ranges):
-            if merged and a <= merged[-1][1] + dt.timedelta(days=1):
+            joins = False
+            if merged:
+                after_previous = merged[-1][1] + dt.timedelta(days=1)
+                joins = a <= after_previous or (
+                    start_of_day(a, zone).astimezone(dt.timezone.utc) <=
+                    start_of_day(after_previous, zone).astimezone(dt.timezone.utc))
+            # A skipped civil day has zero width: equivalent physical boundaries still adjoin.
+            if joins:
                 merged[-1] = (merged[-1][0], max(merged[-1][1], b))
             else:
                 merged.append((a, b))
@@ -103,6 +111,11 @@ class Coverage:
         first = last = None
         for a, b in self.days:
             s, e = max(a, start), min(b, end_excl - dt.timedelta(days=1))
+            # Calendar clipping may land on a skipped day inside an otherwise valid upload.
+            while s <= e and start_of_day(s, self.zone).date() != s:
+                s += dt.timedelta(days=1)
+            while s <= e and start_of_day(e, self.zone).date() != e:
+                e -= dt.timedelta(days=1)
             if s > e:
                 continue
             if first is None:
@@ -179,7 +192,7 @@ class Ledger:
         ups = self.uploads if uploads is None else uploads
         # Reproject the source instants after a profile time-zone change.
         ranges = [self.upload_days(u.doc) for u in ups]
-        return Coverage([(a, b) for a, b in ranges if a], today)
+        return Coverage([(a, b) for a, b in ranges if a], today, self.zone)
 
     def add_upload(self, file_name: str, text: str, uploaded_at: dt.datetime):
         doc = ofx.parse(text)

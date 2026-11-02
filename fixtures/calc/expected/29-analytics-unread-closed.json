@@ -61,7 +61,8 @@
             "status": "ready",
             "value": 15728550,
             "value_kind": "amount",
-            "caption": "<ignored>"
+            "caption": "<ignored>",
+            "help_text": "<ignored>"
           },
           {
             "id": "income",
@@ -103,6 +104,87 @@
         "kind": "bar",
         "value_kind": "amount",
         "points": [
+          {
+            "range": {
+              "from": "2025-10-01T00:00:00+03:00",
+              "to": "2025-11-01T00:00:00+03:00"
+            },
+            "value": 63673873,
+            "coverage": "partial",
+            "data_from": "2025-10-15T00:00:00+03:00",
+            "data_to": "2025-10-31T21:06:35+03:00",
+            "note": "<ignored>",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2025-10"
+            }
+          },
+          {
+            "range": {
+              "from": "2025-11-01T00:00:00+03:00",
+              "to": "2025-12-01T00:00:00+03:00"
+            },
+            "value": 84853478,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2025-11"
+            }
+          },
+          {
+            "range": {
+              "from": "2025-12-01T00:00:00+03:00",
+              "to": "2026-01-01T00:00:00+03:00"
+            },
+            "value": 130271771,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2025-12"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-01-01T00:00:00+03:00",
+              "to": "2026-02-01T00:00:00+03:00"
+            },
+            "value": 101020510,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-01"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-02-01T00:00:00+03:00",
+              "to": "2026-03-01T00:00:00+03:00"
+            },
+            "value": 397023788,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-02"
+            }
+          },
+          {
+            "range": {
+              "from": "2026-03-01T00:00:00+03:00",
+              "to": "2026-04-01T00:00:00+03:00"
+            },
+            "value": 479880069,
+            "coverage": "complete",
+            "action": {
+              "type": "select_analytics_period",
+              "period": "month",
+              "date": "2026-03"
+            }
+          },
           {
             "range": {
               "from": "2026-04-01T00:00:00+03:00",
@@ -188,14 +270,18 @@
             }
           }
         ],
+        "page": {
+          "revision": "<opaque>"
+        },
         "notes": [
           {
             "text": "<ignored>",
             "tone": "muted"
           }
         ],
-        "highlight_index": 5
-      }
+        "highlight_index": 11
+      },
+      "help_text": "<ignored>"
     },
     {
       "id": "expense_categories",
@@ -1043,6 +1129,7 @@
       "status": "ready",
       "title": "<ignored>",
       "alt_text": "<ignored>",
+      "help_text": "<ignored>",
       "data": {
         "kind": "bar",
         "value_kind": "percent",
@@ -1107,7 +1194,6 @@
           "value": -175683631,
           "value_kind": "amount"
         },
-        "caption": "<ignored>",
         "highlight_index": 5
       }
     }
@@ -1120,6 +1206,11 @@
     "full_months": 9,
     "unread_lines_count": 0,
     "calculated_at": "<ignored>",
+    "recalculating": false
+  },
+  "time_zone": "Europe/Moscow",
+  "calculation": {
+    "calc_version": 36,
     "recalculating": false
   }
 }

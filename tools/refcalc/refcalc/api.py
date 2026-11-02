@@ -2,11 +2,21 @@
 from __future__ import annotations
 
 import datetime as dt
+import calendar
 from decimal import Decimal, InvalidOperation
 from typing import Optional
+from urllib.parse import urlencode
+import re
+import hashlib
+import json
+from dataclasses import asdict
+import uuid
+from copy import deepcopy
 
-from .analytics import Analytics, SINGLETONS, parse_supports, period_bounds
+from .analytics import Analytics, Ctx, SINGLETONS, parse_supports, period_bounds
 from .ledger import Ledger, stable_id
+from .recalculation import Recalculation
+from .regular_projection import compose_regular
 from .registry import OWN_TRANSFER, REFUND, TRANSFERS_NAME, UNCATEGORIZED, Registry
 from .util import add_months, day_of, end_of_day, iso, month_key, month_start, parse_iso, start_of_day
 from .views import Scope, account, details, item, records, selection_id
@@ -14,7 +24,7 @@ from .views import Scope, account, details, item, records, selection_id
 MAX_SEARCH = 10_000
 FEATURES = [  # (code, name, threshold kind, required) — spec section 7
     ("comparison", "Сравнение с прошлым месяцем", "full", 1),
-    ("monthly_chart", "Расходы по месяцам", "with_data", 2),
+    ("monthly_chart", "Расходы по месяцам", "with_data", 1),
     ("typical", "Обычные расходы", "full", 2),
     ("regular_payments", "Регулярные платежи", "full", 2),
     ("notable_spending", "Заметные траты", "full", 3),
@@ -24,10 +34,11 @@ FEATURES = [  # (code, name, threshold kind, required) — spec section 7
 
 
 class ApiError(Exception):
-    def __init__(self, status: int, code: str, details=None):
+    def __init__(self, status: int, code: str, details=None, retryable=None):
         super().__init__(code)
         self.status, self.code = status, code
         self.details = details
+        self.retryable = retryable
 
 
 class Backend:
@@ -36,6 +47,12 @@ class Backend:
         self.zone = zone
         self.ledger = Ledger(registry, zone)
         self.now: dt.datetime = None
+        self._chart_owner = uuid.uuid4().hex
+        self._chart_cursors = {}
+        self._regular_snapshots = {}
+        self._regular_absent = set()
+        self._regular_references = {}
+        self.recalculation = Recalculation(self._publish_regular_snapshots)
 
     @property
     def today(self) -> dt.date:
@@ -44,12 +61,70 @@ class Backend:
     def at(self, d: dt.date) -> str:
         return iso(start_of_day(d, self.zone))
 
+    # ---- 3.1 ----
+
+    def import_config(self, period_from: Optional[str] = None, period_to: Optional[str] = None) -> dict:
+        """Server-owned download range; both requested calendar days are inclusive."""
+        def invalid(field, code):
+            raise ApiError(400, "VALIDATION_ERROR", [{"field": field, "code": code}])
+
+        def parse(value, field):
+            if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
+                invalid(field, "INVALID_FORMAT")
+            try:
+                return dt.date.fromisoformat(value)
+            except ValueError:
+                invalid(field, "INVALID_FORMAT")
+
+        def boundary(day, field):
+            try:
+                instant = start_of_day(day, self.zone).astimezone(dt.timezone.utc)
+                return instant.astimezone(self.zone)
+            except (ValueError, OverflowError):
+                invalid(field, "OUT_OF_RANGE")
+
+        start = parse(period_from, "period_from") if period_from is not None else None
+        last = parse(period_to, "period_to") if period_to is not None else None
+        if (period_from is None) != (period_to is None):
+            invalid("period_from" if period_from is None else "period_to", "REQUIRED")
+        ats = [o.at for o in self.ledger.ops.values()]
+        if period_from is not None:
+            if start > last:
+                invalid("period_from", "OUT_OF_RANGE")
+            if last > self.today:
+                invalid("period_to", "OUT_OF_RANGE")
+        else:
+            start = day_of(max(ats), self.zone) if ats else self.today.replace(
+                year=self.today.year - 1, day=min(self.today.day, calendar.monthrange(self.today.year - 1, self.today.month)[1]))
+            last = self.today
+        try:
+            end = last + dt.timedelta(days=1)
+        except OverflowError:
+            invalid("period_to", "OUT_OF_RANGE")
+        begin, finish = boundary(start, "period_from"), boundary(end, "period_to")
+        if begin.astimezone(dt.timezone.utc) >= finish.astimezone(dt.timezone.utc):
+            invalid("period_to", "OUT_OF_RANGE")
+        epoch = dt.datetime(1970, 1, 1, tzinfo=dt.timezone.utc)
+        def millis(at):
+            delta = at.astimezone(dt.timezone.utc) - epoch
+            return delta.days * 86_400_000 + delta.seconds * 1_000 + delta.microseconds // 1000
+        query = urlencode({"appName": "supreme", "appVersion": "0.0.1", "origin": "web,ib5,platform",
+                           "start": millis(begin), "end": millis(finish), "format": "ofx"})
+        out = {"time_zone": str(self.zone), "download_url": "https://www.tbank-online.com/mybank/api/operations/timeline/public/legacy/v1/export_operations?" + query,
+               "login_url": "https://www.tbank.ru/login/", "max_file_size_bytes": 10485760, "accepted_formats": ["OFX"],
+               "suggested_period": {"from": iso(begin), "to": iso(finish)}}
+        if ats:
+            out["loaded"] = {"first_operation_at": iso(min(ats)), "last_operation_at": iso(max(ats)),
+                             "operation_count": len(ats)}
+        return out
+
     # ---- 3.2 / 3.3 ----
 
     def upload(self, file_name: str, text: str) -> dict:
         before = self.ledger.coverage(self.today)
         is_first = not self.ledger.uploads
         up, added, duplicates = self.ledger.add_upload(file_name, text, self.now)
+        self.recalculation.calculate_now()
         after = self.ledger.coverage(self.today)
         doc = up.doc
         scope = Scope(self.ledger, "with")
@@ -86,6 +161,7 @@ class Backend:
         elif not any(t.is_debit for t in doc.transactions):
             notices.append({"code": "no_expenses", "text": "В файле нет расходов"})
         result = {
+            "time_zone": str(self.zone),
             "operation_count": len(doc.transactions),
             "new_count": len(added),
             "duplicate_count": duplicates,
@@ -125,6 +201,7 @@ class Backend:
     def delete_upload(self, file_name: str) -> None:
         up = next(u for u in self.ledger.uploads if u.file_name == file_name)
         self.ledger.remove_upload(up.id)
+        self.recalculation.calculate_now()
 
     # ---- 4.1 ----
 
@@ -141,7 +218,7 @@ class Backend:
             "last_uploaded_at": iso(max(u.uploaded_at for u in self.ledger.uploads)) if self.ledger.uploads else None,
         }
         if not recs:
-            return {"items": [], "summary": [], "state": state}
+            return {"time_zone": str(self.zone), "items": [], "summary": [], "state": state}
         if before:
             end_month = month_start(day_of(parse_iso(before), self.zone) - dt.timedelta(days=1))
         else:
@@ -164,7 +241,7 @@ class Backend:
             if cov.coverage_of(m, me) == "partial":
                 row["data_to"] = a.data_to(m, me)
             summary.append(row)
-        return {"items": [item(r) for r in page], "summary": summary, "state": state,
+        return {"time_zone": str(self.zone), "items": [item(r) for r in page], "summary": summary, "state": state,
                 "range": {"from": iso(s), "to": iso(e)}, "next_before": iso(s) if older else None}
 
     def search(self, params: dict) -> dict:
@@ -215,7 +292,7 @@ class Backend:
             out.append(r)
         if len(out) > MAX_SEARCH:
             raise ApiError(422, "TOO_MANY_RESULTS")
-        res = {"items": [item(r) for r in out], "total_count": len(out)}
+        res = {"time_zone": str(self.zone), "items": [item(r) for r in out], "total_count": len(out)}
         if frm is not None and to is not None:
             res["range"] = {"from": iso(frm), "to": iso(to)}
         if default:
@@ -253,7 +330,12 @@ class Backend:
         """Opaque selections the reference responses hand out: «Без категории», commissions, a regular payment, all
         regular payments of a card, a group of small frequent spendings."""
         if sel in self.ledger.selections:
-            return self.ledger.selections[sel]
+            selection = self.ledger.selections[sel]
+            if isinstance(selection, tuple) and selection[0] == 'regular_all':
+                block = self._source_regular_block(selection[1], selection[2])
+                names = {row['title'] for row in (block or {}).get('data', {}).get('items', [])}
+                return lambda o: o.is_debit and o.name in names
+            return selection
         if sel == selection_id("uncategorized"):
             return lambda o: o.category.id == UNCATEGORIZED or (o.is_refund and o.target.id == UNCATEGORIZED)
         if sel == selection_id("bank_fees"):
@@ -295,14 +377,93 @@ class Backend:
         for kind, k in recs:
             rid = k if kind == "pair" else self.ledger.ops[k].id
             items.append(details(by_id[rid]))
+        self.recalculation.calculate_now()
         return {"items": items, "replaced_id": replaced}
 
-    def dismiss(self, payment_id: str) -> None:
-        """6.3 PUT: the payment is bound to its key, the description."""
-        name = next((o.name for o in self.ledger.ops.values() if stable_id("payment", o.name) == payment_id), None)
+    def _source_regular_block(self, date, mode):
+        """Source recognition shared by the producer and live operation search, never Apply."""
+        source = Analytics(self.ledger, self.now, regular_limit=None)
+        if not self.ledger.ops or source.cov.empty:
+            return None
+        start, end, period_key = period_bounds('month', dt.date.fromisoformat(date + '-01'))
+        if source.cov.bounds(start, end) is None:
+            return None
+        scope = Scope(self.ledger, mode)
+        visible = scope.visible()
+        ctx = Ctx(source, 'month', start, end, period_key, mode, scope, visible,
+                  scope.in_days(visible, start, end), {'coverage': source.coverage_of('month', start, end)})
+        block = ctx.regular_payments()
+        for row in block['data'].get('items', []):
+            self._regular_references[row['button']['payment_id']] = row['title']
+        return block
+
+    def _store_regular_snapshot(self, date, mode, version=None):
+        """Reference publisher: retain the full metric before limiting its displayed rows."""
+        key = date, mode
+        version = self.recalculation.ready_version if version is None else version
+        existing = self._regular_snapshots.get(key)
+        if existing and existing['version'] == version:
+            return
+        block = self._source_regular_block(date, mode)
+        if block is None:
+            self._regular_snapshots.pop(key, None)
+            self._regular_absent.add(key)
+            return
+        self._regular_absent.discard(key)
+        self._regular_snapshots[key] = {'version': version,
+            'params': {'period': 'month', 'date': date, 'transfer_mode': mode},
+            'currency': 'RUB', 'time_zone': str(self.zone), 'block': block}
+
+    def _publish_regular_snapshots(self, version):
+        # Existing producer delivery installs new bases before final; Apply never invokes this.
+        for date, mode in set(self._regular_snapshots) | self._regular_absent:
+            self._store_regular_snapshot(date, mode, version)
+
+    def apply_regular_dismissal(self, payment_id, target, date, mode, fail_compose=False):
+        """Own saved metric only. Failure rolls back analytics, never the source assignment."""
+        def compose(excluded):
+            saved = self._regular_snapshots.get((date, mode))
+            if saved is None and (date, mode) in self._regular_absent:
+                raise ApiError(422, 'ANALYTICS_CONTEXT_UNAVAILABLE', retryable=False)
+            if fail_compose or saved is None:
+                raise ApiError(500, 'INTERNAL_ERROR', retryable=True)
+            return {**{k: deepcopy(saved[k]) for k in ('params', 'currency', 'time_zone')},
+                    'required_calc_version': target, 'blocks': [compose_regular(saved['block'], excluded)]}
+        return self.recalculation.apply_dismissal(payment_id, target, compose)
+
+    def dismiss(self, payment_id: str, dismissed=True, marker_ack=True, defer_calculation=False,
+                date=None, mode=None, fail_compose=False):
+        """PUT returns the full projection; DELETE retains its bodyless asynchronous result."""
+        if dismissed:
+            for field, valid in [('date', isinstance(date, str) and bool(re.fullmatch(r'[0-9]{4}-(0[1-9]|1[0-2])', date)) and date[:4] != '0000'),
+                                 ('transfer_mode', mode in ('with', 'without'))]:
+                if not valid:
+                    raise ApiError(400, 'VALIDATION_ERROR', [{'field': field, 'code': 'REQUIRED' if (date if field == 'date' else mode) is None else 'INVALID_FORMAT'}])
+        if not re.fullmatch(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", payment_id):
+            raise ApiError(400, "VALIDATION_ERROR", [{"field": "id", "code": "INVALID_FORMAT"}])
+        name = self._regular_references.get(payment_id)
+        if name is None:
+            name = next((o.name for o in self.ledger.ops.values() if stable_id("payment", o.name) == payment_id), None)
         if name is None:
             raise ApiError(404, "NOT_FOUND")
-        self.ledger.dismissed.add(name)
+        if dismissed:
+            self._store_regular_snapshot(date, mode)
+        changed = (name in self.ledger.dismissed) != dismissed
+        try:
+            if dismissed:
+                target = self.recalculation.assign(payment_id, True, marker_ack)['calc_version']
+            elif changed:
+                self.recalculation.restore(payment_id)
+        except OverflowError:
+            raise ApiError(500, "INTERNAL_ERROR")
+        if dismissed:
+            self.ledger.dismissed.add(name)
+        else:
+            self.ledger.dismissed.discard(name)
+        result = self.apply_regular_dismissal(payment_id, target, date, mode, fail_compose) if dismissed else None
+        if not defer_calculation:
+            self.recalculation.run_pending()
+        return result
 
     # ---- 5.1, 6.1, 6.2 ----
 
@@ -319,7 +480,94 @@ class Backend:
         except ValueError:
             raise ApiError(400, "VALIDATION_ERROR", [{"field": "supports", "code": "INVALID_FORMAT",
                                                      "message": "has invalid format"}])
-        return Analytics(self.ledger, self.now).screen(period, date, mode, supports)
+        out = Analytics(self.ledger, self.now, lambda anchor: self._chart_page(mode, anchor=anchor)).screen(
+            period, date, mode, supports)
+        # Reference financial responses are calculated immediately except explicit delayed-marker scenarios.
+        if out['has_data'] and self.recalculation.state_version == 0 and not self.recalculation.assignments:
+            self.recalculation.calculate_now()
+        if out['has_data']:
+            out['time_zone'] = str(self.zone)
+        if out['has_data'] and period == 'month':
+            selected = out['params']['date']
+            self._store_regular_snapshot(selected, mode)
+            saved = self._regular_snapshots.get((selected, mode))
+            if saved and self.recalculation.overlays:
+                for i, block in enumerate(out['blocks']):
+                    if block.get('id') == 'regular_payments':
+                        out['blocks'][i] = compose_regular(saved['block'], set(self.recalculation.overlays))
+        out['calculation'] = self.recalculation.state()
+        if 'state' in out:
+            out['state']['recalculating'] = out['calculation']['recalculating']
+        return out
+
+    def _chart_revision(self, mode):
+        # A reference-only fingerprint, not a prescribed production token/storage scheme.
+        state = (self._chart_owner, mode, str(self.zone), self.today,
+                 self.ledger.coverage(self.today).days,
+                 [(key, asdict(op)) for key, op in sorted(self.ledger.ops.items())],
+                 sorted(self.ledger.manual.items()), sorted(self.ledger.unpaired), sorted(self.ledger.pairs.items()))
+        def encode(value):
+            if isinstance(value, (dt.date, dt.datetime)):
+                return value.isoformat()
+            if isinstance(value, (set, frozenset)):
+                return sorted(value)
+            raise TypeError(type(value).__name__)
+        wire = json.dumps(state, default=encode, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(wire.encode()).hexdigest()
+
+    def _chart_page(self, mode, anchor=None, index=None):
+        a = Analytics(self.ledger, self.now)
+        first, last = month_start(a.cov.first), month_start(a.cov.last)
+        distance = (last.year - first.year) * 12 + last.month - first.month
+        if index is None:
+            distance_to_anchor = 0 if anchor is None else (last.year - anchor.year) * 12 + last.month - anchor.month
+            index = min(distance // 60, max(0, distance_to_anchor // 60))
+        end = add_months(last, 1 - index * 60)
+        # Avoid computing a date before year 1 when the oldest page is short.
+        count = min(60, distance + 1 - index * 60)
+        start = add_months(end, -count)
+        scope = Scope(self.ledger, mode)
+        visible = scope.visible()
+        ctx = Ctx(a, "month", start, end, month_key(start), mode, scope, visible, [], {})
+        points = []
+        for i in range(count):
+            m = add_months(start, i)
+            e = add_months(m, 1)
+            covered = a.cov.bounds(m, e) is not None
+            amount = scope.expense(scope.in_days(visible, m, e)) if covered else None
+            point = ctx.point(m, amount)
+            if covered:
+                point["action"] = {"type": "select_analytics_period", "period": "month", "date": month_key(m)}
+            points.append(point)
+        revision = self._chart_revision(mode)
+        page = {"revision": revision}
+        for key, target in (("previous", index + 1), ("next", index - 1)):
+            if 0 <= target <= distance // 60:
+                cursor = uuid.uuid4().hex
+                self._chart_cursors[cursor] = (revision, mode, target)
+                page[key] = cursor
+        return {"id": "monthly_chart", "type": "chart", "v": 1, "title": "Расходы по месяцам",
+                "alt_text": "Расходы по месяцам всей загруженной истории", "status": "ready",
+                "data": {"kind": "bar", "value_kind": "amount", "points": points, "page": page},
+                "help_text": "Столбики показывают полные календарные месяцы всей загруженной истории. "
+                             "Прокрутите к краю графика, чтобы загрузить соседние месяцы. "
+                             "Нажмите на месяц с данными, чтобы открыть его аналитику. "
+                             "Итоги и выводы экрана относятся к выбранному периоду."}
+
+    def chart_page(self, cursor=None):
+        def invalid(code):
+            raise ApiError(400, "VALIDATION_ERROR", [{"field": "cursor", "code": code}])
+        if cursor is None or cursor == "":
+            invalid("REQUIRED")
+        if not isinstance(cursor, str) or len(cursor) > 2048 or cursor not in self._chart_cursors:
+            invalid("INVALID_FORMAT")
+        revision, mode, index = self._chart_cursors[cursor]
+        if revision != self._chart_revision(mode):
+            invalid("OUT_OF_RANGE")
+        return {"block": self._chart_page(mode, index=index), "time_zone": str(self.zone)}
 
     def periods(self, period: str = "month") -> dict:
-        return Analytics(self.ledger, self.now).periods(period)
+        out = Analytics(self.ledger, self.now).periods(period)
+        if out['periods']:
+            out['time_zone'] = str(self.zone)
+        return out

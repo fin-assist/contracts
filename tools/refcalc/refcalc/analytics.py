@@ -83,7 +83,9 @@ def parse_key(key: str) -> dt.date:
 
 
 class Analytics:
-    def __init__(self, ledger: Ledger, now: dt.datetime):
+    def __init__(self, ledger: Ledger, now: dt.datetime, chart_page=None, regular_limit=3):
+        self.regular_limit = regular_limit
+        self.chart_page = chart_page
         self.ledger = ledger
         self.zone = ledger.zone
         self.now = now
@@ -100,7 +102,7 @@ class Analytics:
         return self.cov.empty or (self.today - self.cov.last).days > STALE_DAYS
 
     def data_to(self, start: dt.date, end: dt.date) -> Optional[str]:
-        """Time of the last operation inside the period if it is on the last covered day, else 23:59:59 of that day."""
+        """Last operation on the last covered day, otherwise that day's last real second."""
         b = self.cov.bounds(start, end)
         if b is None:
             return None
@@ -156,13 +158,14 @@ class Analytics:
         ctx = Ctx(self, ptype, start, end, key, mode, scope, V, ops, period)
         supported = parse_supports(supports)
         blocks = ctx.tiles_block(2 if supported is not None and supported.get("tile_group", 0) >= 2 else 1)
-        chart = ctx.monthly_chart()
-        blocks = [blocks] + ([chart] if chart else []) + [ctx.expense_categories(), ctx.income_categories()]
+        selected_points = ctx.selected_points()
+        chart = ctx.monthly_chart(selected_points)
+        blocks = [blocks, chart, ctx.expense_categories(), ctx.income_categories()]
         if ptype == "month":
             blocks += [{"type": "heading", "v": 1, "data": {"text": "Регулярные платежи и заметные траты"}},
                        ctx.regular_payments(), *ctx.notable_spending(), ctx.bank_fees(), ctx.small_frequent()]
         if ptype != "year" and ptype not in SINGLETONS:
-            blocks.append(ctx.balance(chart))
+            blocks.append(ctx.balance())
         if supported is not None:
             blocks = [block for block in blocks if block["v"] <= supported.get(block["type"], 0)]
         unread = sum(1 for _, line in self.ledger.open_unread()
@@ -236,7 +239,8 @@ class Ctx:
         tiles.append(expense)
         n = max(1, self.cov.count_days(self.start, min(self.end, self.today + dt.timedelta(days=1))))
         tiles.append({"id": "daily_expense", "title": "Расходы в день", "status": "ready", **value(tdiv(self.E, n)),
-                      "caption": "сравнение"})
+                      "caption": "сравнение",
+                      "help_text": "Средние расходы по покрытым дням не позже сегодня; пропуски не учитываются"})
         tiles.append({"id": "income", "title": "Доходы", "status": "ready", **value(self.I), "show_plus": True,
                       "action": self.open(self.filt(kind="income"))})
         if self.period["is_current"] and not self.a.stale():
@@ -247,7 +251,6 @@ class Ctx:
             by_id["expense"]["title"] = "Расходы за период"
             by_id["income"]["title"] = "Доходы за период"
             by_id["daily_expense"]["title"] = "Средние расходы в день"
-            by_id["daily_expense"]["caption"] = "По дням с данными не позже сегодня; пропуски не учитываются"
             data = {"groups": [{"tiles": [by_id[key] for key in ("expense", "income", "balance")]},
                                {"title": "Дополнительные показатели", "tiles": [by_id[key] for key in
                                 ("daily_expense", "forecast") if key in by_id]}]}
@@ -255,7 +258,11 @@ class Ctx:
                 "data": data}
 
     def forecast(self) -> dict:
-        t = {"id": "forecast", "title": "Прогноз расходов"}
+        t = {"id": "forecast", "title": "Прогноз расходов на год" if self.ptype == "year" else "Прогноз расходов"}
+        if self.ptype == "year":
+            t["help_text"] = ("Это оценка расходов за весь год. К расходам с начала года добавляем прогноз на оставшиеся дни "
+                              "по средним дневным расходам за последние 12 полных месяцев загруженной истории.")
+        caption = f"К концу {self.start.year} года" if self.ptype == "year" else "к концу периода"
         D = self.bounds[1] if self.bounds else None
         if self.ptype == "month":
             if self.today.day < FORECAST_FROM_DAY:
@@ -269,15 +276,17 @@ class Ctx:
         full = sorted(self.cov.full_months(), reverse=True)
         if len(full) < required:
             locked = lock("need_full_months", required, len(full))
-            locked["text"] = self.forecast_basis_text(required, full)
-            return {**t, "status": "locked", "lock": locked}
+            months = "месяца" if required == 3 else "месяцев"
+            locked["text"] = f"Нужно {required} полных {months}, есть {len(full)}"
+            t["help_text"] = " ".join(filter(None, (t.get("help_text"), self.forecast_basis_text(required, full))))
+            return {**t, "status": "locked", "lock": locked, "caption": caption}
         base = full[:required]
         e_base = sum(self.scope.expense(self.scope.in_days(self.V, m, add_months(m, 1))) for m in base)
         d_base = sum((add_months(m, 1) - m).days for m in base)
         rem_from = D + dt.timedelta(days=1) if D else self.start
         R = max(0, (self.end - rem_from).days)
         return {**t, "status": "ready", **value(self.E + round_half_up(Fraction(e_base * R, d_base))), "approx": True,
-                "caption": "к концу периода"}
+                "caption": caption}
 
     def forecast_basis_text(self, required: int, full: list) -> str:
         """Explain union coverage without inferring continuity from its endpoints."""
@@ -394,13 +403,8 @@ class Ctx:
             notes.append({"text": "обычно", "tone": "muted"})
         return notes
 
-    def monthly_chart(self) -> Optional[dict]:
-        with_data = self.cov.months_with_data()
-        if self.ptype not in SINGLETONS and len(with_data) == 1 and not self.cov.full_month(with_data[0]):
-            return None  # early state: no block (spec section 4)
-        base = {"id": "monthly_chart", "type": "chart", "v": 1, "title": "Расходы по месяцам", "alt_text": "график"}
-        if self.ptype not in SINGLETONS and len(with_data) < 2:
-            return {**base, "status": "locked", "lock": lock("need_months_with_data", 2, len(with_data))}
+    def selected_points(self) -> list:
+        """Selected-period slices for visible notes, without a history-length gate."""
         points = []
         for m in self.chart_months():
             e = add_months(m, 1)
@@ -412,14 +416,25 @@ class Ctx:
             if has:
                 point["action"] = {"type": "select_analytics_period", "period": "month", "date": month_key(m)}
             points.append(point)
-        data = {"kind": "bar", "value_kind": "amount", "points": points, "notes": self.chart_notes(points)}
-        if self.highlight() is not None:
-            data["highlight_index"] = self.highlight()
-        return {**base, "status": "ready", "data": data}
+        return points
 
-    def balance(self, chart: Optional[dict]) -> dict:
+    def monthly_chart(self, selected: list) -> dict:
+        """Navigate whole calendar history while notes keep the selected-period facts."""
+        block = self.a.chart_page(self.month if self.ptype == "month" else None)
+        data = block["data"]
+        points = data["points"]
+        notes = self.chart_notes(selected)
+        data["notes"] = [{**note, "text": f"За выбранный период {self.key}: {note['text']}"} for note in notes]
+        if self.ptype == "month":
+            highlight = next((i for i, p in enumerate(points)
+                             if p["range"]["from"] == self.a.at(self.month)), None)
+            if highlight is not None:
+                data["highlight_index"] = highlight
+        return block
+
+    def balance(self) -> dict:
         points = []
-        if chart and chart.get("status") == "ready":
+        if len(self.cov.months_with_data()) >= 2:
             for m in self.chart_months():
                 e = add_months(m, 1)
                 ms = self.scope.in_days(self.V, m, e)
@@ -427,11 +442,11 @@ class Ctx:
                 val = (inc - exp) / inc if self.cov.has_data_month(m) and inc > 0 else None
                 points.append(self.point(m, val))
         data = {"kind": "bar", "value_kind": "percent", "points": points, "show_values": True,
-                "summary": value(self.I - self.E), "caption": "пояснение"}
+                "summary": value(self.I - self.E)}
         if points and self.highlight() is not None:
             data["highlight_index"] = self.highlight()
         return {"id": "balance", "type": "chart", "v": 1, "status": "ready", "title": "Доходы минус расходы",
-                "alt_text": "разница", "data": data}
+                "alt_text": "разница", "help_text": "пояснение", "data": data}
 
     # ---- categories ----
 
@@ -519,16 +534,16 @@ class Ctx:
         if not payments:
             return self.card("regular_payments", "none", data, empty_text="Регулярных платежей не нашли")
         payments.sort(key=lambda p: (-p[1], p[0]))
-        names = {p[0] for p in payments}
         all_sel = selection_id("regular_all", self.key, self.mode)
-        self.a.ledger.selections[all_sel] = lambda o, names=names: o.is_debit and o.name in names
+        # The source search resolves recognition/assignments live, not names frozen by presentation.
+        self.a.ledger.selections[all_sel] = ("regular_all", self.key, self.mode)
         rows = [{"title": n, "sublabel": "число", **value(med),
                  "action": self.open(self.filt(selection=selection_id("regular", n), selection_name=n)),
                  "button": {"type": "dismiss_regular_payment", "payment_id": stable_id("payment", n),
-                            "label": "Не подписка"}} for n, med in payments[:3]]
+                            "label": "Не подписка"}} for n, med in payments[:self.a.regular_limit]]
         data.update({**value(sum(p[1] for p in payments)), "description": "в месяц", "items": rows})
-        if len(payments) > 3:
-            data["items_more"] = {"label": f"Ещё {len(payments) - 3}", **value(sum(p[1] for p in payments[3:]))}
+        if self.a.regular_limit is not None and len(payments) > self.a.regular_limit:
+            data["items_more"] = {"label": f"Ещё {len(payments) - self.a.regular_limit}", **value(sum(p[1] for p in payments[self.a.regular_limit:]))}
         if len(B) == 2:
             data["badge"] = "предварительно"
         return self.card("regular_payments", "tentative" if len(B) == 2 else "ready", data,

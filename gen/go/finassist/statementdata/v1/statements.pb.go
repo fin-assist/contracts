@@ -422,9 +422,16 @@ func (UnreadReason) EnumDescriptor() ([]byte, []int) {
 	return file_finassist_statementdata_v1_statements_proto_rawDescGZIP(), []int{6}
 }
 
-// Пустой запрос; пользователь — из токена.
+// Пользователь — из токена. Без обеих дат используется рекомендуемый период.
 type GetImportConfigRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Начальный календарный день YYYY-MM-DD в поясе профиля, включительно.
+	// Только вместе с period_to; календарная дата и момент начала дня должны быть представимы.
+	PeriodFrom *string `protobuf:"bytes,1,opt,name=period_from,json=periodFrom,proto3,oneof" json:"period_from,omitempty"`
+	// Конечный календарный день YYYY-MM-DD в поясе профиля, включительно.
+	// Не раньше period_from и не позже сегодня; начало следующего дня должно быть представимо.
+	// Нарушение — VALIDATION_ERROR; точные поля/code и правила — api.md3.1.
+	PeriodTo      *string `protobuf:"bytes,2,opt,name=period_to,json=periodTo,proto3,oneof" json:"period_to,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -459,6 +466,20 @@ func (*GetImportConfigRequest) Descriptor() ([]byte, []int) {
 	return file_finassist_statementdata_v1_statements_proto_rawDescGZIP(), []int{0}
 }
 
+func (x *GetImportConfigRequest) GetPeriodFrom() string {
+	if x != nil && x.PeriodFrom != nil {
+		return *x.PeriodFrom
+	}
+	return ""
+}
+
+func (x *GetImportConfigRequest) GetPeriodTo() string {
+	if x != nil && x.PeriodTo != nil {
+		return *x.PeriodTo
+	}
+	return ""
+}
+
 // Параметры импорта выписки: ссылки, лимиты, рекомендуемый период, что уже загружено.
 type GetImportConfigResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -470,7 +491,8 @@ type GetImportConfigResponse struct {
 	MaxFileSizeBytes int64 `protobuf:"varint,3,opt,name=max_file_size_bytes,json=maxFileSizeBytes,proto3" json:"max_file_size_bytes,omitempty"`
 	// Принимаемые форматы файлов («OFX»).
 	AcceptedFormats []string `protobuf:"bytes,4,rep,name=accepted_formats,json=acceptedFormats,proto3" json:"accepted_formats,omitempty"`
-	// 12 месяцев назад для первой загрузки, от начала дня последней операции — для повторной.
+	// Точный период ссылки: запрошенные календарные дни, иначе 12 месяцев назад для первой
+	// загрузки / от начала дня последней операции для повторной; to — исключительная граница.
 	SuggestedPeriod *v1.TimeRange `protobuf:"bytes,5,opt,name=suggested_period,json=suggestedPeriod,proto3" json:"suggested_period,omitempty"`
 	// Что уже загружено; отсутствует — загрузок ещё не было.
 	Loaded        *LoadedSummary `protobuf:"bytes,6,opt,name=loaded,proto3,oneof" json:"loaded,omitempty"`
@@ -1545,8 +1567,8 @@ type IncompleteMonth struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Month string                 `protobuf:"bytes,1,opt,name=month,proto3" json:"month,omitempty"`
 	Range *v1.TimeRange          `protobuf:"bytes,2,opt,name=range,proto3" json:"range,omitempty"`
-	// Границы покрытых дней месяца, как DataBounds: 00:00 первого покрытого дня и время последней
-	// операции в последний покрытый день или 23:59:59 этого дня.
+	// Границы покрытых дней месяца, как DataBounds: первый существующий момент первого дня и время последней
+	// операции в последний покрытый день или последняя существующая секунда этого дня.
 	DataFrom *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=data_from,json=dataFrom,proto3" json:"data_from,omitempty"`
 	DataTo   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=data_to,json=dataTo,proto3" json:"data_to,omitempty"`
 	// Дни без данных ни в одном файле.
@@ -2284,8 +2306,14 @@ var File_finassist_statementdata_v1_statements_proto protoreflect.FileDescriptor
 
 const file_finassist_statementdata_v1_statements_proto_rawDesc = "" +
 	"\n" +
-	"+finassist/statementdata/v1/statements.proto\x12\x1afinassist.statementdata.v1\x1a finassist/common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17google/rpc/status.proto\"\x18\n" +
-	"\x16GetImportConfigRequest\"\xee\x02\n" +
+	"+finassist/statementdata/v1/statements.proto\x12\x1afinassist.statementdata.v1\x1a finassist/common/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17google/rpc/status.proto\"~\n" +
+	"\x16GetImportConfigRequest\x12$\n" +
+	"\vperiod_from\x18\x01 \x01(\tH\x00R\n" +
+	"periodFrom\x88\x01\x01\x12 \n" +
+	"\tperiod_to\x18\x02 \x01(\tH\x01R\bperiodTo\x88\x01\x01B\x0e\n" +
+	"\f_period_fromB\f\n" +
+	"\n" +
+	"_period_to\"\xee\x02\n" +
 	"\x17GetImportConfigResponse\x12!\n" +
 	"\fdownload_url\x18\x01 \x01(\tR\vdownloadUrl\x12\x1b\n" +
 	"\tlogin_url\x18\x02 \x01(\tR\bloginUrl\x12-\n" +
@@ -2593,6 +2621,7 @@ func file_finassist_statementdata_v1_statements_proto_init() {
 	if File_finassist_statementdata_v1_statements_proto != nil {
 		return
 	}
+	file_finassist_statementdata_v1_statements_proto_msgTypes[0].OneofWrappers = []any{}
 	file_finassist_statementdata_v1_statements_proto_msgTypes[1].OneofWrappers = []any{}
 	file_finassist_statementdata_v1_statements_proto_msgTypes[4].OneofWrappers = []any{}
 	file_finassist_statementdata_v1_statements_proto_msgTypes[6].OneofWrappers = []any{}

@@ -1,0 +1,91 @@
+{
+  "time_zone": "Europe/Moscow",
+  "operation_count": 0,
+  "new_count": 0,
+  "duplicate_count": 0,
+  "unread_count": 0,
+  "first_operation_at": null,
+  "last_operation_at": null,
+  "is_first_import": true,
+  "currency": "RUB",
+  "accounts": [
+    {
+      "type_name": "<ignored>",
+      "mask": "··1111",
+      "is_other_bank": false
+    }
+  ],
+  "categorized_count": 0,
+  "own_transfer_count": 0,
+  "uncategorized_count": 0,
+  "coverage": {
+    "full_months": 0,
+    "full_months_before": 0,
+    "newly_full_months": [],
+    "incomplete_months": [],
+    "features": [
+      {
+        "feature": "comparison",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 1,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "monthly_chart",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_months_with_data": 1,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "typical",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 2,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "regular_payments",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 2,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "notable_spending",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 3,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "small_frequent",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 1,
+        "text": "<ignored>"
+      },
+      {
+        "feature": "year_forecast",
+        "feature_name": "<ignored>",
+        "open": false,
+        "opened_now": false,
+        "required_full_months": 12,
+        "text": "<ignored>"
+      }
+    ]
+  },
+  "notices": [
+    {
+      "code": "empty_statement",
+      "text": "<ignored>"
+    }
+  ]
+}

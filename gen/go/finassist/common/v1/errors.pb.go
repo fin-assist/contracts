@@ -81,6 +81,9 @@ const (
 	ErrorReason_CATEGORY_NOT_ASSIGNABLE ErrorReason = 18
 	// Повтор ответа помощника недоступен.
 	ErrorReason_RETRY_NOT_ALLOWED ErrorReason = 19
+	// Присваивание сохранено, но запрошенный контекст аналитики больше недоступен.
+	// Только ApplyRegularPaymentDismissal; RequestRetryInfo явно запрещает повтор в том же контексте.
+	ErrorReason_ANALYTICS_CONTEXT_UNAVAILABLE ErrorReason = 25
 	// Превышен лимит запросов; retry_at (RFC 3339) — когда можно повторить.
 	ErrorReason_RATE_LIMITED ErrorReason = 20
 	// Внутренняя ошибка. Сервисы обычно возвращают её голым INTERNAL / UNAVAILABLE /
@@ -110,31 +113,33 @@ var (
 		17: "SELECTION_NOT_FOUND",
 		18: "CATEGORY_NOT_ASSIGNABLE",
 		19: "RETRY_NOT_ALLOWED",
+		25: "ANALYTICS_CONTEXT_UNAVAILABLE",
 		20: "RATE_LIMITED",
 		21: "INTERNAL_ERROR",
 	}
 	ErrorReason_value = map[string]int32{
-		"ERROR_REASON_UNSPECIFIED": 0,
-		"VALIDATION_ERROR":         1,
-		"INVALID_TOKEN":            3,
-		"TOKEN_EXPIRED":            4,
-		"TOKEN_REVOKED":            5,
-		"CONSENT_REQUIRED":         6,
-		"LIMIT_EXCEEDED":           7,
-		"NOT_FOUND":                8,
-		"IDEMPOTENCY_CONFLICT":     9,
-		"REQUEST_IN_PROGRESS":      10,
-		"FILE_TOO_LARGE":           11,
-		"WRONG_FORMAT":             12,
-		"CSV_NOT_ACCEPTED":         13,
-		"WRONG_BANK":               14,
-		"CONSENT_OUTDATED":         15,
-		"TOO_MANY_RESULTS":         16,
-		"SELECTION_NOT_FOUND":      17,
-		"CATEGORY_NOT_ASSIGNABLE":  18,
-		"RETRY_NOT_ALLOWED":        19,
-		"RATE_LIMITED":             20,
-		"INTERNAL_ERROR":           21,
+		"ERROR_REASON_UNSPECIFIED":      0,
+		"VALIDATION_ERROR":              1,
+		"INVALID_TOKEN":                 3,
+		"TOKEN_EXPIRED":                 4,
+		"TOKEN_REVOKED":                 5,
+		"CONSENT_REQUIRED":              6,
+		"LIMIT_EXCEEDED":                7,
+		"NOT_FOUND":                     8,
+		"IDEMPOTENCY_CONFLICT":          9,
+		"REQUEST_IN_PROGRESS":           10,
+		"FILE_TOO_LARGE":                11,
+		"WRONG_FORMAT":                  12,
+		"CSV_NOT_ACCEPTED":              13,
+		"WRONG_BANK":                    14,
+		"CONSENT_OUTDATED":              15,
+		"TOO_MANY_RESULTS":              16,
+		"SELECTION_NOT_FOUND":           17,
+		"CATEGORY_NOT_ASSIGNABLE":       18,
+		"RETRY_NOT_ALLOWED":             19,
+		"ANALYTICS_CONTEXT_UNAVAILABLE": 25,
+		"RATE_LIMITED":                  20,
+		"INTERNAL_ERROR":                21,
 	}
 )
 
@@ -169,7 +174,7 @@ var File_finassist_common_v1_errors_proto protoreflect.FileDescriptor
 
 const file_finassist_common_v1_errors_proto_rawDesc = "" +
 	"\n" +
-	" finassist/common/v1/errors.proto\x12\x13finassist.common.v1\x1a'finassist/common/v1/error_options.proto*\xaf\x06\n" +
+	" finassist/common/v1/errors.proto\x12\x13finassist.common.v1\x1a'finassist/common/v1/error_options.proto*\xdd\x06\n" +
 	"\vErrorReason\x12\x1c\n" +
 	"\x18ERROR_REASON_UNSPECIFIED\x10\x00\x12\"\n" +
 	"\x10VALIDATION_ERROR\x10\x01\x1a\f\xa2\xbb\x18\b\b\x03\x10\x90\x03\"\x01\x01\x12\x1c\n" +
@@ -192,7 +197,8 @@ const file_finassist_common_v1_errors_proto_rawDesc = "" +
 	"\x10TOO_MANY_RESULTS\x10\x10\x1a\t\xa2\xbb\x18\x05\b\t\x10\xa6\x03\x12\"\n" +
 	"\x13SELECTION_NOT_FOUND\x10\x11\x1a\t\xa2\xbb\x18\x05\b\t\x10\xa6\x03\x12&\n" +
 	"\x17CATEGORY_NOT_ASSIGNABLE\x10\x12\x1a\t\xa2\xbb\x18\x05\b\t\x10\xa6\x03\x12 \n" +
-	"\x11RETRY_NOT_ALLOWED\x10\x13\x1a\t\xa2\xbb\x18\x05\b\t\x10\xa6\x03\x12(\n" +
+	"\x11RETRY_NOT_ALLOWED\x10\x13\x1a\t\xa2\xbb\x18\x05\b\t\x10\xa6\x03\x12,\n" +
+	"\x1dANALYTICS_CONTEXT_UNAVAILABLE\x10\x19\x1a\t\xa2\xbb\x18\x05\b\t\x10\xa6\x03\x12(\n" +
 	"\fRATE_LIMITED\x10\x14\x1a\x16\xa2\xbb\x18\x12\b\b\x10\xad\x03\x1a\bretry_at\"\x01\x02\x12\x1d\n" +
 	"\x0eINTERNAL_ERROR\x10\x15\x1a\t\xa2\xbb\x18\x05\b\r\x10\xf4\x03\"\x04\b\x02\x10\x02\"\x04\b\x16\x10\x16\"\x04\b\x17\x10\x17\"\x04\b\x18\x10\x18*\rINVALID_PHONE*\vMAINTENANCE*\x1aCLIENT_VERSION_UNSUPPORTED*\x12CALLER_NOT_ALLOWEDBEZCgithub.com/fin-assist/contracts/gen/go/finassist/common/v1;commonv1b\x06proto3"
 

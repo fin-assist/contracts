@@ -43,6 +43,13 @@ class Runner:
         url = urlsplit(request)
         q = dict(parse_qsl(url.query))
         b = self.backend
+        if url.path == "/v1/statements/config":
+            pairs = parse_qsl(url.query, keep_blank_values=True)
+            dates = dict(pairs)
+            for field in ("period_from", "period_to"):
+                if sum(key == field for key, _ in pairs) > 1:
+                    raise ApiError(400, "VALIDATION_ERROR", [{"field": field, "code": "INVALID_FORMAT"}])
+            return b.import_config(dates.get("period_from"), dates.get("period_to"))
         if url.path == "/v1/operations":
             if not q or set(q) == {"before"}:
                 return b.feed(q.get("before"))
@@ -53,6 +60,14 @@ class Runner:
             return b.categories()
         if url.path == "/v1/analytics":
             return b.analytics(q.get("period", "month"), q.get("date"), q.get("transfer_mode", "with"), q.get("supports"))
+        if url.path == "/v1/analytics/charts/monthly_chart":
+            for key, _ in parse_qsl(url.query, keep_blank_values=True):
+                if key != "cursor":
+                    raise ApiError(400, "VALIDATION_ERROR", [{"field": key, "code": "INVALID_FORMAT"}])
+            cursors = [v for k, v in parse_qsl(url.query, keep_blank_values=True) if k == "cursor"]
+            if len(cursors) > 1:
+                raise ApiError(400, "VALIDATION_ERROR", [{"field": "cursor", "code": "INVALID_FORMAT"}])
+            return b.chart_page(cursors[0] if cursors else None)
         if url.path == "/v1/analytics/periods":
             return b.periods(q.get("period", "month"))
         raise ValueError(f"unknown request {request}")
@@ -78,6 +93,8 @@ class Runner:
                         resp = self.backend.upload(os.path.basename(step["file"]), f.read())
                 elif do == "get":
                     request = step.get("request")
+                    if "cursor_from" in step:
+                        request = "GET /v1/analytics/charts/monthly_chart?" + urlencode({"cursor": self.resolve(step["cursor_from"])})
                     if "filter_from" in step:
                         f = filter_query(self.resolve(step["filter_from"]))
                         request = "GET /v1/operations?" + urlencode(f)
@@ -85,12 +102,20 @@ class Runner:
                 elif do == "change_category":
                     resp = self.backend.change_category(step["operation"]["account"], step["operation"]["fitid"],
                                                         step["category_id"])
-                elif do == "dismiss_regular_payment":
+                elif do in ("dismiss_regular_payment", "restore_regular_payment"):
                     # As an implementation does it: the payment_id of the row with this title in the card.
                     screen = self.get(step["request"].split(" ", 1)[1])
                     card = next(b for b in screen["blocks"] if b.get("id") == "regular_payments")
                     row = next(r for r in card["data"]["items"] if r["title"] == step["title"])
-                    self.backend.dismiss(row["button"]["payment_id"])
+                    resp = self.backend.dismiss(row["button"]["payment_id"], do == "dismiss_regular_payment",
+                                                step.get("marker_ack", True), step.get("defer_calculation", False),
+                                                screen["params"]["date"], screen["params"]["transfer_mode"])
+                elif do == "ack_recalculation":
+                    self.backend.recalculation.ack_marker(self.resolve(step["version_from"]))
+                    resp = None
+                elif do == "finish_recalculation":
+                    self.backend.recalculation.start()
+                    self.backend.recalculation.finish()
                     resp = None
                 elif do == "delete_upload":
                     self.backend.delete_upload(os.path.basename(step["file"]))

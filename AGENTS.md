@@ -344,4 +344,30 @@ tile_group@2 sections. REST keeps tile_group@1 when supports is absent or its ma
 include both versions and all_time; schema/coverage choose block data by type and version. Consumers are
 FIN-398/400/403; backend consumers wait for merge and an owner-created immutable gen/go tag.
 
-FIN-413 adds singleton rolling_year/rolling_quarter and optional MonthlyPoint.calculation_range for exact edge slices. Keep month/range calendar identity separate from the calculation interval; compose REST point.range from calculation_range and navigate by month. FIN-411 owns runtime/Android/mock after merge and an owner-created gen/go tag. Reference tests/fixtures cover clamps, coverage anchors, short history and gaps; docs/calc.md12 and docs/grpc-api.md define rollout.
+FIN-413 adds singleton rolling_year/rolling_quarter and optional MonthlyPoint.calculation_range for exact edge slices. Keep month/range calendar identity separate from the calculation interval; use calculation_range for selected facts/notes; FIN-418 navigation uses full calendar points. FIN-411 owns runtime/Android/mock after merge and an owner-created gen/go tag. Reference tests/fixtures cover clamps, coverage anchors, short history and gaps; docs/calc.md12 and docs/grpc-api.md define rollout.
+
+
+FIN-418: `monthly_chart` версии 1 открывает всю историю во всех вкладках страницами по 60 месяцев (api.md6.4);
+факты выбранного периода и календарный balance не меняются. Block/Tile.help_text — вспомогательные пояснения;
+GET /v1/statements/config принимает необязательную пару включительных календарных дат. api.md3.1/FIN-418,
+GetChartPage и page.revision ограничивают выдачу, сохраняют tenant/revision-согласованность;
+calc.md13 и grpc-api.md определяют правила и согласованный rollout альфы (FIN-416), без новой версии chart.
+После merge владелец выпускает новый gen/go-тег до зависимых сервисных PR; merge/тег здесь не выполняются.
+
+FIN-418 PUT dismissal меняет 204→200 и требует показанный month/date+transfer_mode: полный AnalyticsBlockUpdate
+с required_calc_version. BFF → assignment в BSD/надёжная доставкаtrue → analytics.ApplyRegularPaymentDismissal
+из СОБСТВЕННОЙ БД (overlay над целым regular metric), без BSDlive-read. GET/фоновыйfalse сохраняют общий расчёт;
+клиент сразу заменяет полученные блоки, остальные готовые данные сохраняет до подтверждённой полной версии.
+DELETE остаётся прежним 204, восстановление UI/candidate pipeline не расширяется. Требование полного ответа
+не отменялось: прежняя трактовка receipt-only исключена. Temporal отдельно FIN-419. REST breaking принимает
+владелец меткой breaking-accepted; merge/tag здесь не выполняются. Правила: api.md 6.3/grpc-api.md FIN-418.
+
+FIN-418 time_zone: шесть REST-ответов с календарным контекстом передают фактический IANA-пояс источника
+(api.md «Пояс календарных данных ответа»), а не копию профиля клиента. GetChartPageResponse.time_zone2;
+остальные поля уже были в gRPC. Проверять подписи/кэш по response time_zone, включая исторический UTC.
+
+FIN-418 error edge: ANALYTICS_CONTEXT_UNAVAILABLE is an additive registry reason25 (FAILED_PRECONDITION/422),
+only after confirmed BSD assignment; explicit saved-change user_message and retryable=false, one context refresh.
+Malformed query remains400 before assignment; transient Apply failure remains500. Unsupported device tzdb always
+shows a notice, also over a stale verified cache, until a checked supported response. Historical data_to uses
+the last real second (later fold); no invented instant for a skipped day. See api.md6.3 and calendar notation.

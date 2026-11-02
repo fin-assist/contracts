@@ -45,26 +45,27 @@ type Spec struct {
 
 // specs is the registry by ErrorInfo.reason — the REST translation table of bank-bff.
 var specs = map[string]Spec{
-	"VALIDATION_ERROR":        {Reason: commonv1.ErrorReason_VALIDATION_ERROR, GRPCCode: codes.InvalidArgument, HTTPStatus: 400, MetadataKeys: nil, BadRequest: true, RetryInfo: false},
-	"INVALID_TOKEN":           {Reason: commonv1.ErrorReason_INVALID_TOKEN, GRPCCode: codes.Unauthenticated, HTTPStatus: 401, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"TOKEN_EXPIRED":           {Reason: commonv1.ErrorReason_TOKEN_EXPIRED, GRPCCode: codes.Unauthenticated, HTTPStatus: 401, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"TOKEN_REVOKED":           {Reason: commonv1.ErrorReason_TOKEN_REVOKED, GRPCCode: codes.Unauthenticated, HTTPStatus: 401, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"CONSENT_REQUIRED":        {Reason: commonv1.ErrorReason_CONSENT_REQUIRED, GRPCCode: codes.PermissionDenied, HTTPStatus: 403, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"LIMIT_EXCEEDED":          {Reason: commonv1.ErrorReason_LIMIT_EXCEEDED, GRPCCode: codes.ResourceExhausted, HTTPStatus: 403, MetadataKeys: []string{"resets_at"}, BadRequest: false, RetryInfo: false},
-	"NOT_FOUND":               {Reason: commonv1.ErrorReason_NOT_FOUND, GRPCCode: codes.NotFound, HTTPStatus: 404, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"IDEMPOTENCY_CONFLICT":    {Reason: commonv1.ErrorReason_IDEMPOTENCY_CONFLICT, GRPCCode: codes.AlreadyExists, HTTPStatus: 409, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"REQUEST_IN_PROGRESS":     {Reason: commonv1.ErrorReason_REQUEST_IN_PROGRESS, GRPCCode: codes.Aborted, HTTPStatus: 409, MetadataKeys: nil, BadRequest: false, RetryInfo: true},
-	"FILE_TOO_LARGE":          {Reason: commonv1.ErrorReason_FILE_TOO_LARGE, GRPCCode: codes.OutOfRange, HTTPStatus: 413, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"WRONG_FORMAT":            {Reason: commonv1.ErrorReason_WRONG_FORMAT, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"CSV_NOT_ACCEPTED":        {Reason: commonv1.ErrorReason_CSV_NOT_ACCEPTED, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"WRONG_BANK":              {Reason: commonv1.ErrorReason_WRONG_BANK, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"CONSENT_OUTDATED":        {Reason: commonv1.ErrorReason_CONSENT_OUTDATED, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"TOO_MANY_RESULTS":        {Reason: commonv1.ErrorReason_TOO_MANY_RESULTS, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"SELECTION_NOT_FOUND":     {Reason: commonv1.ErrorReason_SELECTION_NOT_FOUND, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"CATEGORY_NOT_ASSIGNABLE": {Reason: commonv1.ErrorReason_CATEGORY_NOT_ASSIGNABLE, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"RETRY_NOT_ALLOWED":       {Reason: commonv1.ErrorReason_RETRY_NOT_ALLOWED, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
-	"RATE_LIMITED":            {Reason: commonv1.ErrorReason_RATE_LIMITED, GRPCCode: codes.ResourceExhausted, HTTPStatus: 429, MetadataKeys: []string{"retry_at"}, BadRequest: false, RetryInfo: true},
-	"INTERNAL_ERROR":          {Reason: commonv1.ErrorReason_INTERNAL_ERROR, GRPCCode: codes.Internal, HTTPStatus: 500, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"VALIDATION_ERROR":              {Reason: commonv1.ErrorReason_VALIDATION_ERROR, GRPCCode: codes.InvalidArgument, HTTPStatus: 400, MetadataKeys: nil, BadRequest: true, RetryInfo: false},
+	"INVALID_TOKEN":                 {Reason: commonv1.ErrorReason_INVALID_TOKEN, GRPCCode: codes.Unauthenticated, HTTPStatus: 401, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"TOKEN_EXPIRED":                 {Reason: commonv1.ErrorReason_TOKEN_EXPIRED, GRPCCode: codes.Unauthenticated, HTTPStatus: 401, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"TOKEN_REVOKED":                 {Reason: commonv1.ErrorReason_TOKEN_REVOKED, GRPCCode: codes.Unauthenticated, HTTPStatus: 401, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"CONSENT_REQUIRED":              {Reason: commonv1.ErrorReason_CONSENT_REQUIRED, GRPCCode: codes.PermissionDenied, HTTPStatus: 403, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"LIMIT_EXCEEDED":                {Reason: commonv1.ErrorReason_LIMIT_EXCEEDED, GRPCCode: codes.ResourceExhausted, HTTPStatus: 403, MetadataKeys: []string{"resets_at"}, BadRequest: false, RetryInfo: false},
+	"NOT_FOUND":                     {Reason: commonv1.ErrorReason_NOT_FOUND, GRPCCode: codes.NotFound, HTTPStatus: 404, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"IDEMPOTENCY_CONFLICT":          {Reason: commonv1.ErrorReason_IDEMPOTENCY_CONFLICT, GRPCCode: codes.AlreadyExists, HTTPStatus: 409, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"REQUEST_IN_PROGRESS":           {Reason: commonv1.ErrorReason_REQUEST_IN_PROGRESS, GRPCCode: codes.Aborted, HTTPStatus: 409, MetadataKeys: nil, BadRequest: false, RetryInfo: true},
+	"FILE_TOO_LARGE":                {Reason: commonv1.ErrorReason_FILE_TOO_LARGE, GRPCCode: codes.OutOfRange, HTTPStatus: 413, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"WRONG_FORMAT":                  {Reason: commonv1.ErrorReason_WRONG_FORMAT, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"CSV_NOT_ACCEPTED":              {Reason: commonv1.ErrorReason_CSV_NOT_ACCEPTED, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"WRONG_BANK":                    {Reason: commonv1.ErrorReason_WRONG_BANK, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"CONSENT_OUTDATED":              {Reason: commonv1.ErrorReason_CONSENT_OUTDATED, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"TOO_MANY_RESULTS":              {Reason: commonv1.ErrorReason_TOO_MANY_RESULTS, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"SELECTION_NOT_FOUND":           {Reason: commonv1.ErrorReason_SELECTION_NOT_FOUND, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"CATEGORY_NOT_ASSIGNABLE":       {Reason: commonv1.ErrorReason_CATEGORY_NOT_ASSIGNABLE, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"RETRY_NOT_ALLOWED":             {Reason: commonv1.ErrorReason_RETRY_NOT_ALLOWED, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"ANALYTICS_CONTEXT_UNAVAILABLE": {Reason: commonv1.ErrorReason_ANALYTICS_CONTEXT_UNAVAILABLE, GRPCCode: codes.FailedPrecondition, HTTPStatus: 422, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
+	"RATE_LIMITED":                  {Reason: commonv1.ErrorReason_RATE_LIMITED, GRPCCode: codes.ResourceExhausted, HTTPStatus: 429, MetadataKeys: []string{"retry_at"}, BadRequest: false, RetryInfo: true},
+	"INTERNAL_ERROR":                {Reason: commonv1.ErrorReason_INTERNAL_ERROR, GRPCCode: codes.Internal, HTTPStatus: 500, MetadataKeys: nil, BadRequest: false, RetryInfo: false},
 }
 
 // ValidationError returns VALIDATION_ERROR: Невалидный запрос: все нарушения по полям — в BadRequest (поле, код нарушения), в том числе неверный формат номера телефона (FIN-68).
@@ -155,6 +156,11 @@ func CategoryNotAssignable() error {
 // RetryNotAllowed returns RETRY_NOT_ALLOWED: Повтор ответа помощника недоступен.
 func RetryNotAllowed() error {
 	return build("RETRY_NOT_ALLOWED", codes.FailedPrecondition, nil)
+}
+
+// AnalyticsContextUnavailable returns ANALYTICS_CONTEXT_UNAVAILABLE: Присваивание сохранено, но запрошенный контекст аналитики больше недоступен. Только ApplyRegularPaymentDismissal; RequestRetryInfo явно запрещает повтор в том же контексте.
+func AnalyticsContextUnavailable() error {
+	return build("ANALYTICS_CONTEXT_UNAVAILABLE", codes.FailedPrecondition, nil)
 }
 
 // RateLimited returns RATE_LIMITED: Превышен лимит запросов; retry_at (RFC 3339) — когда можно повторить.

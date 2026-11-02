@@ -95,7 +95,7 @@ class AnalyticsIncrement(unittest.TestCase):
         b.delete_upload("month.ofx")
         b.now = dt.datetime.fromisoformat("2026-11-02T00:05:00+03:00")
         for mode in ("with", "without"):
-            self.assertEqual({"has_data": False}, b.analytics("all_time", mode=mode))
+            self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("all_time", mode=mode))
 
     def test_all_time_has_no_twelve_month_truncation_or_year_ambiguity(self):
         b = self.ledger()
@@ -113,13 +113,13 @@ class AnalyticsIncrement(unittest.TestCase):
         self.assertEqual("2026-10-01T00:00:00+03:00", s["period"]["range"]["from"])
         self.assertEqual(20000, self.tile(s, "expense")["value"])
         b.delete_upload("new.ofx")
-        self.assertEqual({"has_data": False}, b.analytics("all_time"))
+        self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("all_time"))
         self.assertEqual({"periods": []}, b.periods("all_time"))
 
     def test_all_time_empty_statement_does_not_fabricate_zero_fact(self):
         b = self.backend("2026-10-10T12:00:00+03:00")
         b.upload("empty.ofx", spec.stmt("20261001", "20261010", []))
-        self.assertEqual({"has_data": False}, b.analytics("all_time"))
+        self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("all_time"))
 
     def test_all_time_refund_uses_original_accounting(self):
         b = self.backend("2026-10-10T12:00:00+03:00")
@@ -153,7 +153,7 @@ class AnalyticsIncrement(unittest.TestCase):
             self.assertEqual(["expense", "income", "balance"], [t["id"] for t in groups[0]["tiles"]])
             self.assertEqual("Дополнительные показатели", groups[1]["title"])
             self.assertEqual("Средние расходы в день", groups[1]["tiles"][0]["title"])
-            self.assertIn("не позже сегодня", groups[1]["tiles"][0]["caption"])
+            self.assertIn("не позже сегодня", groups[1]["tiles"][0]["help_text"])
             self.assertEqual({t["id"]: t.get("value") for t in old_tiles["data"]["tiles"]},
                              {t["id"]: t.get("value") for g in groups for t in g["tiles"]})
             self.assertNotIn("caption", groups[0])
@@ -165,7 +165,7 @@ class AnalyticsIncrement(unittest.TestCase):
         s = b.analytics("all_time", supports=SUPPORTS)
         daily = self.block(s, "tiles")[0]["data"]["groups"][1]["tiles"][0]
         self.assertEqual(310, daily["value"])
-        self.assertIn("не позже сегодня", daily["caption"])
+        self.assertIn("не позже сегодня", daily["help_text"])
         self.assertEqual("complete", s["period"]["coverage"])
         self.assertEqual("complete", b.periods("all_time")["periods"][0]["coverage"])
 

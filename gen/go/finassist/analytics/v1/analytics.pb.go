@@ -157,6 +157,150 @@ func (LockReason) EnumDescriptor() ([]byte, []int) {
 	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{1}
 }
 
+// Применить подтверждённое BSD исключение к сохранённой проекции регулярных платежей.
+type ApplyRegularPaymentDismissalRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// UUID, уже проверенный BSD для того же пользователя; не описание операции.
+	RegularPaymentId string `protobuf:"bytes,1,opt,name=regular_payment_id,json=regularPaymentId,proto3" json:"regular_payment_id,omitempty"`
+	// Положительный target из DismissRegularPaymentResponse, не от внешнего клиента.
+	CalcVersion int32 `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
+	// Только MONTH, точный YYYY-MM и заданный режим переводов.
+	Params        *v1.AnalyticsParams `protobuf:"bytes,3,opt,name=params,proto3" json:"params,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApplyRegularPaymentDismissalRequest) Reset() {
+	*x = ApplyRegularPaymentDismissalRequest{}
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplyRegularPaymentDismissalRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyRegularPaymentDismissalRequest) ProtoMessage() {}
+
+func (x *ApplyRegularPaymentDismissalRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyRegularPaymentDismissalRequest.ProtoReflect.Descriptor instead.
+func (*ApplyRegularPaymentDismissalRequest) Descriptor() ([]byte, []int) {
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ApplyRegularPaymentDismissalRequest) GetRegularPaymentId() string {
+	if x != nil {
+		return x.RegularPaymentId
+	}
+	return ""
+}
+
+func (x *ApplyRegularPaymentDismissalRequest) GetCalcVersion() int32 {
+	if x != nil {
+		return x.CalcVersion
+	}
+	return 0
+}
+
+func (x *ApplyRegularPaymentDismissalRequest) GetParams() *v1.AnalyticsParams {
+	if x != nil {
+		return x.Params
+	}
+	return nil
+}
+
+// Полное содержимое изменившихся блоков; глобальная готовность расчёта не изменяется.
+type ApplyRegularPaymentDismissalResponse struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Params   *v1.AnalyticsParams    `protobuf:"bytes,1,opt,name=params,proto3" json:"params,omitempty"`
+	Currency string                 `protobuf:"bytes,2,opt,name=currency,proto3" json:"currency,omitempty"`
+	// IANA-пояс собственной проекции, из которой собраны блоки.
+	TimeZone string `protobuf:"bytes,3,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
+	// От 1 до 16 полных блоков с уникальными id; сейчас только regular_payments.
+	Blocks []*v1.Block `protobuf:"bytes,4,rep,name=blocks,proto3" json:"blocks,omitempty"`
+	// Целевая версия полного фонового результата; 1..2147483647, не applied state version.
+	RequiredCalcVersion int32 `protobuf:"varint,5,opt,name=required_calc_version,json=requiredCalcVersion,proto3" json:"required_calc_version,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *ApplyRegularPaymentDismissalResponse) Reset() {
+	*x = ApplyRegularPaymentDismissalResponse{}
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplyRegularPaymentDismissalResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyRegularPaymentDismissalResponse) ProtoMessage() {}
+
+func (x *ApplyRegularPaymentDismissalResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyRegularPaymentDismissalResponse.ProtoReflect.Descriptor instead.
+func (*ApplyRegularPaymentDismissalResponse) Descriptor() ([]byte, []int) {
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ApplyRegularPaymentDismissalResponse) GetParams() *v1.AnalyticsParams {
+	if x != nil {
+		return x.Params
+	}
+	return nil
+}
+
+func (x *ApplyRegularPaymentDismissalResponse) GetCurrency() string {
+	if x != nil {
+		return x.Currency
+	}
+	return ""
+}
+
+func (x *ApplyRegularPaymentDismissalResponse) GetTimeZone() string {
+	if x != nil {
+		return x.TimeZone
+	}
+	return ""
+}
+
+func (x *ApplyRegularPaymentDismissalResponse) GetBlocks() []*v1.Block {
+	if x != nil {
+		return x.Blocks
+	}
+	return nil
+}
+
+func (x *ApplyRegularPaymentDismissalResponse) GetRequiredCalcVersion() int32 {
+	if x != nil {
+		return x.RequiredCalcVersion
+	}
+	return 0
+}
+
 // Причина блокировки метрики и условие открытия: сколько данных нужно и сколько есть (например,
 // нужно 3 полных месяца, есть 1). При нуле полных месяцев клиент опирается на границы данных из
 // ScreenState. У метрик с окном от выбранного месяца — «полные месяцы до выбранного включительно»
@@ -182,7 +326,7 @@ type MetricLock struct {
 
 func (x *MetricLock) Reset() {
 	*x = MetricLock{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[0]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -194,7 +338,7 @@ func (x *MetricLock) String() string {
 func (*MetricLock) ProtoMessage() {}
 
 func (x *MetricLock) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[0]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -207,7 +351,7 @@ func (x *MetricLock) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricLock.ProtoReflect.Descriptor instead.
 func (*MetricLock) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{0}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *MetricLock) GetReason() LockReason {
@@ -259,7 +403,7 @@ type MetricBasis struct {
 
 func (x *MetricBasis) Reset() {
 	*x = MetricBasis{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[1]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -271,7 +415,7 @@ func (x *MetricBasis) String() string {
 func (*MetricBasis) ProtoMessage() {}
 
 func (x *MetricBasis) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[1]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -284,7 +428,7 @@ func (x *MetricBasis) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricBasis.ProtoReflect.Descriptor instead.
 func (*MetricBasis) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{1}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *MetricBasis) GetRange() *v1.TimeRange {
@@ -353,7 +497,7 @@ type Metric struct {
 
 func (x *Metric) Reset() {
 	*x = Metric{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[2]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -365,7 +509,7 @@ func (x *Metric) String() string {
 func (*Metric) ProtoMessage() {}
 
 func (x *Metric) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[2]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -378,7 +522,7 @@ func (x *Metric) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Metric.ProtoReflect.Descriptor instead.
 func (*Metric) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{2}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Metric) GetStatus() MetricStatus {
@@ -558,7 +702,7 @@ type BalanceDetails struct {
 
 func (x *BalanceDetails) Reset() {
 	*x = BalanceDetails{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[3]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -570,7 +714,7 @@ func (x *BalanceDetails) String() string {
 func (*BalanceDetails) ProtoMessage() {}
 
 func (x *BalanceDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[3]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -583,7 +727,7 @@ func (x *BalanceDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BalanceDetails.ProtoReflect.Descriptor instead.
 func (*BalanceDetails) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{3}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *BalanceDetails) GetShareOfIncome() float64 {
@@ -623,7 +767,7 @@ type CategoryAmount struct {
 
 func (x *CategoryAmount) Reset() {
 	*x = CategoryAmount{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[4]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -635,7 +779,7 @@ func (x *CategoryAmount) String() string {
 func (*CategoryAmount) ProtoMessage() {}
 
 func (x *CategoryAmount) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[4]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -648,7 +792,7 @@ func (x *CategoryAmount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CategoryAmount.ProtoReflect.Descriptor instead.
 func (*CategoryAmount) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{4}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CategoryAmount) GetCategoryId() string {
@@ -718,7 +862,7 @@ type CategoryBreakdown struct {
 
 func (x *CategoryBreakdown) Reset() {
 	*x = CategoryBreakdown{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[5]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -730,7 +874,7 @@ func (x *CategoryBreakdown) String() string {
 func (*CategoryBreakdown) ProtoMessage() {}
 
 func (x *CategoryBreakdown) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[5]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +887,7 @@ func (x *CategoryBreakdown) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CategoryBreakdown.ProtoReflect.Descriptor instead.
 func (*CategoryBreakdown) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{5}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CategoryBreakdown) GetItems() []*CategoryAmount {
@@ -769,8 +913,8 @@ type MonthlyPoint struct {
 	// Только для ROLLING_*: пересечение календарного месяца range с интервалом снимка.
 	// Суммы и bounds относятся только к этому пересечению; при отсутствии — ко всему range.
 	// Краевой отрезок всегда PARTIAL, даже если каждый его день покрыт; без покрытых дней — NO_DATA.
-	// analytics использует calculation_range как REST ChartPoint.range, а month — как ключ перехода
-	// к полному календарному месяцу. Нельзя расширять отрезок при композиции или считать суммы из месячных снимков.
+	// calculation_range относится к фактам/notes выбранного периода; навигационный REST monthly_chart
+	// использует полные календарные месяцы согласованной истории, страницами по 60 (FIN-418).
 	CalculationRange *v1.TimeRange `protobuf:"bytes,6,opt,name=calculation_range,json=calculationRange,proto3,oneof" json:"calculation_range,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
@@ -778,7 +922,7 @@ type MonthlyPoint struct {
 
 func (x *MonthlyPoint) Reset() {
 	*x = MonthlyPoint{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[6]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -790,7 +934,7 @@ func (x *MonthlyPoint) String() string {
 func (*MonthlyPoint) ProtoMessage() {}
 
 func (x *MonthlyPoint) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[6]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -803,7 +947,7 @@ func (x *MonthlyPoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MonthlyPoint.ProtoReflect.Descriptor instead.
 func (*MonthlyPoint) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{6}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *MonthlyPoint) GetMonth() string {
@@ -861,7 +1005,7 @@ type MonthlyChart struct {
 
 func (x *MonthlyChart) Reset() {
 	*x = MonthlyChart{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[7]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -873,7 +1017,7 @@ func (x *MonthlyChart) String() string {
 func (*MonthlyChart) ProtoMessage() {}
 
 func (x *MonthlyChart) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[7]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -886,7 +1030,7 @@ func (x *MonthlyChart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MonthlyChart.ProtoReflect.Descriptor instead.
 func (*MonthlyChart) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{7}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *MonthlyChart) GetPoints() []*MonthlyPoint {
@@ -925,7 +1069,7 @@ type RegularPayment struct {
 
 func (x *RegularPayment) Reset() {
 	*x = RegularPayment{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[8]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -937,7 +1081,7 @@ func (x *RegularPayment) String() string {
 func (*RegularPayment) ProtoMessage() {}
 
 func (x *RegularPayment) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[8]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -950,7 +1094,7 @@ func (x *RegularPayment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegularPayment.ProtoReflect.Descriptor instead.
 func (*RegularPayment) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{8}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *RegularPayment) GetId() string {
@@ -1018,7 +1162,7 @@ type RegularPayments struct {
 
 func (x *RegularPayments) Reset() {
 	*x = RegularPayments{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[9]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1030,7 +1174,7 @@ func (x *RegularPayments) String() string {
 func (*RegularPayments) ProtoMessage() {}
 
 func (x *RegularPayments) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[9]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1043,7 +1187,7 @@ func (x *RegularPayments) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegularPayments.ProtoReflect.Descriptor instead.
 func (*RegularPayments) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{9}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RegularPayments) GetCount() int32 {
@@ -1079,7 +1223,7 @@ type NotableSpendingItem struct {
 
 func (x *NotableSpendingItem) Reset() {
 	*x = NotableSpendingItem{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[10]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1091,7 +1235,7 @@ func (x *NotableSpendingItem) String() string {
 func (*NotableSpendingItem) ProtoMessage() {}
 
 func (x *NotableSpendingItem) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[10]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1104,7 +1248,7 @@ func (x *NotableSpendingItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotableSpendingItem.ProtoReflect.Descriptor instead.
 func (*NotableSpendingItem) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{10}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *NotableSpendingItem) GetCategoryId() string {
@@ -1161,7 +1305,7 @@ type NotableSpending struct {
 
 func (x *NotableSpending) Reset() {
 	*x = NotableSpending{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[11]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1173,7 +1317,7 @@ func (x *NotableSpending) String() string {
 func (*NotableSpending) ProtoMessage() {}
 
 func (x *NotableSpending) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[11]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1186,7 +1330,7 @@ func (x *NotableSpending) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotableSpending.ProtoReflect.Descriptor instead.
 func (*NotableSpending) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{11}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *NotableSpending) GetItems() []*NotableSpendingItem {
@@ -1208,7 +1352,7 @@ type BankFees struct {
 
 func (x *BankFees) Reset() {
 	*x = BankFees{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[12]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1220,7 +1364,7 @@ func (x *BankFees) String() string {
 func (*BankFees) ProtoMessage() {}
 
 func (x *BankFees) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[12]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1233,7 +1377,7 @@ func (x *BankFees) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BankFees.ProtoReflect.Descriptor instead.
 func (*BankFees) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{12}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *BankFees) GetKindsName() string {
@@ -1264,7 +1408,7 @@ type SmallFrequentGroup struct {
 
 func (x *SmallFrequentGroup) Reset() {
 	*x = SmallFrequentGroup{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[13]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1276,7 +1420,7 @@ func (x *SmallFrequentGroup) String() string {
 func (*SmallFrequentGroup) ProtoMessage() {}
 
 func (x *SmallFrequentGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[13]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1289,7 +1433,7 @@ func (x *SmallFrequentGroup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SmallFrequentGroup.ProtoReflect.Descriptor instead.
 func (*SmallFrequentGroup) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{13}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SmallFrequentGroup) GetTitle() string {
@@ -1349,7 +1493,7 @@ type SmallFrequent struct {
 
 func (x *SmallFrequent) Reset() {
 	*x = SmallFrequent{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[14]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1361,7 +1505,7 @@ func (x *SmallFrequent) String() string {
 func (*SmallFrequent) ProtoMessage() {}
 
 func (x *SmallFrequent) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[14]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1374,7 +1518,7 @@ func (x *SmallFrequent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SmallFrequent.ProtoReflect.Descriptor instead.
 func (*SmallFrequent) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{14}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SmallFrequent) GetItems() []*SmallFrequentGroup {
@@ -1382,6 +1526,107 @@ func (x *SmallFrequent) GetItems() []*SmallFrequentGroup {
 		return x.Items
 	}
 	return nil
+}
+
+// Непрозрачный cursor, выданный тому же пользователю; владение проверяется сервисом по токену.
+type GetChartPageRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 1–2048 символов; режим, пояс, ревизия и позиция проверяются по серверному контексту cursor.
+	Cursor        string `protobuf:"bytes,1,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetChartPageRequest) Reset() {
+	*x = GetChartPageRequest{}
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetChartPageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetChartPageRequest) ProtoMessage() {}
+
+func (x *GetChartPageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetChartPageRequest.ProtoReflect.Descriptor instead.
+func (*GetChartPageRequest) Descriptor() ([]byte, []int) {
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetChartPageRequest) GetCursor() string {
+	if x != nil {
+		return x.Cursor
+	}
+	return ""
+}
+
+// Только страница monthly_chart@1; data содержит kind/value_kind/points/page.
+type GetChartPageResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// notes и highlight_index отсутствуют: они принадлежат ответу выбранного периода GetAnalytics.
+	Block *v1.Block `protobuf:"bytes,1,opt,name=block,proto3" json:"block,omitempty"`
+	// IANA-пояс страницы, согласованный с page.revision; переносится в REST.
+	TimeZone      string `protobuf:"bytes,2,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetChartPageResponse) Reset() {
+	*x = GetChartPageResponse{}
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetChartPageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetChartPageResponse) ProtoMessage() {}
+
+func (x *GetChartPageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetChartPageResponse.ProtoReflect.Descriptor instead.
+func (*GetChartPageResponse) Descriptor() ([]byte, []int) {
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetChartPageResponse) GetBlock() *v1.Block {
+	if x != nil {
+		return x.Block
+	}
+	return nil
+}
+
+func (x *GetChartPageResponse) GetTimeZone() string {
+	if x != nil {
+		return x.TimeZone
+	}
+	return ""
 }
 
 // Запрос аналитики за период.
@@ -1419,7 +1664,7 @@ type GetAnalyticsRequest struct {
 
 func (x *GetAnalyticsRequest) Reset() {
 	*x = GetAnalyticsRequest{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[15]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1431,7 +1676,7 @@ func (x *GetAnalyticsRequest) String() string {
 func (*GetAnalyticsRequest) ProtoMessage() {}
 
 func (x *GetAnalyticsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[15]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1444,7 +1689,7 @@ func (x *GetAnalyticsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAnalyticsRequest.ProtoReflect.Descriptor instead.
 func (*GetAnalyticsRequest) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{15}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetAnalyticsRequest) GetPeriod() v1.PeriodType {
@@ -1505,7 +1750,7 @@ type PeriodInfo struct {
 
 func (x *PeriodInfo) Reset() {
 	*x = PeriodInfo{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[16]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1517,7 +1762,7 @@ func (x *PeriodInfo) String() string {
 func (*PeriodInfo) ProtoMessage() {}
 
 func (x *PeriodInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[16]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1530,7 +1775,7 @@ func (x *PeriodInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeriodInfo.ProtoReflect.Descriptor instead.
 func (*PeriodInfo) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{16}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *PeriodInfo) GetRange() *v1.TimeRange {
@@ -1567,7 +1812,7 @@ type Navigation struct {
 
 func (x *Navigation) Reset() {
 	*x = Navigation{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[17]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1579,7 +1824,7 @@ func (x *Navigation) String() string {
 func (*Navigation) ProtoMessage() {}
 
 func (x *Navigation) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[17]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1592,7 +1837,7 @@ func (x *Navigation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Navigation.ProtoReflect.Descriptor instead.
 func (*Navigation) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{17}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *Navigation) GetPrevious() string {
@@ -1639,7 +1884,7 @@ type Tiles struct {
 
 func (x *Tiles) Reset() {
 	*x = Tiles{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[18]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1651,7 +1896,7 @@ func (x *Tiles) String() string {
 func (*Tiles) ProtoMessage() {}
 
 func (x *Tiles) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[18]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1664,7 +1909,7 @@ func (x *Tiles) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tiles.ProtoReflect.Descriptor instead.
 func (*Tiles) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{18}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *Tiles) GetExpense() *Metric {
@@ -1741,7 +1986,7 @@ type Insights struct {
 
 func (x *Insights) Reset() {
 	*x = Insights{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[19]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1753,7 +1998,7 @@ func (x *Insights) String() string {
 func (*Insights) ProtoMessage() {}
 
 func (x *Insights) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[19]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1766,7 +2011,7 @@ func (x *Insights) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Insights.ProtoReflect.Descriptor instead.
 func (*Insights) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{19}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *Insights) GetRegularPayments() *Metric {
@@ -1820,6 +2065,8 @@ type ScreenState struct {
 	// Идёт пересчёт, вызванный действием пользователя (импорт выписки, смена категории, удаление
 	// загрузки, смена пояса, исключение платежа из регулярных): цифры могут измениться, клиенту стоит запросить
 	// аналитику позже. Пересчёт по новой версии реестра признак не ставит (FIN-196).
+	// Равно calculation.recalculating: сохранённый флаг OR marker_version > state.calc_version.
+	// При true сохраняются готовые данные; Apply заменяет только явно возвращённые блоки.
 	Recalculating bool `protobuf:"varint,8,opt,name=recalculating,proto3" json:"recalculating,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1827,7 +2074,7 @@ type ScreenState struct {
 
 func (x *ScreenState) Reset() {
 	*x = ScreenState{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[20]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1839,7 +2086,7 @@ func (x *ScreenState) String() string {
 func (*ScreenState) ProtoMessage() {}
 
 func (x *ScreenState) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[20]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1852,7 +2099,7 @@ func (x *ScreenState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScreenState.ProtoReflect.Descriptor instead.
 func (*ScreenState) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{20}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ScreenState) GetStale() bool {
@@ -1945,7 +2192,8 @@ type GetAnalyticsResponse struct {
 	Insights *Insights `protobuf:"bytes,9,opt,name=insights,proto3,oneof" json:"insights,omitempty"`
 	// Состояние данных.
 	State *ScreenState `protobuf:"bytes,10,opt,name=state,proto3" json:"state,omitempty"`
-	// Пояс профиля (IANA), в котором bank-bff форматирует все моменты ответа.
+	// Фактический IANA-пояс прочитанного снимка. BFF переносит в REST time_zone;
+	// клиент использует его для календарных подписей, не копию профиля. При has_data=false может отсутствовать.
 	TimeZone string `protobuf:"bytes,11,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
 	// Блоки экрана по порядку (FIN-4): состав, порядок и тексты собирает этот сервис (FIN-5). Поля tiles,
 	// expense_categories, income_categories, monthly_chart, insights устарели: bank-bff их не читает; удалить
@@ -1963,13 +2211,15 @@ type GetAnalyticsResponse struct {
 	// Поле внутреннее: bank-bff не переносит его в REST, assistant не передаёт
 	// его модели в промпте, результатах инструментов или текстах блоков.
 	DataRevisions []*v1.DataRevision `protobuf:"bytes,14,rep,name=data_revisions,json=dataRevisions,proto3" json:"data_revisions,omitempty"`
+	// Есть и при has_data=false. Читается согласованно с остальным ответом; FIN-418.
+	Calculation   *v1.CalculationState `protobuf:"bytes,15,opt,name=calculation,proto3" json:"calculation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetAnalyticsResponse) Reset() {
 	*x = GetAnalyticsResponse{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[21]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1981,7 +2231,7 @@ func (x *GetAnalyticsResponse) String() string {
 func (*GetAnalyticsResponse) ProtoMessage() {}
 
 func (x *GetAnalyticsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[21]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1994,7 +2244,7 @@ func (x *GetAnalyticsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAnalyticsResponse.ProtoReflect.Descriptor instead.
 func (*GetAnalyticsResponse) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{21}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GetAnalyticsResponse) GetHasData() bool {
@@ -2100,6 +2350,13 @@ func (x *GetAnalyticsResponse) GetDataRevisions() []*v1.DataRevision {
 	return nil
 }
 
+func (x *GetAnalyticsResponse) GetCalculation() *v1.CalculationState {
+	if x != nil {
+		return x.Calculation
+	}
+	return nil
+}
+
 // Запрос списка периодов с данными.
 type ListPeriodsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2113,7 +2370,7 @@ type ListPeriodsRequest struct {
 
 func (x *ListPeriodsRequest) Reset() {
 	*x = ListPeriodsRequest{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[22]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2125,7 +2382,7 @@ func (x *ListPeriodsRequest) String() string {
 func (*ListPeriodsRequest) ProtoMessage() {}
 
 func (x *ListPeriodsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[22]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2138,7 +2395,7 @@ func (x *ListPeriodsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPeriodsRequest.ProtoReflect.Descriptor instead.
 func (*ListPeriodsRequest) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{22}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ListPeriodsRequest) GetPeriod() v1.PeriodType {
@@ -2170,7 +2427,7 @@ type PeriodItem struct {
 
 func (x *PeriodItem) Reset() {
 	*x = PeriodItem{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[23]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2182,7 +2439,7 @@ func (x *PeriodItem) String() string {
 func (*PeriodItem) ProtoMessage() {}
 
 func (x *PeriodItem) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[23]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2195,7 +2452,7 @@ func (x *PeriodItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeriodItem.ProtoReflect.Descriptor instead.
 func (*PeriodItem) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{23}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *PeriodItem) GetKey() string {
@@ -2240,7 +2497,7 @@ type ListPeriodsResponse struct {
 
 func (x *ListPeriodsResponse) Reset() {
 	*x = ListPeriodsResponse{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[24]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2252,7 +2509,7 @@ func (x *ListPeriodsResponse) String() string {
 func (*ListPeriodsResponse) ProtoMessage() {}
 
 func (x *ListPeriodsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[24]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2265,7 +2522,7 @@ func (x *ListPeriodsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPeriodsResponse.ProtoReflect.Descriptor instead.
 func (*ListPeriodsResponse) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{24}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ListPeriodsResponse) GetPeriods() []*PeriodItem {
@@ -2315,7 +2572,7 @@ type MetricSnapshot struct {
 
 func (x *MetricSnapshot) Reset() {
 	*x = MetricSnapshot{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[25]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2327,7 +2584,7 @@ func (x *MetricSnapshot) String() string {
 func (*MetricSnapshot) ProtoMessage() {}
 
 func (x *MetricSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[25]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2340,7 +2597,7 @@ func (x *MetricSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricSnapshot.ProtoReflect.Descriptor instead.
 func (*MetricSnapshot) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{25}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *MetricSnapshot) GetMetricId() string {
@@ -2402,7 +2659,7 @@ type PeriodSnapshot struct {
 
 func (x *PeriodSnapshot) Reset() {
 	*x = PeriodSnapshot{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[26]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2414,7 +2671,7 @@ func (x *PeriodSnapshot) String() string {
 func (*PeriodSnapshot) ProtoMessage() {}
 
 func (x *PeriodSnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[26]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2427,7 +2684,7 @@ func (x *PeriodSnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeriodSnapshot.ProtoReflect.Descriptor instead.
 func (*PeriodSnapshot) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{26}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *PeriodSnapshot) GetPeriod() v1.PeriodType {
@@ -2507,7 +2764,7 @@ type PeriodRef struct {
 
 func (x *PeriodRef) Reset() {
 	*x = PeriodRef{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[27]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2519,7 +2776,7 @@ func (x *PeriodRef) String() string {
 func (*PeriodRef) ProtoMessage() {}
 
 func (x *PeriodRef) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[27]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2532,7 +2789,7 @@ func (x *PeriodRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PeriodRef.ProtoReflect.Descriptor instead.
 func (*PeriodRef) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{27}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *PeriodRef) GetPeriod() v1.PeriodType {
@@ -2591,7 +2848,7 @@ type UserDataState struct {
 
 func (x *UserDataState) Reset() {
 	*x = UserDataState{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[28]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2603,7 +2860,7 @@ func (x *UserDataState) String() string {
 func (*UserDataState) ProtoMessage() {}
 
 func (x *UserDataState) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[28]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2616,7 +2873,7 @@ func (x *UserDataState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserDataState.ProtoReflect.Descriptor instead.
 func (*UserDataState) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{28}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *UserDataState) GetHasData() bool {
@@ -2689,6 +2946,97 @@ func (x *UserDataState) GetDataRevisions() []*v1.DataRevision {
 	return nil
 }
 
+// Только системный bank-statement-data. Неверный user_id/версия — голый INVALID_ARGUMENT.
+type MarkRecalculatingRequest struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// 1..2147483647; target = текущий BSD calc_version + 1 под user lock, без увеличения счётчика.
+	CalcVersion   int32 `protobuf:"varint,2,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkRecalculatingRequest) Reset() {
+	*x = MarkRecalculatingRequest{}
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkRecalculatingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkRecalculatingRequest) ProtoMessage() {}
+
+func (x *MarkRecalculatingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkRecalculatingRequest.ProtoReflect.Descriptor instead.
+func (*MarkRecalculatingRequest) Descriptor() ([]byte, []int) {
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *MarkRecalculatingRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *MarkRecalculatingRequest) GetCalcVersion() int32 {
+	if x != nil {
+		return x.CalcVersion
+	}
+	return 0
+}
+
+// ACK: маркер применён либо уже покрыт состоянием; tombstone — ACK без записи. Задание true завершено.
+type MarkRecalculatingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkRecalculatingResponse) Reset() {
+	*x = MarkRecalculatingResponse{}
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkRecalculatingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkRecalculatingResponse) ProtoMessage() {}
+
+func (x *MarkRecalculatingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkRecalculatingResponse.ProtoReflect.Descriptor instead.
+func (*MarkRecalculatingResponse) Descriptor() ([]byte, []int) {
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{34}
+}
+
 // Пакет готовых метрик пользователя от bank-statement-data.
 // analytics сохраняет только известные его выпуску поля: новое поле запроса или вложенных сообщений
 // (UserDataState, PeriodSnapshot, PeriodRef, Metric и другие) или новый вариант details — сначала
@@ -2729,7 +3077,7 @@ type UpsertUserMetricsRequest struct {
 
 func (x *UpsertUserMetricsRequest) Reset() {
 	*x = UpsertUserMetricsRequest{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[29]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2741,7 +3089,7 @@ func (x *UpsertUserMetricsRequest) String() string {
 func (*UpsertUserMetricsRequest) ProtoMessage() {}
 
 func (x *UpsertUserMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[29]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2754,7 +3102,7 @@ func (x *UpsertUserMetricsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertUserMetricsRequest.ProtoReflect.Descriptor instead.
 func (*UpsertUserMetricsRequest) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{29}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *UpsertUserMetricsRequest) GetUserId() string {
@@ -2805,7 +3153,7 @@ type UpsertUserMetricsResponse struct {
 
 func (x *UpsertUserMetricsResponse) Reset() {
 	*x = UpsertUserMetricsResponse{}
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[30]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2817,7 +3165,7 @@ func (x *UpsertUserMetricsResponse) String() string {
 func (*UpsertUserMetricsResponse) ProtoMessage() {}
 
 func (x *UpsertUserMetricsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[30]
+	mi := &file_finassist_analytics_v1_analytics_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2830,7 +3178,7 @@ func (x *UpsertUserMetricsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertUserMetricsResponse.ProtoReflect.Descriptor instead.
 func (*UpsertUserMetricsResponse) Descriptor() ([]byte, []int) {
-	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{30}
+	return file_finassist_analytics_v1_analytics_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *UpsertUserMetricsResponse) GetAppliedPeriods() int32 {
@@ -2851,7 +3199,17 @@ var File_finassist_analytics_v1_analytics_proto protoreflect.FileDescriptor
 
 const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\n" +
-	"&finassist/analytics/v1/analytics.proto\x12\x16finassist.analytics.v1\x1a finassist/common/v1/blocks.proto\x1a finassist/common/v1/common.proto\x1a'finassist/common/v1/data_revision.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x96\x02\n" +
+	"&finassist/analytics/v1/analytics.proto\x12\x16finassist.analytics.v1\x1a finassist/common/v1/blocks.proto\x1a%finassist/common/v1/calculation.proto\x1a finassist/common/v1/common.proto\x1a'finassist/common/v1/data_revision.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb4\x01\n" +
+	"#ApplyRegularPaymentDismissalRequest\x12,\n" +
+	"\x12regular_payment_id\x18\x01 \x01(\tR\x10regularPaymentId\x12!\n" +
+	"\fcalc_version\x18\x02 \x01(\x05R\vcalcVersion\x12<\n" +
+	"\x06params\x18\x03 \x01(\v2$.finassist.common.v1.AnalyticsParamsR\x06params\"\x85\x02\n" +
+	"$ApplyRegularPaymentDismissalResponse\x12<\n" +
+	"\x06params\x18\x01 \x01(\v2$.finassist.common.v1.AnalyticsParamsR\x06params\x12\x1a\n" +
+	"\bcurrency\x18\x02 \x01(\tR\bcurrency\x12\x1b\n" +
+	"\ttime_zone\x18\x03 \x01(\tR\btimeZone\x122\n" +
+	"\x06blocks\x18\x04 \x03(\v2\x1a.finassist.common.v1.BlockR\x06blocks\x122\n" +
+	"\x15required_calc_version\x18\x05 \x01(\x05R\x13requiredCalcVersion\"\x96\x02\n" +
 	"\n" +
 	"MetricLock\x12:\n" +
 	"\x06reason\x18\x01 \x01(\x0e2\".finassist.analytics.v1.LockReasonR\x06reason\x12\x1f\n" +
@@ -2957,7 +3315,12 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\x13yearly_amount_minor\x18\x05 \x01(\x03R\x11yearlyAmountMinor\x12?\n" +
 	"\afilters\x18\x06 \x01(\v2%.finassist.common.v1.OperationsFilterR\afilters\"Q\n" +
 	"\rSmallFrequent\x12@\n" +
-	"\x05items\x18\x01 \x03(\v2*.finassist.analytics.v1.SmallFrequentGroupR\x05items\"\xd2\x03\n" +
+	"\x05items\x18\x01 \x03(\v2*.finassist.analytics.v1.SmallFrequentGroupR\x05items\"-\n" +
+	"\x13GetChartPageRequest\x12\x16\n" +
+	"\x06cursor\x18\x01 \x01(\tR\x06cursor\"e\n" +
+	"\x14GetChartPageResponse\x120\n" +
+	"\x05block\x18\x01 \x01(\v2\x1a.finassist.common.v1.BlockR\x05block\x12\x1b\n" +
+	"\ttime_zone\x18\x02 \x01(\tR\btimeZone\"\xd2\x03\n" +
 	"\x13GetAnalyticsRequest\x127\n" +
 	"\x06period\x18\x01 \x01(\x0e2\x1f.finassist.common.v1.PeriodTypeR\x06period\x12\"\n" +
 	"\n" +
@@ -3012,7 +3375,7 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\x12unread_lines_count\x18\x06 \x01(\x05R\x10unreadLinesCount\x12?\n" +
 	"\rcalculated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\fcalculatedAt\x12$\n" +
 	"\rrecalculating\x18\b \x01(\bR\rrecalculatingB\x14\n" +
-	"\x12_last_operation_at\"\xdb\x06\n" +
+	"\x12_last_operation_at\"\xa4\a\n" +
 	"\x14GetAnalyticsResponse\x12\x19\n" +
 	"\bhas_data\x18\x01 \x01(\bR\ahasData\x12<\n" +
 	"\x06params\x18\x02 \x01(\v2$.finassist.common.v1.AnalyticsParamsR\x06params\x12:\n" +
@@ -3030,7 +3393,8 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\ttime_zone\x18\v \x01(\tR\btimeZone\x122\n" +
 	"\x06blocks\x18\f \x03(\v2\x1a.finassist.common.v1.BlockR\x06blocks\x12\x1a\n" +
 	"\bcurrency\x18\r \x01(\tR\bcurrency\x12H\n" +
-	"\x0edata_revisions\x18\x0e \x03(\v2!.finassist.common.v1.DataRevisionR\rdataRevisionsB\v\n" +
+	"\x0edata_revisions\x18\x0e \x03(\v2!.finassist.common.v1.DataRevisionR\rdataRevisions\x12G\n" +
+	"\vcalculation\x18\x0f \x01(\v2%.finassist.common.v1.CalculationStateR\vcalculationB\v\n" +
 	"\t_insights\"w\n" +
 	"\x12ListPeriodsRequest\x127\n" +
 	"\x06period\x18\x01 \x01(\x0e2\x1f.finassist.common.v1.PeriodTypeR\x06period\x12\x1c\n" +
@@ -3084,7 +3448,11 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\n" +
 	"\b_data_toB\x14\n" +
 	"\x12_last_operation_atB\x0e\n" +
-	"\f_stale_after\"\xb0\x02\n" +
+	"\f_stale_after\"V\n" +
+	"\x18MarkRecalculatingRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
+	"\fcalc_version\x18\x02 \x01(\x05R\vcalcVersion\"\x1b\n" +
+	"\x19MarkRecalculatingResponse\"\xb0\x02\n" +
 	"\x18UpsertUserMetricsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\fcalc_version\x18\x02 \x01(\x05R\vcalcVersion\x12@\n" +
@@ -3108,12 +3476,15 @@ const file_finassist_analytics_v1_analytics_proto_rawDesc = "" +
 	"\x1cLOCK_REASON_NEED_FULL_MONTHS\x10\x01\x12%\n" +
 	"!LOCK_REASON_NEED_MONTHS_WITH_DATA\x10\x02\x12\"\n" +
 	"\x1eLOCK_REASON_TOO_EARLY_IN_MONTH\x10\x03\x12\x1a\n" +
-	"\x16LOCK_REASON_STALE_DATA\x10\x042\xe5\x01\n" +
+	"\x16LOCK_REASON_STALE_DATA\x10\x042\xec\x03\n" +
 	"\x10AnalyticsService\x12i\n" +
 	"\fGetAnalytics\x12+.finassist.analytics.v1.GetAnalyticsRequest\x1a,.finassist.analytics.v1.GetAnalyticsResponse\x12f\n" +
-	"\vListPeriods\x12*.finassist.analytics.v1.ListPeriodsRequest\x1a+.finassist.analytics.v1.ListPeriodsResponse2\x90\x01\n" +
+	"\vListPeriods\x12*.finassist.analytics.v1.ListPeriodsRequest\x1a+.finassist.analytics.v1.ListPeriodsResponse\x12i\n" +
+	"\fGetChartPage\x12+.finassist.analytics.v1.GetChartPageRequest\x1a,.finassist.analytics.v1.GetChartPageResponse\x12\x99\x01\n" +
+	"\x1cApplyRegularPaymentDismissal\x12;.finassist.analytics.v1.ApplyRegularPaymentDismissalRequest\x1a<.finassist.analytics.v1.ApplyRegularPaymentDismissalResponse2\x8a\x02\n" +
 	"\x14MetricsIngestService\x12x\n" +
-	"\x11UpsertUserMetrics\x120.finassist.analytics.v1.UpsertUserMetricsRequest\x1a1.finassist.analytics.v1.UpsertUserMetricsResponseBKZIgithub.com/fin-assist/contracts/gen/go/finassist/analytics/v1;analyticsv1b\x06proto3"
+	"\x11UpsertUserMetrics\x120.finassist.analytics.v1.UpsertUserMetricsRequest\x1a1.finassist.analytics.v1.UpsertUserMetricsResponse\x12x\n" +
+	"\x11MarkRecalculating\x120.finassist.analytics.v1.MarkRecalculatingRequest\x1a1.finassist.analytics.v1.MarkRecalculatingResponseBKZIgithub.com/fin-assist/contracts/gen/go/finassist/analytics/v1;analyticsv1b\x06proto3"
 
 var (
 	file_finassist_analytics_v1_analytics_proto_rawDescOnce sync.Once
@@ -3128,149 +3499,167 @@ func file_finassist_analytics_v1_analytics_proto_rawDescGZIP() []byte {
 }
 
 var file_finassist_analytics_v1_analytics_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_finassist_analytics_v1_analytics_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_finassist_analytics_v1_analytics_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
 var file_finassist_analytics_v1_analytics_proto_goTypes = []any{
-	(MetricStatus)(0),                 // 0: finassist.analytics.v1.MetricStatus
-	(LockReason)(0),                   // 1: finassist.analytics.v1.LockReason
-	(*MetricLock)(nil),                // 2: finassist.analytics.v1.MetricLock
-	(*MetricBasis)(nil),               // 3: finassist.analytics.v1.MetricBasis
-	(*Metric)(nil),                    // 4: finassist.analytics.v1.Metric
-	(*BalanceDetails)(nil),            // 5: finassist.analytics.v1.BalanceDetails
-	(*CategoryAmount)(nil),            // 6: finassist.analytics.v1.CategoryAmount
-	(*CategoryBreakdown)(nil),         // 7: finassist.analytics.v1.CategoryBreakdown
-	(*MonthlyPoint)(nil),              // 8: finassist.analytics.v1.MonthlyPoint
-	(*MonthlyChart)(nil),              // 9: finassist.analytics.v1.MonthlyChart
-	(*RegularPayment)(nil),            // 10: finassist.analytics.v1.RegularPayment
-	(*RegularPayments)(nil),           // 11: finassist.analytics.v1.RegularPayments
-	(*NotableSpendingItem)(nil),       // 12: finassist.analytics.v1.NotableSpendingItem
-	(*NotableSpending)(nil),           // 13: finassist.analytics.v1.NotableSpending
-	(*BankFees)(nil),                  // 14: finassist.analytics.v1.BankFees
-	(*SmallFrequentGroup)(nil),        // 15: finassist.analytics.v1.SmallFrequentGroup
-	(*SmallFrequent)(nil),             // 16: finassist.analytics.v1.SmallFrequent
-	(*GetAnalyticsRequest)(nil),       // 17: finassist.analytics.v1.GetAnalyticsRequest
-	(*PeriodInfo)(nil),                // 18: finassist.analytics.v1.PeriodInfo
-	(*Navigation)(nil),                // 19: finassist.analytics.v1.Navigation
-	(*Tiles)(nil),                     // 20: finassist.analytics.v1.Tiles
-	(*Insights)(nil),                  // 21: finassist.analytics.v1.Insights
-	(*ScreenState)(nil),               // 22: finassist.analytics.v1.ScreenState
-	(*GetAnalyticsResponse)(nil),      // 23: finassist.analytics.v1.GetAnalyticsResponse
-	(*ListPeriodsRequest)(nil),        // 24: finassist.analytics.v1.ListPeriodsRequest
-	(*PeriodItem)(nil),                // 25: finassist.analytics.v1.PeriodItem
-	(*ListPeriodsResponse)(nil),       // 26: finassist.analytics.v1.ListPeriodsResponse
-	(*MetricSnapshot)(nil),            // 27: finassist.analytics.v1.MetricSnapshot
-	(*PeriodSnapshot)(nil),            // 28: finassist.analytics.v1.PeriodSnapshot
-	(*PeriodRef)(nil),                 // 29: finassist.analytics.v1.PeriodRef
-	(*UserDataState)(nil),             // 30: finassist.analytics.v1.UserDataState
-	(*UpsertUserMetricsRequest)(nil),  // 31: finassist.analytics.v1.UpsertUserMetricsRequest
-	(*UpsertUserMetricsResponse)(nil), // 32: finassist.analytics.v1.UpsertUserMetricsResponse
-	nil,                               // 33: finassist.analytics.v1.GetAnalyticsRequest.ExperimentsEntry
-	(*timestamppb.Timestamp)(nil),     // 34: google.protobuf.Timestamp
-	(*v1.TimeRange)(nil),              // 35: finassist.common.v1.TimeRange
-	(*v1.OperationsFilter)(nil),       // 36: finassist.common.v1.OperationsFilter
-	(*v1.DataBounds)(nil),             // 37: finassist.common.v1.DataBounds
-	(v1.PeriodType)(0),                // 38: finassist.common.v1.PeriodType
-	(v1.TransferMode)(0),              // 39: finassist.common.v1.TransferMode
-	(*v1.BlockSupport)(nil),           // 40: finassist.common.v1.BlockSupport
-	(*v1.AnalyticsParams)(nil),        // 41: finassist.common.v1.AnalyticsParams
-	(*v1.Block)(nil),                  // 42: finassist.common.v1.Block
-	(*v1.DataRevision)(nil),           // 43: finassist.common.v1.DataRevision
-	(v1.Coverage)(0),                  // 44: finassist.common.v1.Coverage
+	(MetricStatus)(0), // 0: finassist.analytics.v1.MetricStatus
+	(LockReason)(0),   // 1: finassist.analytics.v1.LockReason
+	(*ApplyRegularPaymentDismissalRequest)(nil),  // 2: finassist.analytics.v1.ApplyRegularPaymentDismissalRequest
+	(*ApplyRegularPaymentDismissalResponse)(nil), // 3: finassist.analytics.v1.ApplyRegularPaymentDismissalResponse
+	(*MetricLock)(nil),                           // 4: finassist.analytics.v1.MetricLock
+	(*MetricBasis)(nil),                          // 5: finassist.analytics.v1.MetricBasis
+	(*Metric)(nil),                               // 6: finassist.analytics.v1.Metric
+	(*BalanceDetails)(nil),                       // 7: finassist.analytics.v1.BalanceDetails
+	(*CategoryAmount)(nil),                       // 8: finassist.analytics.v1.CategoryAmount
+	(*CategoryBreakdown)(nil),                    // 9: finassist.analytics.v1.CategoryBreakdown
+	(*MonthlyPoint)(nil),                         // 10: finassist.analytics.v1.MonthlyPoint
+	(*MonthlyChart)(nil),                         // 11: finassist.analytics.v1.MonthlyChart
+	(*RegularPayment)(nil),                       // 12: finassist.analytics.v1.RegularPayment
+	(*RegularPayments)(nil),                      // 13: finassist.analytics.v1.RegularPayments
+	(*NotableSpendingItem)(nil),                  // 14: finassist.analytics.v1.NotableSpendingItem
+	(*NotableSpending)(nil),                      // 15: finassist.analytics.v1.NotableSpending
+	(*BankFees)(nil),                             // 16: finassist.analytics.v1.BankFees
+	(*SmallFrequentGroup)(nil),                   // 17: finassist.analytics.v1.SmallFrequentGroup
+	(*SmallFrequent)(nil),                        // 18: finassist.analytics.v1.SmallFrequent
+	(*GetChartPageRequest)(nil),                  // 19: finassist.analytics.v1.GetChartPageRequest
+	(*GetChartPageResponse)(nil),                 // 20: finassist.analytics.v1.GetChartPageResponse
+	(*GetAnalyticsRequest)(nil),                  // 21: finassist.analytics.v1.GetAnalyticsRequest
+	(*PeriodInfo)(nil),                           // 22: finassist.analytics.v1.PeriodInfo
+	(*Navigation)(nil),                           // 23: finassist.analytics.v1.Navigation
+	(*Tiles)(nil),                                // 24: finassist.analytics.v1.Tiles
+	(*Insights)(nil),                             // 25: finassist.analytics.v1.Insights
+	(*ScreenState)(nil),                          // 26: finassist.analytics.v1.ScreenState
+	(*GetAnalyticsResponse)(nil),                 // 27: finassist.analytics.v1.GetAnalyticsResponse
+	(*ListPeriodsRequest)(nil),                   // 28: finassist.analytics.v1.ListPeriodsRequest
+	(*PeriodItem)(nil),                           // 29: finassist.analytics.v1.PeriodItem
+	(*ListPeriodsResponse)(nil),                  // 30: finassist.analytics.v1.ListPeriodsResponse
+	(*MetricSnapshot)(nil),                       // 31: finassist.analytics.v1.MetricSnapshot
+	(*PeriodSnapshot)(nil),                       // 32: finassist.analytics.v1.PeriodSnapshot
+	(*PeriodRef)(nil),                            // 33: finassist.analytics.v1.PeriodRef
+	(*UserDataState)(nil),                        // 34: finassist.analytics.v1.UserDataState
+	(*MarkRecalculatingRequest)(nil),             // 35: finassist.analytics.v1.MarkRecalculatingRequest
+	(*MarkRecalculatingResponse)(nil),            // 36: finassist.analytics.v1.MarkRecalculatingResponse
+	(*UpsertUserMetricsRequest)(nil),             // 37: finassist.analytics.v1.UpsertUserMetricsRequest
+	(*UpsertUserMetricsResponse)(nil),            // 38: finassist.analytics.v1.UpsertUserMetricsResponse
+	nil,                                          // 39: finassist.analytics.v1.GetAnalyticsRequest.ExperimentsEntry
+	(*v1.AnalyticsParams)(nil),                   // 40: finassist.common.v1.AnalyticsParams
+	(*v1.Block)(nil),                             // 41: finassist.common.v1.Block
+	(*timestamppb.Timestamp)(nil),                // 42: google.protobuf.Timestamp
+	(*v1.TimeRange)(nil),                         // 43: finassist.common.v1.TimeRange
+	(*v1.OperationsFilter)(nil),                  // 44: finassist.common.v1.OperationsFilter
+	(*v1.DataBounds)(nil),                        // 45: finassist.common.v1.DataBounds
+	(v1.PeriodType)(0),                           // 46: finassist.common.v1.PeriodType
+	(v1.TransferMode)(0),                         // 47: finassist.common.v1.TransferMode
+	(*v1.BlockSupport)(nil),                      // 48: finassist.common.v1.BlockSupport
+	(*v1.DataRevision)(nil),                      // 49: finassist.common.v1.DataRevision
+	(*v1.CalculationState)(nil),                  // 50: finassist.common.v1.CalculationState
+	(v1.Coverage)(0),                             // 51: finassist.common.v1.Coverage
 }
 var file_finassist_analytics_v1_analytics_proto_depIdxs = []int32{
-	1,  // 0: finassist.analytics.v1.MetricLock.reason:type_name -> finassist.analytics.v1.LockReason
-	34, // 1: finassist.analytics.v1.MetricLock.available_from:type_name -> google.protobuf.Timestamp
-	35, // 2: finassist.analytics.v1.MetricBasis.range:type_name -> finassist.common.v1.TimeRange
-	0,  // 3: finassist.analytics.v1.Metric.status:type_name -> finassist.analytics.v1.MetricStatus
-	2,  // 4: finassist.analytics.v1.Metric.lock:type_name -> finassist.analytics.v1.MetricLock
-	3,  // 5: finassist.analytics.v1.Metric.basis:type_name -> finassist.analytics.v1.MetricBasis
-	36, // 6: finassist.analytics.v1.Metric.filters:type_name -> finassist.common.v1.OperationsFilter
-	35, // 7: finassist.analytics.v1.Metric.range:type_name -> finassist.common.v1.TimeRange
-	5,  // 8: finassist.analytics.v1.Metric.balance:type_name -> finassist.analytics.v1.BalanceDetails
-	7,  // 9: finassist.analytics.v1.Metric.categories:type_name -> finassist.analytics.v1.CategoryBreakdown
-	9,  // 10: finassist.analytics.v1.Metric.monthly_chart:type_name -> finassist.analytics.v1.MonthlyChart
-	11, // 11: finassist.analytics.v1.Metric.regular_payments:type_name -> finassist.analytics.v1.RegularPayments
-	13, // 12: finassist.analytics.v1.Metric.notable_spending:type_name -> finassist.analytics.v1.NotableSpending
-	14, // 13: finassist.analytics.v1.Metric.bank_fees:type_name -> finassist.analytics.v1.BankFees
-	16, // 14: finassist.analytics.v1.Metric.small_frequent:type_name -> finassist.analytics.v1.SmallFrequent
-	36, // 15: finassist.analytics.v1.CategoryAmount.filters:type_name -> finassist.common.v1.OperationsFilter
-	6,  // 16: finassist.analytics.v1.CategoryBreakdown.items:type_name -> finassist.analytics.v1.CategoryAmount
-	35, // 17: finassist.analytics.v1.MonthlyPoint.range:type_name -> finassist.common.v1.TimeRange
-	37, // 18: finassist.analytics.v1.MonthlyPoint.bounds:type_name -> finassist.common.v1.DataBounds
-	35, // 19: finassist.analytics.v1.MonthlyPoint.calculation_range:type_name -> finassist.common.v1.TimeRange
-	8,  // 20: finassist.analytics.v1.MonthlyChart.points:type_name -> finassist.analytics.v1.MonthlyPoint
-	36, // 21: finassist.analytics.v1.RegularPayment.filters:type_name -> finassist.common.v1.OperationsFilter
-	10, // 22: finassist.analytics.v1.RegularPayments.items:type_name -> finassist.analytics.v1.RegularPayment
-	36, // 23: finassist.analytics.v1.NotableSpendingItem.filters:type_name -> finassist.common.v1.OperationsFilter
-	12, // 24: finassist.analytics.v1.NotableSpending.items:type_name -> finassist.analytics.v1.NotableSpendingItem
-	36, // 25: finassist.analytics.v1.SmallFrequentGroup.filters:type_name -> finassist.common.v1.OperationsFilter
-	15, // 26: finassist.analytics.v1.SmallFrequent.items:type_name -> finassist.analytics.v1.SmallFrequentGroup
-	38, // 27: finassist.analytics.v1.GetAnalyticsRequest.period:type_name -> finassist.common.v1.PeriodType
-	39, // 28: finassist.analytics.v1.GetAnalyticsRequest.transfer_mode:type_name -> finassist.common.v1.TransferMode
-	40, // 29: finassist.analytics.v1.GetAnalyticsRequest.supports:type_name -> finassist.common.v1.BlockSupport
-	33, // 30: finassist.analytics.v1.GetAnalyticsRequest.experiments:type_name -> finassist.analytics.v1.GetAnalyticsRequest.ExperimentsEntry
-	35, // 31: finassist.analytics.v1.PeriodInfo.range:type_name -> finassist.common.v1.TimeRange
-	37, // 32: finassist.analytics.v1.PeriodInfo.bounds:type_name -> finassist.common.v1.DataBounds
-	4,  // 33: finassist.analytics.v1.Tiles.expense:type_name -> finassist.analytics.v1.Metric
-	4,  // 34: finassist.analytics.v1.Tiles.expense_comparison:type_name -> finassist.analytics.v1.Metric
-	4,  // 35: finassist.analytics.v1.Tiles.expense_typical:type_name -> finassist.analytics.v1.Metric
-	4,  // 36: finassist.analytics.v1.Tiles.income:type_name -> finassist.analytics.v1.Metric
-	4,  // 37: finassist.analytics.v1.Tiles.balance:type_name -> finassist.analytics.v1.Metric
-	4,  // 38: finassist.analytics.v1.Tiles.daily_expense:type_name -> finassist.analytics.v1.Metric
-	4,  // 39: finassist.analytics.v1.Tiles.daily_expense_comparison:type_name -> finassist.analytics.v1.Metric
-	4,  // 40: finassist.analytics.v1.Tiles.forecast:type_name -> finassist.analytics.v1.Metric
-	4,  // 41: finassist.analytics.v1.Insights.regular_payments:type_name -> finassist.analytics.v1.Metric
-	4,  // 42: finassist.analytics.v1.Insights.notable_spending:type_name -> finassist.analytics.v1.Metric
-	4,  // 43: finassist.analytics.v1.Insights.bank_fees:type_name -> finassist.analytics.v1.Metric
-	4,  // 44: finassist.analytics.v1.Insights.small_frequent:type_name -> finassist.analytics.v1.Metric
-	34, // 45: finassist.analytics.v1.ScreenState.last_operation_at:type_name -> google.protobuf.Timestamp
-	34, // 46: finassist.analytics.v1.ScreenState.data_from:type_name -> google.protobuf.Timestamp
-	34, // 47: finassist.analytics.v1.ScreenState.data_to:type_name -> google.protobuf.Timestamp
-	34, // 48: finassist.analytics.v1.ScreenState.calculated_at:type_name -> google.protobuf.Timestamp
-	41, // 49: finassist.analytics.v1.GetAnalyticsResponse.params:type_name -> finassist.common.v1.AnalyticsParams
-	18, // 50: finassist.analytics.v1.GetAnalyticsResponse.period:type_name -> finassist.analytics.v1.PeriodInfo
-	19, // 51: finassist.analytics.v1.GetAnalyticsResponse.navigation:type_name -> finassist.analytics.v1.Navigation
-	20, // 52: finassist.analytics.v1.GetAnalyticsResponse.tiles:type_name -> finassist.analytics.v1.Tiles
-	4,  // 53: finassist.analytics.v1.GetAnalyticsResponse.expense_categories:type_name -> finassist.analytics.v1.Metric
-	4,  // 54: finassist.analytics.v1.GetAnalyticsResponse.income_categories:type_name -> finassist.analytics.v1.Metric
-	4,  // 55: finassist.analytics.v1.GetAnalyticsResponse.monthly_chart:type_name -> finassist.analytics.v1.Metric
-	21, // 56: finassist.analytics.v1.GetAnalyticsResponse.insights:type_name -> finassist.analytics.v1.Insights
-	22, // 57: finassist.analytics.v1.GetAnalyticsResponse.state:type_name -> finassist.analytics.v1.ScreenState
-	42, // 58: finassist.analytics.v1.GetAnalyticsResponse.blocks:type_name -> finassist.common.v1.Block
-	43, // 59: finassist.analytics.v1.GetAnalyticsResponse.data_revisions:type_name -> finassist.common.v1.DataRevision
-	38, // 60: finassist.analytics.v1.ListPeriodsRequest.period:type_name -> finassist.common.v1.PeriodType
-	35, // 61: finassist.analytics.v1.PeriodItem.range:type_name -> finassist.common.v1.TimeRange
-	44, // 62: finassist.analytics.v1.PeriodItem.coverage:type_name -> finassist.common.v1.Coverage
-	25, // 63: finassist.analytics.v1.ListPeriodsResponse.periods:type_name -> finassist.analytics.v1.PeriodItem
-	43, // 64: finassist.analytics.v1.ListPeriodsResponse.data_revisions:type_name -> finassist.common.v1.DataRevision
-	4,  // 65: finassist.analytics.v1.MetricSnapshot.metric:type_name -> finassist.analytics.v1.Metric
-	38, // 66: finassist.analytics.v1.PeriodSnapshot.period:type_name -> finassist.common.v1.PeriodType
-	39, // 67: finassist.analytics.v1.PeriodSnapshot.transfer_mode:type_name -> finassist.common.v1.TransferMode
-	35, // 68: finassist.analytics.v1.PeriodSnapshot.range:type_name -> finassist.common.v1.TimeRange
-	37, // 69: finassist.analytics.v1.PeriodSnapshot.bounds:type_name -> finassist.common.v1.DataBounds
-	27, // 70: finassist.analytics.v1.PeriodSnapshot.metrics:type_name -> finassist.analytics.v1.MetricSnapshot
-	34, // 71: finassist.analytics.v1.PeriodSnapshot.calculated_at:type_name -> google.protobuf.Timestamp
-	43, // 72: finassist.analytics.v1.PeriodSnapshot.data_revisions:type_name -> finassist.common.v1.DataRevision
-	38, // 73: finassist.analytics.v1.PeriodRef.period:type_name -> finassist.common.v1.PeriodType
-	34, // 74: finassist.analytics.v1.UserDataState.data_from:type_name -> google.protobuf.Timestamp
-	34, // 75: finassist.analytics.v1.UserDataState.data_to:type_name -> google.protobuf.Timestamp
-	34, // 76: finassist.analytics.v1.UserDataState.last_operation_at:type_name -> google.protobuf.Timestamp
-	34, // 77: finassist.analytics.v1.UserDataState.stale_after:type_name -> google.protobuf.Timestamp
-	34, // 78: finassist.analytics.v1.UserDataState.calculated_at:type_name -> google.protobuf.Timestamp
-	43, // 79: finassist.analytics.v1.UserDataState.data_revisions:type_name -> finassist.common.v1.DataRevision
-	30, // 80: finassist.analytics.v1.UpsertUserMetricsRequest.state:type_name -> finassist.analytics.v1.UserDataState
-	28, // 81: finassist.analytics.v1.UpsertUserMetricsRequest.periods:type_name -> finassist.analytics.v1.PeriodSnapshot
-	29, // 82: finassist.analytics.v1.UpsertUserMetricsRequest.removed_periods:type_name -> finassist.analytics.v1.PeriodRef
-	17, // 83: finassist.analytics.v1.AnalyticsService.GetAnalytics:input_type -> finassist.analytics.v1.GetAnalyticsRequest
-	24, // 84: finassist.analytics.v1.AnalyticsService.ListPeriods:input_type -> finassist.analytics.v1.ListPeriodsRequest
-	31, // 85: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:input_type -> finassist.analytics.v1.UpsertUserMetricsRequest
-	23, // 86: finassist.analytics.v1.AnalyticsService.GetAnalytics:output_type -> finassist.analytics.v1.GetAnalyticsResponse
-	26, // 87: finassist.analytics.v1.AnalyticsService.ListPeriods:output_type -> finassist.analytics.v1.ListPeriodsResponse
-	32, // 88: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:output_type -> finassist.analytics.v1.UpsertUserMetricsResponse
-	86, // [86:89] is the sub-list for method output_type
-	83, // [83:86] is the sub-list for method input_type
-	83, // [83:83] is the sub-list for extension type_name
-	83, // [83:83] is the sub-list for extension extendee
-	0,  // [0:83] is the sub-list for field type_name
+	40, // 0: finassist.analytics.v1.ApplyRegularPaymentDismissalRequest.params:type_name -> finassist.common.v1.AnalyticsParams
+	40, // 1: finassist.analytics.v1.ApplyRegularPaymentDismissalResponse.params:type_name -> finassist.common.v1.AnalyticsParams
+	41, // 2: finassist.analytics.v1.ApplyRegularPaymentDismissalResponse.blocks:type_name -> finassist.common.v1.Block
+	1,  // 3: finassist.analytics.v1.MetricLock.reason:type_name -> finassist.analytics.v1.LockReason
+	42, // 4: finassist.analytics.v1.MetricLock.available_from:type_name -> google.protobuf.Timestamp
+	43, // 5: finassist.analytics.v1.MetricBasis.range:type_name -> finassist.common.v1.TimeRange
+	0,  // 6: finassist.analytics.v1.Metric.status:type_name -> finassist.analytics.v1.MetricStatus
+	4,  // 7: finassist.analytics.v1.Metric.lock:type_name -> finassist.analytics.v1.MetricLock
+	5,  // 8: finassist.analytics.v1.Metric.basis:type_name -> finassist.analytics.v1.MetricBasis
+	44, // 9: finassist.analytics.v1.Metric.filters:type_name -> finassist.common.v1.OperationsFilter
+	43, // 10: finassist.analytics.v1.Metric.range:type_name -> finassist.common.v1.TimeRange
+	7,  // 11: finassist.analytics.v1.Metric.balance:type_name -> finassist.analytics.v1.BalanceDetails
+	9,  // 12: finassist.analytics.v1.Metric.categories:type_name -> finassist.analytics.v1.CategoryBreakdown
+	11, // 13: finassist.analytics.v1.Metric.monthly_chart:type_name -> finassist.analytics.v1.MonthlyChart
+	13, // 14: finassist.analytics.v1.Metric.regular_payments:type_name -> finassist.analytics.v1.RegularPayments
+	15, // 15: finassist.analytics.v1.Metric.notable_spending:type_name -> finassist.analytics.v1.NotableSpending
+	16, // 16: finassist.analytics.v1.Metric.bank_fees:type_name -> finassist.analytics.v1.BankFees
+	18, // 17: finassist.analytics.v1.Metric.small_frequent:type_name -> finassist.analytics.v1.SmallFrequent
+	44, // 18: finassist.analytics.v1.CategoryAmount.filters:type_name -> finassist.common.v1.OperationsFilter
+	8,  // 19: finassist.analytics.v1.CategoryBreakdown.items:type_name -> finassist.analytics.v1.CategoryAmount
+	43, // 20: finassist.analytics.v1.MonthlyPoint.range:type_name -> finassist.common.v1.TimeRange
+	45, // 21: finassist.analytics.v1.MonthlyPoint.bounds:type_name -> finassist.common.v1.DataBounds
+	43, // 22: finassist.analytics.v1.MonthlyPoint.calculation_range:type_name -> finassist.common.v1.TimeRange
+	10, // 23: finassist.analytics.v1.MonthlyChart.points:type_name -> finassist.analytics.v1.MonthlyPoint
+	44, // 24: finassist.analytics.v1.RegularPayment.filters:type_name -> finassist.common.v1.OperationsFilter
+	12, // 25: finassist.analytics.v1.RegularPayments.items:type_name -> finassist.analytics.v1.RegularPayment
+	44, // 26: finassist.analytics.v1.NotableSpendingItem.filters:type_name -> finassist.common.v1.OperationsFilter
+	14, // 27: finassist.analytics.v1.NotableSpending.items:type_name -> finassist.analytics.v1.NotableSpendingItem
+	44, // 28: finassist.analytics.v1.SmallFrequentGroup.filters:type_name -> finassist.common.v1.OperationsFilter
+	17, // 29: finassist.analytics.v1.SmallFrequent.items:type_name -> finassist.analytics.v1.SmallFrequentGroup
+	41, // 30: finassist.analytics.v1.GetChartPageResponse.block:type_name -> finassist.common.v1.Block
+	46, // 31: finassist.analytics.v1.GetAnalyticsRequest.period:type_name -> finassist.common.v1.PeriodType
+	47, // 32: finassist.analytics.v1.GetAnalyticsRequest.transfer_mode:type_name -> finassist.common.v1.TransferMode
+	48, // 33: finassist.analytics.v1.GetAnalyticsRequest.supports:type_name -> finassist.common.v1.BlockSupport
+	39, // 34: finassist.analytics.v1.GetAnalyticsRequest.experiments:type_name -> finassist.analytics.v1.GetAnalyticsRequest.ExperimentsEntry
+	43, // 35: finassist.analytics.v1.PeriodInfo.range:type_name -> finassist.common.v1.TimeRange
+	45, // 36: finassist.analytics.v1.PeriodInfo.bounds:type_name -> finassist.common.v1.DataBounds
+	6,  // 37: finassist.analytics.v1.Tiles.expense:type_name -> finassist.analytics.v1.Metric
+	6,  // 38: finassist.analytics.v1.Tiles.expense_comparison:type_name -> finassist.analytics.v1.Metric
+	6,  // 39: finassist.analytics.v1.Tiles.expense_typical:type_name -> finassist.analytics.v1.Metric
+	6,  // 40: finassist.analytics.v1.Tiles.income:type_name -> finassist.analytics.v1.Metric
+	6,  // 41: finassist.analytics.v1.Tiles.balance:type_name -> finassist.analytics.v1.Metric
+	6,  // 42: finassist.analytics.v1.Tiles.daily_expense:type_name -> finassist.analytics.v1.Metric
+	6,  // 43: finassist.analytics.v1.Tiles.daily_expense_comparison:type_name -> finassist.analytics.v1.Metric
+	6,  // 44: finassist.analytics.v1.Tiles.forecast:type_name -> finassist.analytics.v1.Metric
+	6,  // 45: finassist.analytics.v1.Insights.regular_payments:type_name -> finassist.analytics.v1.Metric
+	6,  // 46: finassist.analytics.v1.Insights.notable_spending:type_name -> finassist.analytics.v1.Metric
+	6,  // 47: finassist.analytics.v1.Insights.bank_fees:type_name -> finassist.analytics.v1.Metric
+	6,  // 48: finassist.analytics.v1.Insights.small_frequent:type_name -> finassist.analytics.v1.Metric
+	42, // 49: finassist.analytics.v1.ScreenState.last_operation_at:type_name -> google.protobuf.Timestamp
+	42, // 50: finassist.analytics.v1.ScreenState.data_from:type_name -> google.protobuf.Timestamp
+	42, // 51: finassist.analytics.v1.ScreenState.data_to:type_name -> google.protobuf.Timestamp
+	42, // 52: finassist.analytics.v1.ScreenState.calculated_at:type_name -> google.protobuf.Timestamp
+	40, // 53: finassist.analytics.v1.GetAnalyticsResponse.params:type_name -> finassist.common.v1.AnalyticsParams
+	22, // 54: finassist.analytics.v1.GetAnalyticsResponse.period:type_name -> finassist.analytics.v1.PeriodInfo
+	23, // 55: finassist.analytics.v1.GetAnalyticsResponse.navigation:type_name -> finassist.analytics.v1.Navigation
+	24, // 56: finassist.analytics.v1.GetAnalyticsResponse.tiles:type_name -> finassist.analytics.v1.Tiles
+	6,  // 57: finassist.analytics.v1.GetAnalyticsResponse.expense_categories:type_name -> finassist.analytics.v1.Metric
+	6,  // 58: finassist.analytics.v1.GetAnalyticsResponse.income_categories:type_name -> finassist.analytics.v1.Metric
+	6,  // 59: finassist.analytics.v1.GetAnalyticsResponse.monthly_chart:type_name -> finassist.analytics.v1.Metric
+	25, // 60: finassist.analytics.v1.GetAnalyticsResponse.insights:type_name -> finassist.analytics.v1.Insights
+	26, // 61: finassist.analytics.v1.GetAnalyticsResponse.state:type_name -> finassist.analytics.v1.ScreenState
+	41, // 62: finassist.analytics.v1.GetAnalyticsResponse.blocks:type_name -> finassist.common.v1.Block
+	49, // 63: finassist.analytics.v1.GetAnalyticsResponse.data_revisions:type_name -> finassist.common.v1.DataRevision
+	50, // 64: finassist.analytics.v1.GetAnalyticsResponse.calculation:type_name -> finassist.common.v1.CalculationState
+	46, // 65: finassist.analytics.v1.ListPeriodsRequest.period:type_name -> finassist.common.v1.PeriodType
+	43, // 66: finassist.analytics.v1.PeriodItem.range:type_name -> finassist.common.v1.TimeRange
+	51, // 67: finassist.analytics.v1.PeriodItem.coverage:type_name -> finassist.common.v1.Coverage
+	29, // 68: finassist.analytics.v1.ListPeriodsResponse.periods:type_name -> finassist.analytics.v1.PeriodItem
+	49, // 69: finassist.analytics.v1.ListPeriodsResponse.data_revisions:type_name -> finassist.common.v1.DataRevision
+	6,  // 70: finassist.analytics.v1.MetricSnapshot.metric:type_name -> finassist.analytics.v1.Metric
+	46, // 71: finassist.analytics.v1.PeriodSnapshot.period:type_name -> finassist.common.v1.PeriodType
+	47, // 72: finassist.analytics.v1.PeriodSnapshot.transfer_mode:type_name -> finassist.common.v1.TransferMode
+	43, // 73: finassist.analytics.v1.PeriodSnapshot.range:type_name -> finassist.common.v1.TimeRange
+	45, // 74: finassist.analytics.v1.PeriodSnapshot.bounds:type_name -> finassist.common.v1.DataBounds
+	31, // 75: finassist.analytics.v1.PeriodSnapshot.metrics:type_name -> finassist.analytics.v1.MetricSnapshot
+	42, // 76: finassist.analytics.v1.PeriodSnapshot.calculated_at:type_name -> google.protobuf.Timestamp
+	49, // 77: finassist.analytics.v1.PeriodSnapshot.data_revisions:type_name -> finassist.common.v1.DataRevision
+	46, // 78: finassist.analytics.v1.PeriodRef.period:type_name -> finassist.common.v1.PeriodType
+	42, // 79: finassist.analytics.v1.UserDataState.data_from:type_name -> google.protobuf.Timestamp
+	42, // 80: finassist.analytics.v1.UserDataState.data_to:type_name -> google.protobuf.Timestamp
+	42, // 81: finassist.analytics.v1.UserDataState.last_operation_at:type_name -> google.protobuf.Timestamp
+	42, // 82: finassist.analytics.v1.UserDataState.stale_after:type_name -> google.protobuf.Timestamp
+	42, // 83: finassist.analytics.v1.UserDataState.calculated_at:type_name -> google.protobuf.Timestamp
+	49, // 84: finassist.analytics.v1.UserDataState.data_revisions:type_name -> finassist.common.v1.DataRevision
+	34, // 85: finassist.analytics.v1.UpsertUserMetricsRequest.state:type_name -> finassist.analytics.v1.UserDataState
+	32, // 86: finassist.analytics.v1.UpsertUserMetricsRequest.periods:type_name -> finassist.analytics.v1.PeriodSnapshot
+	33, // 87: finassist.analytics.v1.UpsertUserMetricsRequest.removed_periods:type_name -> finassist.analytics.v1.PeriodRef
+	21, // 88: finassist.analytics.v1.AnalyticsService.GetAnalytics:input_type -> finassist.analytics.v1.GetAnalyticsRequest
+	28, // 89: finassist.analytics.v1.AnalyticsService.ListPeriods:input_type -> finassist.analytics.v1.ListPeriodsRequest
+	19, // 90: finassist.analytics.v1.AnalyticsService.GetChartPage:input_type -> finassist.analytics.v1.GetChartPageRequest
+	2,  // 91: finassist.analytics.v1.AnalyticsService.ApplyRegularPaymentDismissal:input_type -> finassist.analytics.v1.ApplyRegularPaymentDismissalRequest
+	37, // 92: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:input_type -> finassist.analytics.v1.UpsertUserMetricsRequest
+	35, // 93: finassist.analytics.v1.MetricsIngestService.MarkRecalculating:input_type -> finassist.analytics.v1.MarkRecalculatingRequest
+	27, // 94: finassist.analytics.v1.AnalyticsService.GetAnalytics:output_type -> finassist.analytics.v1.GetAnalyticsResponse
+	30, // 95: finassist.analytics.v1.AnalyticsService.ListPeriods:output_type -> finassist.analytics.v1.ListPeriodsResponse
+	20, // 96: finassist.analytics.v1.AnalyticsService.GetChartPage:output_type -> finassist.analytics.v1.GetChartPageResponse
+	3,  // 97: finassist.analytics.v1.AnalyticsService.ApplyRegularPaymentDismissal:output_type -> finassist.analytics.v1.ApplyRegularPaymentDismissalResponse
+	38, // 98: finassist.analytics.v1.MetricsIngestService.UpsertUserMetrics:output_type -> finassist.analytics.v1.UpsertUserMetricsResponse
+	36, // 99: finassist.analytics.v1.MetricsIngestService.MarkRecalculating:output_type -> finassist.analytics.v1.MarkRecalculatingResponse
+	94, // [94:100] is the sub-list for method output_type
+	88, // [88:94] is the sub-list for method input_type
+	88, // [88:88] is the sub-list for extension type_name
+	88, // [88:88] is the sub-list for extension extendee
+	0,  // [0:88] is the sub-list for field type_name
 }
 
 func init() { file_finassist_analytics_v1_analytics_proto_init() }
@@ -3278,8 +3667,8 @@ func file_finassist_analytics_v1_analytics_proto_init() {
 	if File_finassist_analytics_v1_analytics_proto != nil {
 		return
 	}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[0].OneofWrappers = []any{}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[2].OneofWrappers = []any{
+	file_finassist_analytics_v1_analytics_proto_msgTypes[2].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[4].OneofWrappers = []any{
 		(*Metric_Balance)(nil),
 		(*Metric_Categories)(nil),
 		(*Metric_MonthlyChart)(nil),
@@ -3288,26 +3677,26 @@ func file_finassist_analytics_v1_analytics_proto_init() {
 		(*Metric_BankFees)(nil),
 		(*Metric_SmallFrequent)(nil),
 	}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[3].OneofWrappers = []any{}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[4].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[5].OneofWrappers = []any{}
 	file_finassist_analytics_v1_analytics_proto_msgTypes[6].OneofWrappers = []any{}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[9].OneofWrappers = []any{}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[12].OneofWrappers = []any{}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[15].OneofWrappers = []any{}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[17].OneofWrappers = []any{}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[18].OneofWrappers = []any{}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[20].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[8].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[11].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[14].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[19].OneofWrappers = []any{}
 	file_finassist_analytics_v1_analytics_proto_msgTypes[21].OneofWrappers = []any{}
 	file_finassist_analytics_v1_analytics_proto_msgTypes[22].OneofWrappers = []any{}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[28].OneofWrappers = []any{}
-	file_finassist_analytics_v1_analytics_proto_msgTypes[29].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[24].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[25].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[26].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[32].OneofWrappers = []any{}
+	file_finassist_analytics_v1_analytics_proto_msgTypes[35].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finassist_analytics_v1_analytics_proto_rawDesc), len(file_finassist_analytics_v1_analytics_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   32,
+			NumMessages:   38,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package finassist.common.v1;
+
+option go_package = "github.com/fin-assist/contracts/gen/go/finassist/common/v1;commonv1";
+
+// Состояние существующего фонового расчёта, в том числе до появления финансовых данных.
+message CalculationState {
+  // Версия применённого UserDataState; 0, если состояния ещё нет. Не версия маркера.
+  int32 calc_version = 1;
+  // Сохранённый признак OR marker_version > calc_version; FIN-418.
+  // false и calc_version >= required_calc_version обновления блоков подтверждают готовность для клиента.
+  bool recalculating = 2;
+}

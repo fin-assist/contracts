@@ -127,6 +127,12 @@ enum ErrorReason {
     grpc_code: GRPC_CODE_FAILED_PRECONDITION
     http_status: 422
   }];
+  // Присваивание сохранено, но запрошенный контекст аналитики больше недоступен.
+  // Только ApplyRegularPaymentDismissal; RequestRetryInfo явно запрещает повтор в том же контексте.
+  ANALYTICS_CONTEXT_UNAVAILABLE = 25 [(error_spec) = {
+    grpc_code: GRPC_CODE_FAILED_PRECONDITION
+    http_status: 422
+  }];
 
   // Превышен лимит запросов; retry_at (RFC 3339) — когда можно повторить.
   RATE_LIMITED = 20 [(error_spec) = {

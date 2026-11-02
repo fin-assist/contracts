@@ -1,0 +1,18 @@
+{
+  "time_zone": "Europe/Moscow",
+  "download_url": "<ignored>",
+  "login_url": "<ignored>",
+  "max_file_size_bytes": 10485760,
+  "accepted_formats": [
+    "OFX"
+  ],
+  "suggested_period": {
+    "from": "2025-10-31T00:00:00+03:00",
+    "to": "2025-11-02T00:00:00+03:00"
+  },
+  "loaded": {
+    "first_operation_at": "2025-10-15T08:25:02+03:00",
+    "last_operation_at": "2025-10-31T21:06:35+03:00",
+    "operation_count": 76
+  }
+}

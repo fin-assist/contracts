@@ -19,8 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AnalyticsService_GetAnalytics_FullMethodName = "/finassist.analytics.v1.AnalyticsService/GetAnalytics"
-	AnalyticsService_ListPeriods_FullMethodName  = "/finassist.analytics.v1.AnalyticsService/ListPeriods"
+	AnalyticsService_GetAnalytics_FullMethodName                 = "/finassist.analytics.v1.AnalyticsService/GetAnalytics"
+	AnalyticsService_ListPeriods_FullMethodName                  = "/finassist.analytics.v1.AnalyticsService/ListPeriods"
+	AnalyticsService_GetChartPage_FullMethodName                 = "/finassist.analytics.v1.AnalyticsService/GetChartPage"
+	AnalyticsService_ApplyRegularPaymentDismissal_FullMethodName = "/finassist.analytics.v1.AnalyticsService/ApplyRegularPaymentDismissal"
 )
 
 // AnalyticsServiceClient is the client API for AnalyticsService service.
@@ -38,6 +40,16 @@ type AnalyticsServiceClient interface {
 	// мог предложить выбор периода.
 	// GET /v1/analytics/periods.
 	ListPeriods(ctx context.Context, in *ListPeriodsRequest, opts ...grpc.CallOption) (*ListPeriodsResponse, error)
+	// Страница monthly_chart: максимум 60 полных календарных месяцев, только по выданному cursor.
+	// Вызывающий — только bank-bff с проверяемым токеном пользователя; системные вызовы не разрешены.
+	// GET /v1/analytics/charts/monthly_chart. Как GetAnalytics: primary, одна согласованная проверка/выборка.
+	// Ошибки cursor и согласованность — api.md6.4.
+	GetChartPage(ctx context.Context, in *GetChartPageRequest, opts ...grpc.CallOption) (*GetChartPageResponse, error)
+	// Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
+	// Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
+	// Достоверно отсутствующий контекст: ANALYTICS_CONTEXT_UNAVAILABLE, FAILED_PRECONDITION, RequestRetryInfo=false.
+	// Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
+	ApplyRegularPaymentDismissal(ctx context.Context, in *ApplyRegularPaymentDismissalRequest, opts ...grpc.CallOption) (*ApplyRegularPaymentDismissalResponse, error)
 }
 
 type analyticsServiceClient struct {
@@ -68,6 +80,26 @@ func (c *analyticsServiceClient) ListPeriods(ctx context.Context, in *ListPeriod
 	return out, nil
 }
 
+func (c *analyticsServiceClient) GetChartPage(ctx context.Context, in *GetChartPageRequest, opts ...grpc.CallOption) (*GetChartPageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetChartPageResponse)
+	err := c.cc.Invoke(ctx, AnalyticsService_GetChartPage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analyticsServiceClient) ApplyRegularPaymentDismissal(ctx context.Context, in *ApplyRegularPaymentDismissalRequest, opts ...grpc.CallOption) (*ApplyRegularPaymentDismissalResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApplyRegularPaymentDismissalResponse)
+	err := c.cc.Invoke(ctx, AnalyticsService_ApplyRegularPaymentDismissal_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnalyticsServiceServer is the server API for AnalyticsService service.
 // All implementations must embed UnimplementedAnalyticsServiceServer
 // for forward compatibility.
@@ -83,6 +115,16 @@ type AnalyticsServiceServer interface {
 	// мог предложить выбор периода.
 	// GET /v1/analytics/periods.
 	ListPeriods(context.Context, *ListPeriodsRequest) (*ListPeriodsResponse, error)
+	// Страница monthly_chart: максимум 60 полных календарных месяцев, только по выданному cursor.
+	// Вызывающий — только bank-bff с проверяемым токеном пользователя; системные вызовы не разрешены.
+	// GET /v1/analytics/charts/monthly_chart. Как GetAnalytics: primary, одна согласованная проверка/выборка.
+	// Ошибки cursor и согласованность — api.md6.4.
+	GetChartPage(context.Context, *GetChartPageRequest) (*GetChartPageResponse, error)
+	// Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
+	// Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
+	// Достоверно отсутствующий контекст: ANALYTICS_CONTEXT_UNAVAILABLE, FAILED_PRECONDITION, RequestRetryInfo=false.
+	// Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
+	ApplyRegularPaymentDismissal(context.Context, *ApplyRegularPaymentDismissalRequest) (*ApplyRegularPaymentDismissalResponse, error)
 	mustEmbedUnimplementedAnalyticsServiceServer()
 }
 
@@ -98,6 +140,12 @@ func (UnimplementedAnalyticsServiceServer) GetAnalytics(context.Context, *GetAna
 }
 func (UnimplementedAnalyticsServiceServer) ListPeriods(context.Context, *ListPeriodsRequest) (*ListPeriodsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPeriods not implemented")
+}
+func (UnimplementedAnalyticsServiceServer) GetChartPage(context.Context, *GetChartPageRequest) (*GetChartPageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChartPage not implemented")
+}
+func (UnimplementedAnalyticsServiceServer) ApplyRegularPaymentDismissal(context.Context, *ApplyRegularPaymentDismissalRequest) (*ApplyRegularPaymentDismissalResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApplyRegularPaymentDismissal not implemented")
 }
 func (UnimplementedAnalyticsServiceServer) mustEmbedUnimplementedAnalyticsServiceServer() {}
 func (UnimplementedAnalyticsServiceServer) testEmbeddedByValue()                          {}
@@ -156,6 +204,42 @@ func _AnalyticsService_ListPeriods_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AnalyticsService_GetChartPage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChartPageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalyticsServiceServer).GetChartPage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AnalyticsService_GetChartPage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalyticsServiceServer).GetChartPage(ctx, req.(*GetChartPageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AnalyticsService_ApplyRegularPaymentDismissal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApplyRegularPaymentDismissalRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalyticsServiceServer).ApplyRegularPaymentDismissal(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AnalyticsService_ApplyRegularPaymentDismissal_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalyticsServiceServer).ApplyRegularPaymentDismissal(ctx, req.(*ApplyRegularPaymentDismissalRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AnalyticsService_ServiceDesc is the grpc.ServiceDesc for AnalyticsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -171,6 +255,14 @@ var AnalyticsService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ListPeriods",
 			Handler:    _AnalyticsService_ListPeriods_Handler,
 		},
+		{
+			MethodName: "GetChartPage",
+			Handler:    _AnalyticsService_GetChartPage_Handler,
+		},
+		{
+			MethodName: "ApplyRegularPaymentDismissal",
+			Handler:    _AnalyticsService_ApplyRegularPaymentDismissal_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "finassist/analytics/v1/analytics.proto",
@@ -178,17 +270,21 @@ var AnalyticsService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	MetricsIngestService_UpsertUserMetrics_FullMethodName = "/finassist.analytics.v1.MetricsIngestService/UpsertUserMetrics"
+	MetricsIngestService_MarkRecalculating_FullMethodName = "/finassist.analytics.v1.MetricsIngestService/MarkRecalculating"
 )
 
 // MetricsIngestServiceClient is the client API for MetricsIngestService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Вызывающий: только bank-statement-data (воркер outbox). Идемпотентный upsert с версиями.
+// Вызывающий: только системный bank-statement-data (post-commit доставка маркера / фон). Идемпотентные версии.
 type MetricsIngestServiceClient interface {
 	// Записать готовые метрики пользователя: состояние данных и полные снимки периодов, удалить
 	// периоды без данных. Применяется по версии расчёта, повторы безопасны.
 	UpsertUserMetrics(ctx context.Context, in *UpsertUserMetricsRequest, opts ...grpc.CallOption) (*UpsertUserMetricsResponse, error)
+	// Только bank-statement-data: короткая попытка после commit или повтор надёжного задания.
+	// Записывает отдельную монотонную границу, не UserDataState/финансовые снимки.
+	MarkRecalculating(ctx context.Context, in *MarkRecalculatingRequest, opts ...grpc.CallOption) (*MarkRecalculatingResponse, error)
 }
 
 type metricsIngestServiceClient struct {
@@ -209,15 +305,28 @@ func (c *metricsIngestServiceClient) UpsertUserMetrics(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *metricsIngestServiceClient) MarkRecalculating(ctx context.Context, in *MarkRecalculatingRequest, opts ...grpc.CallOption) (*MarkRecalculatingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkRecalculatingResponse)
+	err := c.cc.Invoke(ctx, MetricsIngestService_MarkRecalculating_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MetricsIngestServiceServer is the server API for MetricsIngestService service.
 // All implementations must embed UnimplementedMetricsIngestServiceServer
 // for forward compatibility.
 //
-// Вызывающий: только bank-statement-data (воркер outbox). Идемпотентный upsert с версиями.
+// Вызывающий: только системный bank-statement-data (post-commit доставка маркера / фон). Идемпотентные версии.
 type MetricsIngestServiceServer interface {
 	// Записать готовые метрики пользователя: состояние данных и полные снимки периодов, удалить
 	// периоды без данных. Применяется по версии расчёта, повторы безопасны.
 	UpsertUserMetrics(context.Context, *UpsertUserMetricsRequest) (*UpsertUserMetricsResponse, error)
+	// Только bank-statement-data: короткая попытка после commit или повтор надёжного задания.
+	// Записывает отдельную монотонную границу, не UserDataState/финансовые снимки.
+	MarkRecalculating(context.Context, *MarkRecalculatingRequest) (*MarkRecalculatingResponse, error)
 	mustEmbedUnimplementedMetricsIngestServiceServer()
 }
 
@@ -230,6 +339,9 @@ type UnimplementedMetricsIngestServiceServer struct{}
 
 func (UnimplementedMetricsIngestServiceServer) UpsertUserMetrics(context.Context, *UpsertUserMetricsRequest) (*UpsertUserMetricsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpsertUserMetrics not implemented")
+}
+func (UnimplementedMetricsIngestServiceServer) MarkRecalculating(context.Context, *MarkRecalculatingRequest) (*MarkRecalculatingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkRecalculating not implemented")
 }
 func (UnimplementedMetricsIngestServiceServer) mustEmbedUnimplementedMetricsIngestServiceServer() {}
 func (UnimplementedMetricsIngestServiceServer) testEmbeddedByValue()                              {}
@@ -270,6 +382,24 @@ func _MetricsIngestService_UpsertUserMetrics_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetricsIngestService_MarkRecalculating_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkRecalculatingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetricsIngestServiceServer).MarkRecalculating(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetricsIngestService_MarkRecalculating_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetricsIngestServiceServer).MarkRecalculating(ctx, req.(*MarkRecalculatingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MetricsIngestService_ServiceDesc is the grpc.ServiceDesc for MetricsIngestService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -280,6 +410,10 @@ var MetricsIngestService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpsertUserMetrics",
 			Handler:    _MetricsIngestService_UpsertUserMetrics_Handler,
+		},
+		{
+			MethodName: "MarkRecalculating",
+			Handler:    _MetricsIngestService_MarkRecalculating_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

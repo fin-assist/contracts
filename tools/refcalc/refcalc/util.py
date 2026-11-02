@@ -20,16 +20,48 @@ def round_half_up(x: Fraction) -> int:
 
 def iso(t: dt.datetime) -> str:
     """RFC 3339 with seconds and the offset of `t` (`2026-09-25T21:40:00+03:00`)."""
+    if t.utcoffset() is not None and t.utcoffset().total_seconds() % 60:
+        t = t.astimezone(dt.timezone.utc)
     return t.replace(microsecond=0).isoformat()
 
 
 def start_of_day(d: dt.date, zone: ZoneInfo) -> dt.datetime:
-    return dt.datetime(d.year, d.month, d.day, tzinfo=zone)
+    """Earliest real instant of the civil day, or the next existing day when skipped."""
+    midnight = dt.datetime(d.year, d.month, d.day)
+    # PEP 495: fold=0/1 use the offsets on either side of a gap/fold.
+    # https://peps.python.org/pep-0495/#mind-the-gap
+    candidates = sorted({midnight.replace(tzinfo=zone, fold=f).astimezone(dt.timezone.utc)
+                         for f in (0, 1)})
+    valid = [instant for instant in candidates
+             if instant.astimezone(zone).replace(tzinfo=None) == midnight]
+    if valid:
+        return min(valid).astimezone(zone)
+    # A UTC round-trip alone advances by the entire gap, which can overshoot its end.
+    # The two synthetic instants bracket the transition; find its first real instant.
+    lo, hi = candidates
+    tick = dt.timedelta(microseconds=1)
+    while hi - lo > tick:
+        mid = lo + (hi - lo) // 2
+        if mid.astimezone(zone).date() < d:
+            lo = mid
+        else:
+            hi = mid
+    return hi.astimezone(zone)
 
 
 def end_of_day(d: dt.date, zone: ZoneInfo) -> dt.datetime:
-    """23:59:59 of the day in the zone (docs/calc.md, section 4)."""
-    return dt.datetime(d.year, d.month, d.day, 23, 59, 59, tzinfo=zone)
+    """Last real second of the civil day; reject a completely skipped day."""
+    last = dt.datetime(d.year, d.month, d.day, 23, 59, 59)
+    candidates = {last.replace(tzinfo=zone, fold=f).astimezone(dt.timezone.utc) for f in (0, 1)}
+    valid = [instant for instant in candidates if instant.astimezone(zone).replace(tzinfo=None) == last]
+    if valid:
+        # A rollback across midnight can revisit yesterday after tomorrow first started.
+        return max(valid).astimezone(zone)
+    instant = start_of_day(d + dt.timedelta(days=1), zone).astimezone(dt.timezone.utc)
+    result = (instant - dt.timedelta(seconds=1)).astimezone(zone)
+    if result.date() != d:
+        raise ValueError('civil day does not exist')
+    return result
 
 
 def day_of(t: dt.datetime, zone: ZoneInfo) -> dt.date:

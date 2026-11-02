@@ -85,7 +85,8 @@
                 "status": "ready",
                 "value": 3745521,
                 "value_kind": "amount",
-                "caption": "<ignored>"
+                "caption": "<ignored>",
+                "help_text": "<ignored>"
               }
             ]
           }
@@ -120,13 +121,17 @@
             }
           }
         ],
+        "page": {
+          "revision": "<opaque>"
+        },
         "notes": [
           {
             "text": "<ignored>",
             "tone": "primary"
           }
         ]
-      }
+      },
+      "help_text": "<ignored>"
     },
     {
       "id": "expense_categories",
@@ -561,6 +566,11 @@
     "full_months": 0,
     "unread_lines_count": 0,
     "calculated_at": "<ignored>",
+    "recalculating": false
+  },
+  "time_zone": "Europe/Moscow",
+  "calculation": {
+    "calc_version": 9,
     "recalculating": false
   }
 }

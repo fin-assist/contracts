@@ -41,6 +41,20 @@ func TestConstructorRoundTrip(t *testing.T) {
 	}
 }
 
+func TestSavedAssignmentContextUnavailableIsNotValidationFailure(t *testing.T) {
+	err := WithRequestRetryInfo(AnalyticsContextUnavailable(), false)
+	if got := status.Code(err); got != codes.FailedPrecondition {
+		t.Fatalf("grpc code %v", got)
+	}
+	rest, ok := ToREST(err)
+	if !ok || rest.Code != "ANALYTICS_CONTEXT_UNAVAILABLE" || rest.Spec.HTTPStatus != 422 {
+		t.Fatalf("ToREST = %+v, %v", rest, ok)
+	}
+	if len(rest.Violations) != 0 || rest.RequestRetryable == nil || *rest.RequestRetryable {
+		t.Fatalf("saved assignment must not suggest correcting or repeating the same query: %+v", rest)
+	}
+}
+
 func TestMetadataAndRetryInfo(t *testing.T) {
 	resetsAt := time.Date(2026, 10, 17, 0, 0, 0, 0, time.FixedZone("MSK", 3*60*60))
 	rest, ok := ToREST(LimitExceeded(resetsAt))

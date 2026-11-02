@@ -509,7 +509,7 @@ type MonthSummary struct {
 	// Доходы, со знаком.
 	IncomeMinor int64 `protobuf:"varint,4,opt,name=income_minor,json=incomeMinor,proto3" json:"income_minor,omitempty"`
 	// Есть, если месяц неполный: конец данных по покрытым дням, как DataBounds.data_to (время
-	// последней операции в последний покрытый день или 23:59:59 этого дня).
+	// последней операции в последний покрытый день или последняя существующая секунда этого дня).
 	DataTo        *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=data_to,json=dataTo,proto3,oneof" json:"data_to,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1349,9 +1349,11 @@ func (x *DismissRegularPaymentRequest) GetRegularPaymentId() string {
 	return ""
 }
 
-// Пустой ответ: отметка поставлена, пересчёт запущен.
+// Отметка сохранена; BFF затем получает полное обновление из собственной проекции analytics.
 type DismissRegularPaymentResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Сохранённый target > 0 из последовательности BSD; повтор assignment возвращает тот же target.
+	CalcVersion   int32 `protobuf:"varint,1,opt,name=calc_version,json=calcVersion,proto3" json:"calc_version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1384,6 +1386,13 @@ func (x *DismissRegularPaymentResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use DismissRegularPaymentResponse.ProtoReflect.Descriptor instead.
 func (*DismissRegularPaymentResponse) Descriptor() ([]byte, []int) {
 	return file_finassist_statementdata_v1_operations_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *DismissRegularPaymentResponse) GetCalcVersion() int32 {
+	if x != nil {
+		return x.CalcVersion
+	}
+	return 0
 }
 
 // Вернуть платёж в регулярные.
@@ -1431,7 +1440,7 @@ func (x *RestoreRegularPaymentRequest) GetRegularPaymentId() string {
 	return ""
 }
 
-// Пустой ответ: отметка снята, пересчёт запущен.
+// Прежнее асинхронное снятие отметки.
 type RestoreRegularPaymentResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1589,8 +1598,9 @@ const file_finassist_statementdata_v1_operations_proto_rawDesc = "" +
 	"categories\x18\x01 \x03(\v2$.finassist.statementdata.v1.CategoryR\n" +
 	"categories\"L\n" +
 	"\x1cDismissRegularPaymentRequest\x12,\n" +
-	"\x12regular_payment_id\x18\x01 \x01(\tR\x10regularPaymentId\"\x1f\n" +
-	"\x1dDismissRegularPaymentResponse\"L\n" +
+	"\x12regular_payment_id\x18\x01 \x01(\tR\x10regularPaymentId\"B\n" +
+	"\x1dDismissRegularPaymentResponse\x12!\n" +
+	"\fcalc_version\x18\x01 \x01(\x05R\vcalcVersion\"L\n" +
 	"\x1cRestoreRegularPaymentRequest\x12,\n" +
 	"\x12regular_payment_id\x18\x01 \x01(\tR\x10regularPaymentId\"\x1f\n" +
 	"\x1dRestoreRegularPaymentResponse*\x87\x01\n" +

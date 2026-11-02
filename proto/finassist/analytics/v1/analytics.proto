@@ -3,6 +3,7 @@ syntax = "proto3";
 package finassist.analytics.v1;
 
 import "finassist/common/v1/blocks.proto";
+import "finassist/common/v1/calculation.proto";
 import "finassist/common/v1/common.proto";
 import "finassist/common/v1/data_revision.proto";
 import "google/protobuf/timestamp.proto";
@@ -26,13 +27,48 @@ service AnalyticsService {
   // мог предложить выбор периода.
   // GET /v1/analytics/periods.
   rpc ListPeriods(ListPeriodsRequest) returns (ListPeriodsResponse);
+  // Страница monthly_chart: максимум 60 полных календарных месяцев, только по выданному cursor.
+  // Вызывающий — только bank-bff с проверяемым токеном пользователя; системные вызовы не разрешены.
+  // GET /v1/analytics/charts/monthly_chart. Как GetAnalytics: primary, одна согласованная проверка/выборка.
+  // Ошибки cursor и согласованность — api.md6.4.
+  rpc GetChartPage(GetChartPageRequest) returns (GetChartPageResponse);
+  // Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
+  // Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
+  // Достоверно отсутствующий контекст: ANALYTICS_CONTEXT_UNAVAILABLE, FAILED_PRECONDITION, RequestRetryInfo=false.
+  // Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
+  rpc ApplyRegularPaymentDismissal(ApplyRegularPaymentDismissalRequest) returns (ApplyRegularPaymentDismissalResponse);
 }
 
-// Вызывающий: только bank-statement-data (воркер outbox). Идемпотентный upsert с версиями.
+// Вызывающий: только системный bank-statement-data (post-commit доставка маркера / фон). Идемпотентные версии.
 service MetricsIngestService {
   // Записать готовые метрики пользователя: состояние данных и полные снимки периодов, удалить
   // периоды без данных. Применяется по версии расчёта, повторы безопасны.
   rpc UpsertUserMetrics(UpsertUserMetricsRequest) returns (UpsertUserMetricsResponse);
+  // Только bank-statement-data: короткая попытка после commit или повтор надёжного задания.
+  // Записывает отдельную монотонную границу, не UserDataState/финансовые снимки.
+  rpc MarkRecalculating(MarkRecalculatingRequest) returns (MarkRecalculatingResponse);
+}
+
+// Применить подтверждённое BSD исключение к сохранённой проекции регулярных платежей.
+message ApplyRegularPaymentDismissalRequest {
+  // UUID, уже проверенный BSD для того же пользователя; не описание операции.
+  string regular_payment_id = 1;
+  // Положительный target из DismissRegularPaymentResponse, не от внешнего клиента.
+  int32 calc_version = 2;
+  // Только MONTH, точный YYYY-MM и заданный режим переводов.
+  finassist.common.v1.AnalyticsParams params = 3;
+}
+
+// Полное содержимое изменившихся блоков; глобальная готовность расчёта не изменяется.
+message ApplyRegularPaymentDismissalResponse {
+  finassist.common.v1.AnalyticsParams params = 1;
+  string currency = 2;
+  // IANA-пояс собственной проекции, из которой собраны блоки.
+  string time_zone = 3;
+  // От 1 до 16 полных блоков с уникальными id; сейчас только regular_payments.
+  repeated finassist.common.v1.Block blocks = 4;
+  // Целевая версия полного фонового результата; 1..2147483647, не applied state version.
+  int32 required_calc_version = 5;
 }
 
 // ---------------------------------------------------------------- Модель метрики
@@ -210,8 +246,8 @@ message MonthlyPoint {
   // Только для ROLLING_*: пересечение календарного месяца range с интервалом снимка.
   // Суммы и bounds относятся только к этому пересечению; при отсутствии — ко всему range.
   // Краевой отрезок всегда PARTIAL, даже если каждый его день покрыт; без покрытых дней — NO_DATA.
-  // analytics использует calculation_range как REST ChartPoint.range, а month — как ключ перехода
-  // к полному календарному месяцу. Нельзя расширять отрезок при композиции или считать суммы из месячных снимков.
+  // calculation_range относится к фактам/notes выбранного периода; навигационный REST monthly_chart
+  // использует полные календарные месяцы согласованной истории, страницами по 60 (FIN-418).
   optional finassist.common.v1.TimeRange calculation_range = 6;
 }
 
@@ -313,6 +349,20 @@ message SmallFrequent {
 }
 
 // ---------------------------------------------------------------- Чтение
+
+// Непрозрачный cursor, выданный тому же пользователю; владение проверяется сервисом по токену.
+message GetChartPageRequest {
+  // 1–2048 символов; режим, пояс, ревизия и позиция проверяются по серверному контексту cursor.
+  string cursor = 1;
+}
+
+// Только страница monthly_chart@1; data содержит kind/value_kind/points/page.
+message GetChartPageResponse {
+  // notes и highlight_index отсутствуют: они принадлежат ответу выбранного периода GetAnalytics.
+  finassist.common.v1.Block block = 1;
+  // IANA-пояс страницы, согласованный с page.revision; переносится в REST.
+  string time_zone = 2;
+}
 
 // Запрос аналитики за период.
 message GetAnalyticsRequest {
@@ -423,6 +473,8 @@ message ScreenState {
   // Идёт пересчёт, вызванный действием пользователя (импорт выписки, смена категории, удаление
   // загрузки, смена пояса, исключение платежа из регулярных): цифры могут измениться, клиенту стоит запросить
   // аналитику позже. Пересчёт по новой версии реестра признак не ставит (FIN-196).
+  // Равно calculation.recalculating: сохранённый флаг OR marker_version > state.calc_version.
+  // При true сохраняются готовые данные; Apply заменяет только явно возвращённые блоки.
   bool recalculating = 8;
 }
 
@@ -449,7 +501,8 @@ message GetAnalyticsResponse {
   optional Insights insights = 9 [deprecated = true];
   // Состояние данных.
   ScreenState state = 10;
-  // Пояс профиля (IANA), в котором bank-bff форматирует все моменты ответа.
+  // Фактический IANA-пояс прочитанного снимка. BFF переносит в REST time_zone;
+  // клиент использует его для календарных подписей, не копию профиля. При has_data=false может отсутствовать.
   string time_zone = 11;
   // Блоки экрана по порядку (FIN-4): состав, порядок и тексты собирает этот сервис (FIN-5). Поля tiles,
   // expense_categories, income_categories, monthly_chart, insights устарели: bank-bff их не читает; удалить
@@ -467,6 +520,8 @@ message GetAnalyticsResponse {
   // Поле внутреннее: bank-bff не переносит его в REST, assistant не передаёт
   // его модели в промпте, результатах инструментов или текстах блоков.
   repeated finassist.common.v1.DataRevision data_revisions = 14;
+  // Есть и при has_data=false. Читается согласованно с остальным ответом; FIN-418.
+  finassist.common.v1.CalculationState calculation = 15;
 }
 
 // Запрос списка периодов с данными.
@@ -602,6 +657,16 @@ message UserDataState {
   // используемых legacy-загрузок (FIN-357); текущий счётчик их не подтверждает.
   repeated finassist.common.v1.DataRevision data_revisions = 10;
 }
+
+// Только системный bank-statement-data. Неверный user_id/версия — голый INVALID_ARGUMENT.
+message MarkRecalculatingRequest {
+  string user_id = 1;
+  // 1..2147483647; target = текущий BSD calc_version + 1 под user lock, без увеличения счётчика.
+  int32 calc_version = 2;
+}
+
+// ACK: маркер применён либо уже покрыт состоянием; tombstone — ACK без записи. Задание true завершено.
+message MarkRecalculatingResponse {}
 
 // Пакет готовых метрик пользователя от bank-statement-data.
 // analytics сохраняет только известные его выпуску поля: новое поле запроса или вложенных сообщений

@@ -54,8 +54,16 @@ service StatementsService {
   rpc ListUnreadLines(ListUnreadLinesRequest) returns (ListUnreadLinesResponse);
 }
 
-// Пустой запрос; пользователь — из токена.
-message GetImportConfigRequest {}
+// Пользователь — из токена. Без обеих дат используется рекомендуемый период.
+message GetImportConfigRequest {
+  // Начальный календарный день YYYY-MM-DD в поясе профиля, включительно.
+  // Только вместе с period_to; календарная дата и момент начала дня должны быть представимы.
+  optional string period_from = 1;
+  // Конечный календарный день YYYY-MM-DD в поясе профиля, включительно.
+  // Не раньше period_from и не позже сегодня; начало следующего дня должно быть представимо.
+  // Нарушение — VALIDATION_ERROR; точные поля/code и правила — api.md3.1.
+  optional string period_to = 2;
+}
 
 // Параметры импорта выписки: ссылки, лимиты, рекомендуемый период, что уже загружено.
 message GetImportConfigResponse {
@@ -67,7 +75,8 @@ message GetImportConfigResponse {
   int64 max_file_size_bytes = 3;
   // Принимаемые форматы файлов («OFX»).
   repeated string accepted_formats = 4;
-  // 12 месяцев назад для первой загрузки, от начала дня последней операции — для повторной.
+  // Точный период ссылки: запрошенные календарные дни, иначе 12 месяцев назад для первой
+  // загрузки / от начала дня последней операции для повторной; to — исключительная граница.
   finassist.common.v1.TimeRange suggested_period = 5;
   // Что уже загружено; отсутствует — загрузок ещё не было.
   optional LoadedSummary loaded = 6;
@@ -260,8 +269,8 @@ message ImportAccount {
 message IncompleteMonth {
   string month = 1;
   finassist.common.v1.TimeRange range = 2;
-  // Границы покрытых дней месяца, как DataBounds: 00:00 первого покрытого дня и время последней
-  // операции в последний покрытый день или 23:59:59 этого дня.
+  // Границы покрытых дней месяца, как DataBounds: первый существующий момент первого дня и время последней
+  // операции в последний покрытый день или последняя существующая секунда этого дня.
   google.protobuf.Timestamp data_from = 3;
   google.protobuf.Timestamp data_to = 4;
   // Дни без данных ни в одном файле.

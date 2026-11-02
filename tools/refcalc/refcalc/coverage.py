@@ -18,6 +18,8 @@ BLOCK_DATA = {
 
 def block_data_schema(block: dict):
     """Select the exact known primitive version; never validate a new shape as an older one."""
+    if block.get("id") == "monthly_chart" and block.get("type") == "chart" and block.get("v", 1) == 1:
+        return "MonthlyChartData"
     if block.get("type") == "tile_group" and block.get("v", 1) == 2:
         return "TileGroupDataV2"
     if block.get("v", 1) == 1 and block.get("type") in BLOCK_DATA:

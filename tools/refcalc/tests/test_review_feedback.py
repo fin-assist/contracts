@@ -1,0 +1,318 @@
+"""FIN-418: whole-history navigation, explicit help, and inclusive download dates."""
+import copy
+import datetime as dt
+import unittest
+from urllib.parse import parse_qs, urlsplit
+from zoneinfo import ZoneInfo
+
+from refcalc.api import ApiError
+from refcalc.schema import SchemaCheck
+from tests import test_spec_examples as spec
+from tests.test_analytics_increment import ROOT
+
+SUPPORTS = "heading@1,text@1,rows@1,chart@1,tile_group@1,ranked_list@1,insight_card@1"
+
+
+class ReviewFeedback(unittest.TestCase):
+    backend = spec.SpecExamples.backend
+    block = spec.SpecExamples.block
+    tile = spec.SpecExamples.tile
+
+    def history(self):
+        b = self.backend("2026-10-31T12:00:00+03:00")
+        b.upload("old", spec.stmt("20251230", "20251231", [
+            ("old", "20251230120000", -100, "Shop", "Продукты")]))
+        b.upload("zero", spec.stmt("20260101", "20260131", []))
+        b.upload("new", spec.stmt("20261001", "20261030", [
+            ("new", "20261003120000", -200, "Shop", "Продукты"),
+            ("salary", "20261004120000", 500, "Salary", "Зарплата"),
+            ("person", "20261005120000", -50, "Person", "Переводы")]))
+        return b
+
+    def test_every_tab_and_repeated_month_selection_keeps_whole_history(self):
+        b = self.history()
+        for mode in ("with", "without"):
+            expected = self.block(b.analytics("all_time", mode=mode), "monthly_chart")[0]["data"]["points"]
+            for period, date in (("month", "2026-10"), ("quarter", "2026-Q4"), ("year", "2026"),
+                                 ("all_time", None), ("rolling_year", None), ("rolling_quarter", None),
+                                 ("month", "2025-12"), ("month", "2026-10"), ("month", "2025-12")):
+                with self.subTest(period=period, date=date, mode=mode):
+                    plain = b.analytics(period, date, mode)
+                    screen = b.analytics(period, date, mode, SUPPORTS)
+                    chart = self.block(screen, "monthly_chart")[0]
+                    self.assertEqual(1, chart["v"])
+                    self.assertEqual(expected, chart["data"]["points"])
+                    self.assertIn("всей загруженной истории", chart["help_text"])
+                    self.assertEqual(plain["period"], screen["period"])
+                    self.assertEqual(self.tile(plain, "expense")["value"], self.tile(screen, "expense")["value"])
+                    self.assertEqual(self.block(plain, "balance"), self.block(screen, "balance"))
+                    if period == "month":
+                        point = chart["data"]["points"][chart["data"]["highlight_index"]]
+                        self.assertEqual(date, point["action"]["date"])
+                    else:
+                        self.assertNotIn("highlight_index", chart["data"])
+                    for note in chart["data"]["notes"]:
+                        self.assertIn(screen["params"]["date"], note["text"])
+                    self.assertEqual([], SchemaCheck(ROOT + "/openapi/openapi.yaml").errors("/v1/analytics", screen))
+            points = expected
+            self.assertEqual(0, points[1]["value"])
+            self.assertEqual("2026-01", points[1]["action"]["date"])
+            self.assertIsNone(points[2]["value"])
+            self.assertNotIn("action", points[2])
+
+    def test_chart_has_one_partial_month_without_gate(self):
+        b = self.backend("2026-10-10T12:00:00+03:00")
+        uploaded = b.upload("one", spec.stmt("20261001", "20261010", [("x", "20261003120000", -1, "Shop", "Продукты")]))
+        feature = next(f for f in uploaded["coverage"]["features"] if f["feature"] == "monthly_chart")
+        self.assertTrue(feature["open"])
+        self.assertTrue(feature["opened_now"])
+        self.assertEqual(1, len(self.block(b.analytics("month"), "monthly_chart")))
+        for period in ("month", "quarter", "year", "all_time", "rolling_year", "rolling_quarter"):
+            screen = b.analytics(period, supports=SUPPORTS)
+            chart = self.block(screen, "monthly_chart")[0]
+            self.assertEqual("ready", chart["status"])
+            self.assertEqual(1, len(chart["data"]["points"]))
+            self.assertEqual("partial", chart["data"]["points"][0]["coverage"])
+            expected = [] if period == "month" else ["primary", "muted"] if period == "year" else ["primary"]
+            self.assertEqual(expected, [n["tone"] for n in chart["data"]["notes"]])
+            if period in ("month", "quarter"):
+                balance = self.block(screen, "balance")[0]
+                self.assertEqual([], balance["data"]["points"])
+                self.assertEqual(-100, balance["data"]["summary"]["value"])
+                self.assertIn("help_text", balance)
+                self.assertNotIn("caption", balance["data"])
+        b.delete_upload("one")
+        self.assertEqual({"has_data": False, "calculation": b.recalculation.state()}, b.analytics("month", supports=SUPPORTS))
+
+    def test_history_chart_does_not_change_selected_rolling_facts(self):
+        b = self.history()
+        screen = b.analytics("rolling_year")
+        points = self.block(screen, "monthly_chart")[0]["data"]["points"]
+        self.assertEqual("2025-10-31T00:00:00+03:00", screen["period"]["range"]["from"])
+        self.assertEqual("2025-12-01T00:00:00+03:00", points[0]["range"]["from"])
+        self.assertEqual(35000, self.tile(screen, "expense")["value"])
+        self.assertEqual(points, self.block(b.analytics("month", "2025-12"), "monthly_chart")[0]["data"]["points"])
+
+    def test_forecast_keeps_main_content_and_moves_only_method_and_coverage(self):
+        b = self.history()
+        screen = b.analytics("year", "2026", supports=SUPPORTS)
+        forecast = self.tile(screen, "forecast")
+        self.assertEqual("Прогноз расходов на год", forecast["title"])
+        self.assertEqual("К концу 2026 года", forecast["caption"])
+        self.assertEqual("Нужно 12 полных месяцев, есть 1", forecast["lock"]["text"])
+        self.assertIn("последние 12 полных месяцев", forecast["help_text"])
+        self.assertIn("Учтены полные месяцы", forecast["help_text"])
+        daily = self.tile(screen, "daily_expense")
+        self.assertIn("value", daily)
+        self.assertEqual("сравнение", daily["caption"])
+        self.assertIn("пропуски", daily["help_text"])
+
+    def test_optional_help_is_nonnullable_and_absence_remains_valid(self):
+        check = SchemaCheck(ROOT + "/openapi/openapi.yaml")
+        screen = self.history().analytics("year", "2026", supports=SUPPORTS)
+        self.assertEqual([], check.errors("/v1/analytics", screen))
+        invalid = copy.deepcopy(screen)
+        self.block(invalid, "monthly_chart")[0]["help_text"] = None
+        self.assertTrue(check.errors("/v1/analytics", invalid))
+        invalid = copy.deepcopy(screen)
+        self.tile(invalid, "forecast")["help_text"] = []
+        self.assertTrue(check.errors("/v1/analytics", invalid))
+        for block in screen["blocks"]:
+            block.pop("help_text", None)
+            for tile in block.get("data", {}).get("tiles", []):
+                tile.pop("help_text", None)
+        self.assertEqual([], check.errors("/v1/analytics", screen))
+
+    def test_download_default_and_selected_range_are_independent_of_loaded(self):
+        b = self.backend("2024-02-29T12:00:00+03:00")
+        self.assertEqual({"from": "2023-02-28T00:00:00+03:00", "to": "2024-03-01T00:00:00+03:00"},
+                         b.import_config()["suggested_period"])
+        b = self.history()
+        self.assertEqual("2026-10-05T00:00:00+03:00", b.import_config()["suggested_period"]["from"])
+        for start, end, exclusive in (("2025-12-31", "2026-01-01", "2026-01-02"),
+                                      ("2024-02-29", "2024-02-29", "2024-03-01"),
+                                      ("2026-10-31", "2026-10-31", "2026-11-01")):
+            response = b.import_config(start, end)
+            self.assertEqual({"from": start + "T00:00:00+03:00", "to": exclusive + "T00:00:00+03:00"},
+                             response["suggested_period"])
+            query = parse_qs(urlsplit(response["download_url"]).query)
+            for field, key in (("from", "start"), ("to", "end")):
+                at = dt.datetime.fromisoformat(response["suggested_period"][field])
+                self.assertEqual(int(at.timestamp() * 1000), int(query[key][0]))
+            self.assertEqual([], SchemaCheck(ROOT + "/openapi/openapi.yaml").errors("/v1/statements/config", response))
+        self.assertEqual(4, b.import_config()["loaded"]["operation_count"])
+
+    def test_download_respects_profile_today_and_dst_boundary_offsets(self):
+        b = self.backend("2026-03-09T12:00:00+00:00")
+        b.zone = ZoneInfo("America/New_York")
+        r = b.import_config("2026-03-08", "2026-03-08")["suggested_period"]
+        self.assertEqual({"from": "2026-03-08T00:00:00-05:00", "to": "2026-03-09T00:00:00-04:00"}, r)
+        self.assertEqual(dt.timedelta(hours=23), dt.datetime.fromisoformat(r["to"]) - dt.datetime.fromisoformat(r["from"]))
+        b.now = dt.datetime.fromisoformat("2026-03-09T02:00:00+00:00")
+        with self.assertRaises(ApiError):
+            b.import_config("2026-03-09", "2026-03-09")
+
+    def test_download_errors_are_canonical_and_field_specific(self):
+        b = self.history()
+        cases = [(None, "2026-01-01", "period_from", "REQUIRED"),
+                 ("2026-01-01", None, "period_to", "REQUIRED"),
+                 ("", "2026-01-01", "period_from", "INVALID_FORMAT"),
+                 ("2026-01-01", "2026-02-30", "period_to", "INVALID_FORMAT"),
+                 ("2026-1-01", "2026-01-01", "period_from", "INVALID_FORMAT"),
+                 ("0000-01-01", "2026-01-01", "period_from", "INVALID_FORMAT"),
+                 ("2026-01-02", "2026-01-01", "period_from", "OUT_OF_RANGE"),
+                 ("2026-01-01", "2026-11-01", "period_to", "OUT_OF_RANGE"),
+                 ("0001-01-01", "2026-01-01", "period_from", "OUT_OF_RANGE")]
+        for start, end, field, code in cases:
+            with self.subTest(start=start, end=end), self.assertRaises(ApiError) as raised:
+                b.import_config(start, end)
+            e = raised.exception
+            self.assertEqual((400, "VALIDATION_ERROR"), (e.status, e.code))
+            self.assertEqual([{"field": field, "code": code}], e.details)
+        b.zone = ZoneInfo("Pacific/Apia")
+        with self.assertRaises(ApiError) as raised:
+            b.import_config("2011-12-30", "2011-12-30")
+        self.assertEqual([{"field": "period_to", "code": "OUT_OF_RANGE"}], raised.exception.details)
+
+    def test_download_query_preserves_empty_and_rejects_duplicate_dates(self):
+        from refcalc.scenario import Runner
+        runner = Runner.__new__(Runner)
+        runner.backend = self.history()
+        for query, field, code in (
+            ("period_from=&period_to=2026-10-31", "period_from", "INVALID_FORMAT"),
+            ("period_from=2026-10-01&period_from=2026-10-02&period_to=2026-10-31", "period_from", "INVALID_FORMAT"),
+            ("period_from=2026-10-01&period_to=2026-10-30&period_to=2026-10-31", "period_to", "INVALID_FORMAT"),
+            ("period_from=2026-10-01&period_from=2026-10-02", "period_from", "INVALID_FORMAT"),
+        ):
+            with self.subTest(query=query), self.assertRaises(ApiError) as caught:
+                runner.get("/v1/statements/config?" + query)
+            self.assertEqual([{"field": field, "code": code}], caught.exception.details)
+        runner.backend.now = dt.datetime(9999, 12, 31, 12, tzinfo=dt.timezone.utc)
+        with self.assertRaises(ApiError) as caught:
+            runner.backend.import_config("9999-12-30", "9999-12-31")
+        self.assertEqual([{"field": "period_to", "code": "OUT_OF_RANGE"}], caught.exception.details)
+
+    def test_quarter_forecast_uses_common_auxiliary_role_without_formula_change(self):
+        b = self.history()
+        forecast = self.tile(b.analytics("quarter", "2026-Q4"), "forecast")
+        self.assertEqual("Прогноз расходов", forecast["title"])
+        self.assertEqual("locked", forecast["status"])
+        self.assertEqual("Нужно 3 полных месяца, есть 1", forecast["lock"]["text"])
+        self.assertEqual((3, 1), (forecast["lock"]["required"], forecast["lock"]["available"]))
+        self.assertIn("Учтены полные месяцы", forecast["help_text"])
+        self.assertEqual("к концу периода", forecast["caption"])
+
+    def test_download_skipped_start_normalizes_but_keeps_nonempty_range(self):
+        b = self.history()
+        b.zone = ZoneInfo("Pacific/Apia")
+        result = b.import_config("2011-12-30", "2011-12-31")
+        self.assertEqual({"from": "2011-12-31T00:00:00+14:00", "to": "2012-01-01T00:00:00+14:00"},
+                         result["suggested_period"])
+        start = dt.datetime(2011, 12, 30, tzinfo=b.zone).astimezone(dt.timezone.utc)
+        end = dt.datetime(2012, 1, 1, tzinfo=b.zone).astimezone(dt.timezone.utc)
+        self.assertEqual(start, dt.datetime.fromisoformat(result["suggested_period"]["from"]))
+        self.assertEqual(end, dt.datetime.fromisoformat(result["suggested_period"]["to"]))
+        self.assertGreater(end, start)
+
+    def test_download_partial_midnight_gap_uses_first_real_instant(self):
+        b = self.history()
+        b.zone = ZoneInfo('America/Toronto')
+        result = b.import_config('1919-03-31', '1919-03-31')
+        start = dt.datetime.fromisoformat(result['suggested_period']['from'])
+        self.assertEqual('1919-03-31T00:30:00-04:00', start.isoformat())
+        instant = start.astimezone(dt.timezone.utc)
+        self.assertEqual(dt.date(1919, 3, 30), (instant - dt.timedelta(seconds=1)).astimezone(b.zone).date())
+        self.assertEqual('1919-04-01T00:00:00-04:00', result['suggested_period']['to'])
+        query = parse_qs(urlsplit(result['download_url']).query)
+        self.assertEqual(int(instant.timestamp() * 1000), int(query['start'][0]))
+
+    def test_data_to_uses_last_real_second_before_midnight_gap(self):
+        b = self.backend('1919-04-02T12:00:00-04:00')
+        b.zone = b.ledger.zone = ZoneInfo('America/Toronto')
+        statement = spec.stmt('19190301', '19190330', [
+            ('old', '19190329120000', -10, 'Shop', 'Продукты')])
+        statement = statement.replace('[+3:MSK]', '[-5:EST]').replace('19190330235959', '19190330232959')
+        b.upload('history', statement)
+        response = b.analytics('month', '1919-03')
+        at = dt.datetime.fromisoformat(response['period']['data_to'])
+        zone = ZoneInfo(response['time_zone'])
+        self.assertEqual('1919-03-30T23:29:59-05:00', at.astimezone(zone).isoformat())
+        self.assertEqual(dt.date(1919, 3, 30), at.astimezone(zone).date())
+        next_second = at.astimezone(dt.timezone.utc) + dt.timedelta(seconds=1)
+        self.assertEqual('1919-03-31T00:30:00-04:00', next_second.astimezone(zone).isoformat())
+
+    def test_end_of_day_chooses_later_fold_and_rejects_completely_skipped_day(self):
+        from refcalc.util import end_of_day, start_of_day
+        zone = ZoneInfo('America/Goose_Bay')
+        day = dt.date(1988, 10, 29)
+        last = end_of_day(day, zone)
+        self.assertEqual('1988-10-29T23:59:59-04:00', last.isoformat())
+        utc_last = last.astimezone(dt.timezone.utc)
+        # This rollback revisits yesterday after the earliest start of tomorrow.
+        self.assertGreater(utc_last, start_of_day(day + dt.timedelta(days=1), zone).astimezone(dt.timezone.utc))
+        self.assertEqual(dt.date(1988, 10, 30), (utc_last + dt.timedelta(seconds=1)).astimezone(zone).date())
+        with self.assertRaises(ValueError):
+            end_of_day(dt.date(2011, 12, 30), ZoneInfo('Pacific/Apia'))
+
+    def test_month_bounds_skip_missing_last_day_inside_covered_upload(self):
+        schema = SchemaCheck(ROOT + '/openapi/openapi.yaml')
+        for operation_day in (29, 30):
+            with self.subTest(operation_day=operation_day):
+                b = self.backend('1995-01-03T12:00:00+14:00')
+                b.zone = b.ledger.zone = ZoneInfo('Pacific/Kiritimati')
+                statement = spec.stmt('19941201', '19950102', [
+                    ('old', f'199412{operation_day}120000', -10, 'Shop', 'Продукты')])
+                statement = statement.replace('[+3:MSK]', '[-10]')
+                statement = statement.replace('19950102235959.000[-10]', '19950102235959.000[+14]')
+                b.upload('history', statement)
+                response = b.analytics('month', '1994-12')
+                self.assertEqual('Pacific/Kiritimati', response['time_zone'])
+                last = dt.datetime.fromisoformat(response['period']['data_to']).astimezone(b.zone)
+                self.assertEqual(dt.date(1994, 12, 30), last.date())
+                self.assertEqual('12:00:00' if operation_day == 30 else '23:59:59', last.strftime('%H:%M:%S'))
+                self.assertEqual(1000, self.tile(response, 'expense')['value'])
+                self.assertEqual([], schema.errors('/v1/analytics', response))
+                # Only the nonexistent day contributes no displayable bound; no invented instant.
+                self.assertIsNone(b.ledger.coverage(b.today).bounds(dt.date(1994, 12, 31), dt.date(1995, 1, 1)))
+        with self.assertRaises(ApiError) as caught:
+            b.import_config('1994-12-31', '1994-12-31')
+        self.assertEqual((400, 'VALIDATION_ERROR'), (caught.exception.status, caught.exception.code))
+        self.assertEqual([{'field': 'period_to', 'code': 'OUT_OF_RANGE'}], caught.exception.details)
+
+    def test_single_and_split_uploads_have_same_coverage_across_skipped_day(self):
+        schema = SchemaCheck(ROOT + '/openapi/openapi.yaml')
+        before = ('before', '19941230120000', -10, 'Shop', 'Продукты')
+        after = ('after', '19950101120000', -3, 'Shop', 'Продукты')
+        first = spec.stmt('19941201', '19941230', [before]).replace('[+3:MSK]', '[-10]')
+        second = spec.stmt('19950101', '19950102', [after]).replace('[+3:MSK]', '[+14]')
+        whole = spec.stmt('19941201', '19950102', [before, after]).replace('[+3:MSK]', '[-10]')
+        whole = whole.replace('19950101120000.000[-10]', '19950101120000.000[+14]')
+        whole = whole.replace('19950102235959.000[-10]', '19950102235959.000[+14]')
+        backends = []
+        for statements in ([whole], [first, second]):
+            b = self.backend('1995-01-03T12:00:00+14:00')
+            b.zone = b.ledger.zone = ZoneInfo('Pacific/Kiritimati')
+            for i, statement in enumerate(statements):
+                b.upload(str(i), statement)
+            backends.append(b)
+        single, split = backends
+        self.assertEqual([(op.fitid, op.at, op.amount) for op in single.ledger.ops.values()],
+                         [(op.fitid, op.at, op.amount) for op in split.ledger.ops.values()])
+        for b in backends:
+            cov = b.ledger.coverage(b.today)
+            self.assertEqual([(dt.date(1994, 12, 1), dt.date(1995, 1, 2))], cov.days)
+            self.assertEqual([], cov.gaps())
+            self.assertTrue(cov.full_month(dt.date(1994, 12, 1)))
+            self.assertEqual(31, cov.count_days(dt.date(1994, 12, 1), dt.date(1995, 1, 1)))
+            self.assertEqual(33, cov.count_days(dt.date(1994, 12, 1), dt.date(1995, 1, 3)))
+            with self.assertRaises(ApiError):
+                b.import_config('1994-12-31', '1994-12-31')
+        for period, date, expected_sum in [('month', '1994-12', 1000), ('all_time', None, 1300)]:
+            left, right = [b.analytics(period, date) for b in backends]
+            self.assertEqual(left['period'], right['period'])
+            self.assertEqual('complete', right['period']['coverage'])
+            self.assertEqual([], right['period']['gaps'])
+            self.assertEqual(left['state'], right['state'])
+            for response in (left, right):
+                self.assertEqual(expected_sum, self.tile(response, 'expense')['value'])
+                self.assertEqual([], schema.errors('/v1/analytics', response))
