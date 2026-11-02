@@ -46,7 +46,7 @@ user ──(системный, outbox)──► usersettings.SetUserTimezone н
 
 ### 3.1 От имени пользователя
 
-Путь `bank-bff → сервис`. `bank-bff` проверяет JWT сам (JWKS, локально) и **пробрасывает исходный токен** в `authorization`. Сервис проверяет его повторно (Ed25519, микросекунды) и берёт `user_id` только из `sub`. В сообщениях запросов `user_id` нет.
+Путь `bank-bff → сервис`. `bank-bff` проверяет JWT сам (JWKS, локально) и **пробрасывает исходный токен** в `authorization`. Сервис проверяет его повторно (Ed25519, микросекунды) и берёт `user_id` только из `sub`. В сообщениях запросов `user_id` не выбирает пользователя. Исключение FIN-420: вложенный MetricProjection.user_id сверяется с verified sub только для защиты от смешивания ответов BSD.
 
 ### 3.2 Системный
 
@@ -56,7 +56,7 @@ user ──(системный, outbox)──► usersettings.SetUserTimezone н
 
 Методы со смешанной моделью (`GetAnalytics`, `ListPeriods`, `GetAssistantConsentStatus`) имеют `optional string user_id`: с токеном пользователя поле пустое (или равно `sub`), с системным вызовом — обязательно.
 
-`AnalyticsService.GetChartPage` и `ApplyRegularPaymentDismissal` — только пользовательский вызов bank-bff. У него нет user_id и нет системных вызывающих; разрешение assistant на GetAnalytics/ListPeriods на этот метод не распространяется.
+`AnalyticsService.GetChartPage` и `ApplyRegularPaymentDismissal` — только пользовательский вызов bank-bff. Системных вызывающих нет; вложенный MetricProjection.user_id в Apply — только проверка принадлежности уже полученного BSD payload, он обязан совпасть с verified sub и не выбирает пользователя; разрешение assistant на GetAnalytics/ListPeriods на этот метод не распространяется.
 
 ### 3.3 Идентичность сервиса
 
@@ -538,7 +538,7 @@ RefreshTokens/закрытия заявки. Её refresh только из-за
 | 6.3 `DELETE …/regular-payments/{id}/dismissal` | BSD.RestoreRegularPayment (прежний204) |
 
 - **Лента и поиск — два RPC**, а не один с режимами, как в REST. Режим выбирает `bank-bff` по наличию фильтров; `before` вместе с фильтрами — 400 на `bank-bff`. Типы ответов разные, сервису не нужно ветвиться.
-- **Исключение платежа из регулярных («не подписка») живёт в `bank-statement-data`**, хотя путь REST под `/v1/analytics`: отметка меняет распознавание регулярных платежей и вызывает пересчёт. `bank-bff` маршрутизирует путь в `RegularPaymentsService`. `analytics` хранит временное исключение поверх собственной метрики для полного ответа PUT (FIN-418); исходное assignment принадлежит BSD.
+- **Исключение платежа из регулярных («не подписка») живёт в `bank-statement-data`**, хотя путь REST под `/v1/analytics`: отметка меняет распознавание регулярных платежей и вызывает пересчёт. `bank-bff` маршрутизирует путь в `RegularPaymentsService`. `analytics` компонует полный ответ PUT из свежей метрики BSD (FIN-420), не хранит overlay; исходное assignment и расчёт метрики принадлежат BSD.
 - **Запись по `occurred_at` и `id`** (решение владельца 20.10.2026, FIN-202): `GetOperation` и `ChangeCategory` получают вместе с `id` время совершения записи `occurred_at` — то, что клиент видел в ленте или поиске (api.md 4.2, 4.3). Поле обязательное (`buf.validate.field.required`): нет — `VALIDATION_ERROR` с нарушением у `occurred_at` от интерцептора. Сервис ищет запись по `(user_id, occurred_at, id)` — точное равенство момента, одна секция года; не нашёл — по `(user_id, id)` во всех секциях, потому что время записи меняется (холд проведён, повторный импорт). Неверное время — не ошибка; записи нет и так — `NOT_FOUND`. Чтобы значение из ленты возвращалось без потерь, `bank-bff` форматирует `occurred_at` с точностью хранения: доли секунды выводятся, если они не нулевые (api.md 4.2). Поле обязательно с этой версии контракта для всех сторон сразу: продовых клиентов нет, порядок выкатки не нужен (решение владельца 20.10.2026).
 - **Таймаут разбора — 3 минуты** с начала (решение владельца 17.10.2026, FIN-159): разбор, не завершившийся за это время, в том числе прерванный падением пода, `bank-statement-data` завершает `IMPORT_ERROR_CODE_PROCESSING_FAILED` — фоновой проверкой загрузок в `PROCESSING` старше 3 минут, независимо от того, какой под вёл разбор. Как при любой ошибке, ничего не сохраняется, файл удаляется, а итог остаётся у записи загрузки для `WatchUpload`.
 - **Загрузка**: `bank-bff` не держит файл целиком — режет multipart-поток на куски по 256 КиБ и шлёт первым сообщением `UploadHeader`. Сервис считает SHA-256 на лету, пишет файл во временный объект Object Storage, на исходе потока проверяет формат и банк и только тогда создаёт загрузку и отвечает. При `FILE_TOO_LARGE` сервис отвечает ошибкой, не дочитывая поток; `bank-bff` закрывает приём от клиента. Дедлайн — 60 с.
@@ -583,13 +583,14 @@ RefreshTokens/закрытия заявки. Её refresh только из-за
 ### FIN-418: доставка `recalculating:true` после принятого изменения
 
 REST6.3 PUT идёт BFF → BSD RegularPaymentsService → BFF → analytics.ApplyRegularPaymentDismissal; DELETE сохраняет прежний асинхронный 204. Пользователь только из проверенного токена;
-системные Dismiss/Restore запрещены. Dismiss возвращает положительный calc_version=target для следующего
-Apply, Restore сохраняет пустой ответ. REST PUT 200 содержит полный AnalyticsBlockUpdate, не receipt-only.
-BSD не запрашивает аналитику. FIN-196 сохраняет immutable baseline, локальное представление regular
-имеет узкое исключение ниже. Temporal — отдельная FIN-419.
+системные Dismiss/Restore запрещены. Dismiss возвращает положительный calc_version=target и свежий MetricProjection для следующего
+Apply (FIN-420), Restore сохраняет пустой ответ. REST PUT 200 содержит полный AnalyticsBlockUpdate, не receipt-only.
+BSD не запрашивает аналитику. FIN-196 сохраняет immutable baseline; mutation response меняет только клиентское представление regular. Temporal — отдельная FIN-419.
 
 **Локальная транзакция и короткая доставка.** Под сериализацией пользователя BSD сохраняет assignment
 (dismiss), исходную ревизию, очередь обычного фонового пересчёта и надёжное задание доставки true.
+Там же считает только актуальную regular-метрику по существующим правилам/выбранному месяцу и режиму;
+проверяет представимость и размер полного payload до commit. Любая ошибка до commit откатывает новое изменение.
 В той же транзакции запоминает для assignment `target = user_state.calc_version + 1`, **не увеличивая**
 этот счётчик. После commit отдельная попытка `MarkRecalculating{user_id,calc_version:target}` длится не более
 1 секунды и остатка RPC deadline. ACK завершает доставку; ошибка/таймаут оставляет задание без отката изменения. В обоих случаях BFF продолжает Apply.
@@ -639,60 +640,90 @@ state нет. При наличии ScreenState его флаг равен calcu
 LLM. Эффективный true также учитывается существующей проверкой достоверности data_revisions; marker не
 сертифицирует старые источники и не даёт помощнику ложного source-freshness ACK.
 
-**ApplyRegularPaymentDismissal (FIN-418).** Только bank-bff с проверенным пользовательским токеном;
-user_id из sub, системный вызов/assistant запрещён. Запрос: канонический UUID regular_payment_id,
-calc_version 1…2147483647 из ответа BSD и params (MONTH, точный YYYY-MM, заданный transfer_mode).
-BFF не принимает target/blocks из клиентского тела: вызывает RPC только после успешной проверки владельца
-и assignment в BSD для того же пользователя. Внешний query проверен до записи в BSD. Нарушение внутреннего
-формата — голый INVALID_ARGUMENT, чужой caller — PERMISSION_DENIED; tombstone не позволяет воскресить аккаунт.
-Ответ соответствует AnalyticsBlockUpdate (api.md 6.3); типизированная форма ApplyRegularPaymentDismissalResponse.
+**MetricProjection и ApplyRegularPaymentDismissal (FIN-420).** Только bank-bff с проверенным пользовательским
+токеном; системные вызовы, включая assistant, запрещены. DismissRequest.params=2 обязателен: MONTH,
+точный YYYY-MM, заданный transfer_mode. DismissResponse.projection=2 — свежий результат той же BSD-транзакции;
+BFF передаёт его без изменения в ApplyRequest.projection=4 вместе с проверенным id, исходным target и params.
+Прежние номера полей не переиспользуются. RPC остаются прежними; отсутствие новых обязательных по смыслу
+полей — голый INVALID_ARGUMENT, без fallback на прежнюю own-DB/overlay реализацию.
 
-Одна локальная транзакция analytics на primary сериализует собственные overlay/marker с ingest и purge,
-читает полный Metric.regular_payments.items выбранного снимка и его контекст, сохраняет pending исключение
-(id,target) и повышает marker, компонует Block и коммитит. Внешних вызовов нет. Остальные PeriodSnapshot,
-UserDataState/calc_version/calculated_at и исходные ревизии не переписываются. Базовые items не вырезаются:
-для всех незавершённых исключений фильтруются полные строки, затем итог/count/top3/items_more пересобираются
-по calc.md 14; статус/lock/основание/границы берутся из своей проекции. Тот же overlay применяется в обычном
-GetAnalytics, без запроса BSD. Достоверно удалённый/отсутствующий контекст (removed, вне доступных
-периодов, подтверждённый no-data) даёт ANALYTICS_CONTEXT_UNAVAILABLE (FAILED_PRECONDITION/REST422)
-с RequestRetryInfo=false, без BadRequest. Код разрешён здесь только после подтверждённого BSD assignment:
-BFF-каталог показывает «Изменение сохранено, но данные для этого периода недоступны. Обновите аналитику».
-Клиент сохраняет известный результат и один раз обновляет выбор/GET, не повторяет тот же PUT. Синтаксические
-ошибки query остаются VALIDATION_ERROR/400 до BSD без эффекта. Допустимый контекст с временно не доставленным snapshot/metric либо временный
-сбой composition даёт INTERNAL/UNAVAILABLE с разрешением безопасного повтора (FIN-225), REST500
-INTERNAL_ERROR по действующему mapping5.1. 503 MAINTENANCE не переопределяется. Нет фиктивных нулей.
-Очередь полного фонового расчёта сохраняется вместе с исходным assignment независимо от результата
-Apply: ошибка composition и повтор changed=false не теряют задание. Воркер выполняет его и без успешного
-повтора PUT; Apply не запускает финансовый расчёт синхронно. Поиск по action regular_all принадлежит BSD:
-он проверяет актуальные assignments/распознавание при поиске, не захватывает старый набор имён из блока.
-Немедленный переход из PUT200 работает без дополнительного GET/фонового расчёта; analytics не меняет
-predicate в БД BSD и не вызывает BSD внутри своей транзакции.
-Ошибка до commit analytics откатывает overlay/marker; assignment в BSD не откатывается. При потерянном ответе
-повтор ничего не вычитает повторно: выдаёт полную актуальную проекцию. Новая база кандидатов для Restore
-не нужна и не вводится; штатный DELETE и последующий фоновый snapshot восстановят платёж.
+Все поля MetricProjection обязательны; user_id — канонический UUID, currency —3 символа,
+time_zone —1..128 символов с разрешимым IANA-именем (UTC допускается, специальный Go Local — нет).
+MetricProjection.metrics — набор MetricSnapshot с уникальными id; FIN-420 требует ровно один элемент
+с id=insights.regular_payments и definition_version>0; пустой набор/дубли/другой id — INVALID_ARGUMENT.
+Metric соблюдает прежние инварианты READY/TENTATIVE/LOCKED/NONE. Общий контекст содержит params, currency=RUB,
+фактический time_zone, range полного календарного месяца, bounds покрытия и data_range оболочки покрытия
+источника (полуинтервал).
+Metric.regular_payments.items — весь список, без top3-усечения; value_minor и count уже посчитаны BSD.
+Для READY/TENTATIVE оба числа и непустой details.regular_payments обязательны; UUID строк уникальны.
+Analytics переносит count и итог, не восстанавливает пропущенные значения финансовым расчётом.
+LOCKED/NONE сохраняют прежние правила отсутствия чисел и деталей. Контекст не является UserDataState:
+нет выдуманного глобального full_months, applied version или calculated_at. data_range нужен только для
+пояснений при нуле полных месяцев; Metric.lock/basis остаются источником причины/базы.
 
-Удалять исключение или повторно активировать его нельзя по одной версии pending/parts. Target считается
-покрытым только уже принятой готовой false-версией существующего фонового пути, с соблюдением прежних
-ACK-барьеров и marker. Доказательство покрытия монотонно сохраняется внутри analytics и не забывается при
-новом true. Например, dismiss4 → false6 → restore false9 → unrelated pending true10 → lateApply4:
-платёж не исключается повторно. Старый/nonconsecutive replay false не уменьшает доказательство и не
-отменяет более новый marker. Конкретная таблица/индекс не предписаны; нового публичного счётчика или
-протокола final нет. Поздний Apply покрытого target только собирает нынешний блок. Purge очищает overlay
-и доказательство; tombstone блокирует запоздавших отправителей.
+Сериализованный MetricProjection ≤3 МиБ; прежний лимит каждого RPC —4 МиБ. BSD проверяет размер до commit,
+не обрезает items ради лимита; превышение и исчерпание calc_version дают INTERNAL_ERROR с
+RequestRetryInfo=false до нового эффекта, не413. BFF не принимает projection/target/user_id от внешнего клиента и проверяет
+ответ BSD: params равны показанному запросу, target>0, projection.user_id равен verified sub. Analytics
+повторяет проверку binding, допустимого единственного metric_id/типизированных details, статуса/границ/валюты,
+IANA и размера. Для READY/TENTATIVE проверяет, что regular_payment_id запроса отсутствует в items: это
+проверка связи команды с результатом, без пересчёта сумм. Проверяет только используемые данные, не требует
+полного финансового снимка экрана.
+Фильтры/UUID строк принадлежат тому же источнику/пользователю; имя операции, payload и токены не логируются.
+Неверный внутренний payload — INVALID_ARGUMENT (внешний безопасный500 по общему mapping), без изменений.
 
-Это узкое исключение FIN-196 для представления regular_payments, а не новый финансовый снимок всего
-экрана. При активном overlay ревизия categories всего GetAnalytics неизвестна (code отсутствует), пока
-согласованный фон не подтвердит её; остальные ревизии следуют прежнему пересечению источников. Нельзя
-приписать свежесть локального блока всем остальным метрикам/помощнику. Применение full-block200 и freeze
-остального ready-cache, сохранение собственной source zone, generation guard и существующий ограниченный
-refresh примерно 3 секунды при true/непокрытом required_calc_version — api.md 6.3. Нового таймера нет.
+Analytics оформляет блок из переданной метрики: top3, items_more по уже рассчитанным monthly_amount_minor,
+готовые тексты/status/lock/basis. Не перечитывает старый regular из собственной БД, не вызывает BSD и не
+пересчитывает операции/value_minor/count. В локальной транзакции под той же защитой пользователя от удаления
+принимает monotonic marker target и завершает композицию; ошибка откатывает локальный marker, бизнесэффект
+BSD не откатывается. Успех гарантирует marker принят/покрыт до ответа. Поздний target после final не включает
+true снова; если позднее идёт новый true, старый Apply не уменьшает его. Purge/tombstone не дают воскресить
+пользователя. Ни финансовые snapshots, ни UserDataState, calc_version, calculated_at или data_revisions
+от этой композиции не переписываются. Нет overlay/retired-through протокола или новой очереди final.
 
-**Проверки runtime:** rollback обеих локальных транзакций; BSDcommit → failApply → повтор changed=false;
-ACK завершает только true-job;200 → immediate primaryGET при задержанном async; несколько id/общийtarget;
-top3/итог/count/items_more/последний none; missing/locked/старый/будущий месяц; failcomposition без200;
-старый false/lateApply после нового true, непоследовательные версии; purge; same params/source zone;
-GET до mutation; собственные данные analytics без BSDаналитики. Эталон проверяет наблюдаемые переходы,
-PostgreSQL/сеть — обязательные проверки зависимых runtime PR FIN-416.
+ANALYTICS_CONTEXT_UNAVAILABLE разрешён только BSD.DismissRegularPayment после подтверждённого assignment BSD;
+нельзя использовать его для первого отказа до записи. Apply его не выдаёт: NONE/LOCKED корректны, отсутствие
+собственного snapshot не проверяется, неверный payload — голый INVALID_ARGUMENT. Error_spec/status не меняются.
+Ошибки контекста определяет BSD по данным той же транзакции: порядок и различие нового400 OUT_OF_RANGE
+до записи и422 ANALYTICS_CONTEXT_UNAVAILABLE после ранее сохранённого assignment — api.md6.3. Оба неповторяемы
+с прежними params (RequestRetryInfo=false);422 сохраняет правдивый saved-change текст. Для400 BSD явно
+передаёт BadRequest.field_violations[{field:"date",reason:"OUT_OF_RANGE"}] и RequestRetryInfo=false:
+используется внешнее имя date, не params.date/params.period_key; BFF переносит поле без переименования.
+Клиент не меняет блок и один раз обновляет выбор/GET, не повторяет PUT и не показывает ошибку поля формы. Временная ошибка
+расчёта/композиции — INTERNAL_ERROR/REST500 с разрешением безопасного повтора, не MAINTENANCE503.
+Отсутствие собственного snapshot analytics не означает отсутствия контекста и не блокирует Apply.
+
+После BSDcommit ошибка/timeout Apply не даёт200 без блока; UI сохраняет старый блок и ручной повтор по
+retryable=true. Очередь полного расчёта и true-job сохраняются независимо; repeat changed=false возвращает
+тот же target, но заново рассчитанную свежую метрику. Старый/потерянный ответ не заменяет новый бизнесэффект.
+Переданный payload соответствует моменту BSD-транзакции, не моменту поздней доставки: после newer final/Restore
+Apply всё равно только оформляет этот payload и не восстанавливает никакую серверную financial state.
+Клиент защищён whole-block serialization/generation, не применяет GET во время PUT и после200 использует
+существующий refresh для готового GET>=required target. Правила source-zone/cache/minversion — api.md6.3.
+Неизвестный исход команды и read freeze — разные состояния клиента: после любого завершённого PUT
+с unknown, включая retryable=true, доступно явное «Обновить аналитику». Оно возобновляет чтение по обычным
+version/source-zone барьерам, сохраняя предупреждение и исходную разрешённость повтора; GET не подтверждает
+команду. Gate принадлежит исходным user/id/params/source-zone/готовой версии: другие params/zone или принятый
+readyGET со строго большей известной версией допускают только новую явную команду. Для неё прежний запрет
+по данным/контексту прекращается; endpoint wait/Retry-After и unknown сохраняются. Импорт/удаление загрузки сами по себе freeze/gate не снимают, автоматического PUT нет. Точный400
+с date/OUT_OF_RANGE разрешает unknown как отсутствие assignment при locked-проверке BSD;200/422 — как
+сохранённый результат;403/404/429 не доказывают исход. Состояние принадлежит текущему ViewModel, без нового
+долговечного хранилища; переходы, утрата ViewModel/кэша и приёмка — api.md6.3.
+
+Обычный GetAnalytics остаётся чтением асинхронного согласованного снимка с primary и effective marker;
+при true может вернуть прежний regular. Клиент сохраняет полный обновлённый блок PUT до готового полного GET;
+без подходящего ready-cache, в том числе на другом устройстве, показывает preparing, не старый список.
+Ревизии помощника остаются честным пересечением реально использованных сохранённых источников: свежая
+mutation-метрика не приписывается остальным блокам. Поиск regular_all/per-item в BSD сразу учитывает
+сохранённые assignments и прежнее окно; никакого удалённого вызова из транзакции analytics.
+DELETE остаётся прежним204, без нового UI восстановления/candidate pipeline.
+
+**Проверки runtime:** rollback assignment/заданий при failcalc/payload-size до commit; BSDcommit → failApply →
+повтор changed=false со свежей метрикой; ACK завершает только true-job;200 → immediate primaryGET true при
+задержанном async; новый расчёт после изменения категории/истории между повторами; пустой analytics DB;
+чужой user/params/payload, malformed/oversized; оба режима/locked/старый месяц/последний none/top3/items_more;
+late compose/newer final/старый marker/purge; GET во время PUT и разные generation. Эталон проверяет
+наблюдаемые переходы; PostgreSQL/сеть и фактические protobuf-лимиты проверяются зависимыми runtime PR FIN-416.
 
 ### 7.4 `assistant`
 
@@ -851,13 +882,15 @@ MonthlyPoint.range остаётся полным календарным меся
 
 Первая страница включается в GetAnalytics, отдельного первого RPC не появляется. Все страницы одной page.revision относятся к одному пользователю/режиму/поясу и согласованной истории; ревизия учитывает изменения покрытия при daily, не только data_revisions. Выбранные факты/notes сохраняют свой период. GetChartPage, как GetAnalytics, всегда читает с primary независимо от x-read-primary. Проверка пользователя/ревизии cursor и чтение точек выполняются из одного согласованного снимка: нельзя проверить R2 на primary, а точки взять с реплики R1. Только реальная смена текущей ревизии, а не отставание реплики, даёт OUT_OF_RANGE. Runtime-тест: после фонового final GetAnalytics выдаёт R2/cursor, немедленный GetChartPage без заголовка при отстающей R1-реплике успешно возвращает R2; этот тест должен приходить с сервисной реализацией. Как хранить ограниченную страницу и проверять непрозрачный cursor внутри такого чтения, выбирает runtime; конкретная таблица, индекс, секрет или криптосхема контрактом не навязываются. После merge новый gen/go-тег владельца предшествует обновлению analytics/BFF и клиента FIN-416.
 
-Rollout FIN-418 после merge и нового gen/go-тега: analytics поддерживает MarkRecalculating,
-ApplyRegularPaymentDismissal, overlay и согласованный GET; BSD сохраняет target/true-job; BFF маршрутизирует
-PUT в оба сервиса и возвращает200 с полными блоками; Android/mock применяют blocks и freeze остальных данных.
-DELETE остаётся 204. Альфа переключается согласованно без fallback на receipt-only. Откат сначала останавливает
-новые mutation и сохраняет/доставляет задания; нельзя терять overlay/marker до завершения соответствующих
-публикаций. Existing finalfalse/ACKбарьеры сохраняются. Удаление204 у PUT и обязательные query — REST breaking,
-метку breaking-accepted ставит только владелец.
+Rollout FIN-420: после merge владелец выпускает новый неизменяемый gen/go-тег; до него зависимые Go PR
+не используют новый wire. Финальная схема заменяет overlay FIN-418: analytics принимает supplied projection,
+BSD считает fresh regular в локальной транзакции и возвращает projection, BFF передаёт params/payload между
+ними. На время согласованной выкатки новый PUT закрыт; открывается только когда все три сервиса поддерживают
+FIN-420. Одна добавка protobuf-полей не делает смешанный запуск безопасным: старый analytics проигнорирует
+payload и использует устаревший путь. После переключения отсутствующий payload отвергается, прежний режим
+не поддерживается. Откат также согласованный, сначала прекращает новые mutation, сохраняет/доставляет задания
+и marker. REST200/DELETE204, Android/cache, chart60/help_text/даты остаются FIN-418; новая REST-форма или
+новый final-протокол не вводятся. buf breaking проверяет структурную совместимость, rollout — поведение.
 
 ### Фактический пояс REST-ответа FIN-418
 

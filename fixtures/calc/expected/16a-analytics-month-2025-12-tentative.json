@@ -819,12 +819,12 @@
             }
           }
         ],
+        "badge": "<ignored>",
         "items_more": {
           "label": "<ignored>",
           "value": 293700,
           "value_kind": "amount"
-        },
-        "badge": "<ignored>"
+        }
       },
       "action": {
         "type": "open_operations",

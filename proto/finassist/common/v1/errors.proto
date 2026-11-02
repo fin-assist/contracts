@@ -128,7 +128,8 @@ enum ErrorReason {
     http_status: 422
   }];
   // Присваивание сохранено, но запрошенный контекст аналитики больше недоступен.
-  // Только ApplyRegularPaymentDismissal; RequestRetryInfo явно запрещает повтор в том же контексте.
+  // Только DismissRegularPayment после подтверждённого assignment в BSD; Apply этот код не выдаёт.
+  // RequestRetryInfo явно запрещает повтор в том же контексте. До нового assignment — VALIDATION_ERROR.
   ANALYTICS_CONTEXT_UNAVAILABLE = 25 [(error_spec) = {
     grpc_code: GRPC_CODE_FAILED_PRECONDITION
     http_status: 422

@@ -46,8 +46,11 @@ type AnalyticsServiceClient interface {
 	// Ошибки cursor и согласованность — api.md6.4.
 	GetChartPage(ctx context.Context, in *GetChartPageRequest, opts ...grpc.CallOption) (*GetChartPageResponse, error)
 	// Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
-	// Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
-	// Достоверно отсутствующий контекст: ANALYTICS_CONTEXT_UNAVAILABLE, FAILED_PRECONDITION, RequestRetryInfo=false.
+	// Компонует переданную свежую метрику BSD; не читает собственную финансовую базу или BSD.
+	// До успешного ответа принимает marker target. Нет overlay и пересчёта финансовых значений.
+	// ANALYTICS_CONTEXT_UNAVAILABLE этот метод не выдаёт: контекст проверяет BSD до передачи payload.
+	// Неверный payload — голый INVALID_ARGUMENT; NONE/LOCKED сами по себе корректны.
+	// Отсутствие собственного финансового snapshot analytics не является ошибкой этого метода.
 	// Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
 	ApplyRegularPaymentDismissal(ctx context.Context, in *ApplyRegularPaymentDismissalRequest, opts ...grpc.CallOption) (*ApplyRegularPaymentDismissalResponse, error)
 }
@@ -121,8 +124,11 @@ type AnalyticsServiceServer interface {
 	// Ошибки cursor и согласованность — api.md6.4.
 	GetChartPage(context.Context, *GetChartPageRequest) (*GetChartPageResponse, error)
 	// Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
-	// Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
-	// Достоверно отсутствующий контекст: ANALYTICS_CONTEXT_UNAVAILABLE, FAILED_PRECONDITION, RequestRetryInfo=false.
+	// Компонует переданную свежую метрику BSD; не читает собственную финансовую базу или BSD.
+	// До успешного ответа принимает marker target. Нет overlay и пересчёта финансовых значений.
+	// ANALYTICS_CONTEXT_UNAVAILABLE этот метод не выдаёт: контекст проверяет BSD до передачи payload.
+	// Неверный payload — голый INVALID_ARGUMENT; NONE/LOCKED сами по себе корректны.
+	// Отсутствие собственного финансового snapshot analytics не является ошибкой этого метода.
 	// Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
 	ApplyRegularPaymentDismissal(context.Context, *ApplyRegularPaymentDismissalRequest) (*ApplyRegularPaymentDismissalResponse, error)
 	mustEmbedUnimplementedAnalyticsServiceServer()

@@ -33,8 +33,11 @@ service AnalyticsService {
   // Ошибки cursor и согласованность — api.md6.4.
   rpc GetChartPage(GetChartPageRequest) returns (GetChartPageResponse);
   // Только bank-bff с проверенным пользователем, после успешного Dismiss в BSD.
-  // Локально применяет исключение к собственной проекции; не вызывает BSD и не пересчитывает операции.
-  // Достоверно отсутствующий контекст: ANALYTICS_CONTEXT_UNAVAILABLE, FAILED_PRECONDITION, RequestRetryInfo=false.
+  // Компонует переданную свежую метрику BSD; не читает собственную финансовую базу или BSD.
+  // До успешного ответа принимает marker target. Нет overlay и пересчёта финансовых значений.
+  // ANALYTICS_CONTEXT_UNAVAILABLE этот метод не выдаёт: контекст проверяет BSD до передачи payload.
+  // Неверный payload — голый INVALID_ARGUMENT; NONE/LOCKED сами по себе корректны.
+  // Отсутствие собственного финансового snapshot analytics не является ошибкой этого метода.
   // Временный сбой доставки метрики/композиции: прежний INTERNAL/UNAVAILABLE с указанием допустимости повтора.
   rpc ApplyRegularPaymentDismissal(ApplyRegularPaymentDismissalRequest) returns (ApplyRegularPaymentDismissalResponse);
 }
@@ -49,26 +52,75 @@ service MetricsIngestService {
   rpc MarkRecalculating(MarkRecalculatingRequest) returns (MarkRecalculatingResponse);
 }
 
-// Применить подтверждённое BSD исключение к сохранённой проекции регулярных платежей.
+// Запрос BFF в analytics для получения обновлённого блока после действия «Не подписка».
+// К этому моменту BSD уже сохранил изменение и рассчитал новые данные регулярных платежей.
+// BFF передаёт проверенный BSD идентификатор платежа, полученные от BSD версию и результат расчёта.
+// Analytics оформляет этот результат в полный блок regular_payments для ответа пользователю.
 message ApplyRegularPaymentDismissalRequest {
-  // UUID, уже проверенный BSD для того же пользователя; не описание операции.
+  // Идентификатор платежа, для которого пользователь нажал «Не подписка».
+  // BSD уже проверил, что платёж принадлежит этому пользователю, и сохранил изменение.
   string regular_payment_id = 1;
-  // Положительный target из DismissRegularPaymentResponse, не от внешнего клиента.
+  // Целевая версия фонового пересчёта из DismissRegularPaymentResponse, больше нуля.
+  // Нужна для защиты от старых ответов аналитики; не означает, что весь пересчёт уже завершён.
   int32 calc_version = 2;
-  // Только MONTH, точный YYYY-MM и заданный режим переводов.
+  // Месяц и режим переводов, показанные пользователю при нажатии: MONTH, YYYY-MM и with/without.
   finassist.common.v1.AnalyticsParams params = 3;
+  // Обновлённые данные из того же ответа BSD, что и calc_version. Обязательное поле.
+  // Содержит одну метрику insights.regular_payments и сведения о периоде, валюте и часовом поясе.
+  // BFF передаёт её без пересчёта. При отсутствии analytics возвращает INVALID_ARGUMENT.
+  // Мобильное приложение это поле не присылает.
+  MetricProjection projection = 4;
 }
 
 // Полное содержимое изменившихся блоков; глобальная готовность расчёта не изменяется.
 message ApplyRegularPaymentDismissalResponse {
   finassist.common.v1.AnalyticsParams params = 1;
   string currency = 2;
-  // IANA-пояс собственной проекции, из которой собраны блоки.
+  // Фактический IANA-пояс переданной BSD метрики.
   string time_zone = 3;
   // От 1 до 16 полных блоков с уникальными id; сейчас только regular_payments.
   repeated finassist.common.v1.Block blocks = 4;
   // Целевая версия полного фонового результата; 1..2147483647, не applied state version.
   int32 required_calc_version = 5;
+}
+
+// Рассчитанные BSD метрики и сведения, необходимые analytics для сборки блоков интерфейса.
+// BSD возвращает эти данные в ответе «Не подписка», BFF передаёт их в ApplyRegularPaymentDismissal.
+// Сейчас metrics содержит одну метрику insights.regular_payments: обновлённые регулярные платежи.
+// Суммы, статусы, причины недоступности, данные для пояснений и фильтры уже определены BSD.
+// Analytics использует их для формирования блока, не пересчитывая финансовые показатели.
+// Остальные метрики экрана сюда не входят; их позже обновит обычный фоновый пересчёт.
+// Сериализованное сообщение занимает не более 3 МиБ; список платежей передаётся полностью.
+// Общий лимит gRPC-сообщения — 4 МиБ.
+message MetricProjection {
+  // Месяц и режим переводов, для которых BSD рассчитал метрику.
+  // Должны совпадать с params в DismissRegularPayment и ApplyRegularPaymentDismissal.
+  finassist.common.v1.AnalyticsParams params = 1;
+  // Валюта всех сумм в metrics: код ISO 4217, сейчас RUB.
+  // Суммы передаются в минимальных единицах валюты, например в копейках для RUB.
+  string currency = 2;
+  // Часовой пояс, в котором BSD выполнил расчёт, например Europe/Moscow.
+  // Это IANA-имя из рассчитанных данных; значение из профиля клиента его не заменяет.
+  string time_zone = 3;
+  // Границы полного календарного месяца в time_zone: from включается, to не включается.
+  finassist.common.v1.TimeRange range = 4;
+  // Какая часть выбранного месяца покрыта данными: общее правило DataBounds из common.proto.
+  // data_to — время последней операции в месяце, если она в последний покрытый день;
+  // иначе — последняя существующая секунда этого дня. Расчёт тот же, что для PeriodSnapshot.
+  finassist.common.v1.DataBounds bounds = 5;
+  // Границы данных источника для пояснений о недоступности метрики: from включается, to не включается.
+  // Не описывают состояние или готовность остальных метрик экрана.
+  finassist.common.v1.TimeRange data_range = 6;
+  // Результаты расчёта в той же форме MetricSnapshot, что и при фоновой передаче метрик.
+  // Сейчас требуется ровно один элемент с id insights.regular_payments.
+  // Другой id, повторяющиеся id или пустой список приводят к INVALID_ARGUMENT.
+  // В рассчитанном списке платежей (READY/TENTATIVE) не должно быть regular_payment_id из запроса Apply.
+  repeated MetricSnapshot metrics = 7;
+  // Идентификатор пользователя, чьи данные проверил и рассчитал BSD.
+  // Analytics сравнивает его с пользователем из проверенного токена вызова BFF.
+  // Поле служит только для проверки совпадения; получить данные другого пользователя через него нельзя.
+  // Вызов по-прежнему разрешён только BFF с токеном пользователя, не системному клиенту.
+  string user_id = 8;
 }
 
 // ---------------------------------------------------------------- Модель метрики
