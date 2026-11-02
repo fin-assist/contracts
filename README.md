@@ -190,7 +190,7 @@ calc.md13 и grpc-api.md определяют правила и согласов
 
 FIN-418 PUT dismissal меняет 204→200 и требует показанный month/date+transfer_mode: полный AnalyticsBlockUpdate
 с required_calc_version. BFF → assignment в BSD/надёжная доставкаtrue → analytics.ApplyRegularPaymentDismissal
-из СОБСТВЕННОЙ БД (overlay над целым regular metric), без BSDlive-read. GET/фоновыйfalse сохраняют общий расчёт;
+из свежего MetricProjection BSD (FIN-420), без own-DB overlay или BSDlive-read. GET/фоновыйfalse сохраняют общий расчёт;
 клиент сразу заменяет полученные блоки, остальные готовые данные сохраняет до подтверждённой полной версии.
 DELETE остаётся прежним 204, восстановление UI/candidate pipeline не расширяется. Требование полного ответа
 не отменялось: прежняя трактовка receipt-only исключена. Temporal отдельно FIN-419. REST breaking принимает
@@ -205,3 +205,10 @@ only after confirmed BSD assignment; explicit saved-change user_message and retr
 Malformed query remains400 before assignment; transient Apply failure remains500. Unsupported device tzdb always
 shows a notice, also over a stale verified cache, until a checked supported response. Historical data_to uses
 the last real second (later fold); no invented instant for a skipped day. See api.md6.3 and calendar notation.
+
+FIN-420 заменяет внутреннюю подготовку полного PUT200: BSD считает только fresh regular в той же локальной
+транзакции assignment; DismissRequest.params2, DismissResponse.projection2 и ApplyRequest.projection4.
+MetricProjection содержит одну typed metric и минимальный контекст/verified user binding (≤3 МиБ).
+Analytics только компонует payload и принимает marker; не обновляет финансовые snapshots. REST/cache/true-job
+остаются FIN-418. После merge новый тег владельца и согласованная выкатка BSD/analytics/BFF до открытия PUT;
+старый overlay режим не поддерживается. Потребитель Android/mock — FIN-416, Temporal отдельно FIN-419.

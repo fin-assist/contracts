@@ -1,7 +1,8 @@
-"""FIN-418: marker ACK ends delivery; the existing background final ends calculation."""
+"""FIN-420 source calculation + pure composition; FIN-418 marker/background stays independent."""
 import os
 import unittest
 from copy import deepcopy
+from zoneinfo import ZoneInfo
 from refcalc.api import ApiError
 from refcalc.ledger import stable_id
 from refcalc.recalculation import MAX_VERSION, Recalculation
@@ -123,7 +124,7 @@ class RecalculationContract(unittest.TestCase):
         self.assertEqual({update['required_calc_version']}, b.recalculation.jobs)  # Apply is not BSD job ACK.
         after = b.analytics('month', '2026-10')
         self.assertTrue(after['calculation']['recalculating'])
-        self.assertEqual(block, self.block(after, 'regular_payments')[0])
+        self.assertEqual(self.block(before, 'regular_payments')[0], self.block(after, 'regular_payments')[0])  # GET is still the async baseline while true.
         unchanged = [x for x in before['blocks'] if x.get('id') != 'regular_payments']
         self.assertEqual(unchanged, [x for x in after['blocks'] if x.get('id') != 'regular_payments'])
         b.recalculation.ack_marker(update['required_calc_version'])
@@ -132,7 +133,6 @@ class RecalculationContract(unittest.TestCase):
         ready = b.analytics('month', '2026-10')
         self.assertFalse(ready['calculation']['recalculating'])
         self.assertGreaterEqual(ready['calculation']['calc_version'], update['required_calc_version'])
-        self.assertEqual(set(), set(b.recalculation.overlays))
 
     def test_changed_false_retry_multiple_ids_same_target_and_last_none(self):
         b = self.regular_backend(2)
@@ -153,22 +153,40 @@ class RecalculationContract(unittest.TestCase):
         self.assertIsNone(b.dismiss(stable_id('payment', 'A'), dismissed=False))  # Existing bodyless DELETE.
         self.assertEqual('ready', self.block(b.analytics('month', '2026-10'), 'regular_payments')[0]['status'])
 
-    def test_failure_after_source_commit_retries_from_own_projection_only(self):
+    def test_failure_after_source_commit_retries_fresh_source_then_composes_without_database(self):
         b = self.regular_backend()
         old_marker = b.recalculation.marker
         with self.assertRaises(ApiError):
             self.put(b, 'E', marker_ack=False, defer_calculation=True, fail_compose=True)
         self.assertIn('E', b.ledger.dismissed)
-        self.assertEqual({}, b.recalculation.overlays)
         self.assertEqual(old_marker, b.recalculation.marker)
         target = b.recalculation.assignments[stable_id('payment', 'E')][1]
         self.assertIn(target, b.recalculation.jobs)
+        b.ledger.dismissed.add('D')  # A newer source change between attempts; own analytics is stale.
         retry = self.put(b, 'E', marker_ack=False, defer_calculation=True)
         self.assertEqual(target, retry['required_calc_version'])
-        # Destroy source operations: Apply still reads only the previously saved full metric.
+        self.assertEqual(['C', 'B', 'A'], [r['title'] for r in retry['blocks'][0]['data']['items']])
+        projection = b._fresh_regular_projection('2026-10', 'with')
         b.ledger.ops.clear()
-        same = b.apply_regular_dismissal(stable_id('payment', 'E'), target, '2026-10', 'with')
+        b._regular_snapshots.clear()
+        b._source_regular_block = lambda *_: self.fail('composition read source')
+        same = b.apply_regular_dismissal(target, projection)
         self.assertEqual(retry, same)
+
+    def test_calculation_or_payload_failure_rolls_back_new_assignment_and_jobs(self):
+        for injected in ('fail_calculate', 'fail_payload'):
+            b = self.regular_backend()
+            state = deepcopy(b.recalculation.__dict__)
+            with self.assertRaises(ApiError) as caught:
+                self.put(b, 'A', **{injected: True})
+            self.assertEqual((500, injected == 'fail_calculate'), (caught.exception.status, caught.exception.retryable))
+            self.assertNotIn('A', b.ledger.dismissed)
+            for key in ('assignments', 'jobs', 'marker', 'current', 'calculation_pending'):
+                self.assertEqual(state[key], b.recalculation.__dict__[key])
+            self.put(b, 'A', defer_calculation=True)
+            with self.assertRaises(ApiError):
+                self.put(b, 'A', **{injected: True})
+            self.assertIn('A', b.ledger.dismissed)  # An earlier committed effect is never undone.
 
     def test_failed_apply_keeps_durable_calculation_for_retry_or_independent_worker(self):
         for retry_first in (True, False):
@@ -202,44 +220,40 @@ class RecalculationContract(unittest.TestCase):
         self.assertTrue(b.recalculation.calculation_pending)
         self.assertLess(b.recalculation.state_version, update['required_calc_version'])
 
-    def test_old_apply_after_ready_restore_new_pending_and_out_of_order_false(self):
-        r = Recalculation()
-        r.current = 3
-        target = r.assign('p', True)['calc_version']
-        r.apply_dismissal('p', target, lambda ids: self.assertIn('p', ids))
-        r.apply_state(6, False)
-        r.apply_state(9, False)  # Existing async restore has completed.
-        r.apply_state(10, True)
-        self.assertEqual(9, r.ready_version)
-        r.apply_dismissal('p', target, lambda ids: self.assertNotIn('p', ids))
-        r.apply_state(6, False)
-        self.assertEqual(9, r.ready_version)
-        r.apply_dismissal('p', 11, lambda ids: self.assertIn('p', ids))
-        r.apply_state(10, True)
-        self.assertIn('p', r.overlays)
-        r.apply_state(15, False)
-        self.assertEqual(15, r.ready_version)
-        self.assertEqual({}, r.overlays)
-        r.purge()
-        with self.assertRaises(LookupError):
-            r.apply_dismissal('p', 16, lambda _: {})
-
-    def test_background_publishes_restored_payload_before_late_apply_without_get(self):
+    def test_late_supplied_projection_never_replaces_persisted_financial_state(self):
         b = self.regular_backend(2)
-        first = self.put(b, 'A', defer_calculation=True)
-        self.assertEqual(4, first['required_calc_version'])
+        self.put(b, 'A', defer_calculation=True)
+        projection = b._fresh_regular_projection('2026-10', 'with')
         b.recalculation.start(); b.recalculation.finish()
-        self.assertEqual(6, b.recalculation.state_version)
         b.dismiss(stable_id('payment', 'A'), dismissed=False, defer_calculation=True)
         b.recalculation.start(); b.recalculation.finish()
-        self.assertEqual(9, b.recalculation.state_version)
+        restored = b.analytics('month', '2026-10')
         b.recalculation.start()
-        self.assertEqual(10, b.recalculation.state_version)
-        late = b.apply_regular_dismissal(stable_id('payment', 'A'), 4, '2026-10', 'with')
-        self.assertEqual(['B', 'A'], [row['title'] for row in late['blocks'][0]['data']['items']])
-        self.assertEqual(2100, late['blocks'][0]['data']['value'])
-        self.assertIn('2', late['blocks'][0]['data']['description'])
-        self.assertEqual({}, b.recalculation.overlays)
+        state = b.recalculation.state()
+        late = b.apply_regular_dismissal(4, projection)
+        self.assertEqual(['B'], [row['title'] for row in late['blocks'][0]['data']['items']])
+        self.assertEqual(state, b.recalculation.state())
+        self.assertEqual(['B', 'A'], [row['title'] for row in self.block(restored, 'regular_payments')[0]['data']['items']])
+        b.recalculation.apply_state(6, False)
+        self.assertEqual(state, b.recalculation.state())
+        b.recalculation.purge()
+        with self.assertRaises(LookupError):
+            b.apply_regular_dismissal(4, projection)
+
+    def test_supplied_payload_is_bound_to_user_and_displayed_params(self):
+        b = self.regular_backend(2)
+        projection = b._fresh_regular_projection('2026-10', 'with')
+        for field, value in [('user_id', 'other-user'), ('currency', 'USD'), ('time_zone', 'Local'), ('time_zone', 'Not/A_Zone'),
+                             ('full_block', {}), ('params', {'period': 'year'})]:
+            bad = deepcopy(projection); bad[field] = value
+            with self.assertRaises(ApiError) as caught:
+                b.apply_regular_dismissal(4, bad)
+            self.assertEqual((500, False), (caught.exception.status, caught.exception.retryable))
+            self.assertEqual(0, b.recalculation.marker)
+        for bad in (None, {}, projection):
+            with self.assertRaises(ApiError):
+                b.apply_regular_dismissal(4, bad, expected_params={'period': 'month', 'date': '2026-09', 'transfer_mode': 'without'})
+        self.assertEqual(0, b.recalculation.marker)
 
     def test_invalid_context_before_assignment_foreign_id_and_exhaustion(self):
         b = self.regular_backend(1)
@@ -259,37 +273,36 @@ class RecalculationContract(unittest.TestCase):
         self.assertEqual((500, 'INTERNAL_ERROR'), (caught.exception.status, caught.exception.code))
         self.assertEqual(set(), b.ledger.dismissed)
 
-    def test_nonexistent_month_reports_nonretryable_context_after_source_commit(self):
+    def test_nonexistent_month_before_new_assignment_is_not_a_saved_change_error(self):
         b = self.regular_backend(1)
-        for date in ('2026-01', '2027-01'):
+        for date in ('2026-01', '2027-01', '9999-12'):
             with self.assertRaises(ApiError) as caught:
                 b.dismiss(stable_id('payment', 'A'), date=date, mode='without', defer_calculation=True)
-            self.assertEqual((422, 'ANALYTICS_CONTEXT_UNAVAILABLE', False),
+            self.assertEqual((400, 'VALIDATION_ERROR', False),
                              (caught.exception.status, caught.exception.code, caught.exception.retryable))
-            self.assertIsNone(caught.exception.details)
-            self.assertIn('A', b.ledger.dismissed)
-            self.assertNotIn((date, 'without'), b._regular_snapshots)
+            self.assertEqual([{'field': 'date', 'code': 'OUT_OF_RANGE'}], caught.exception.details)
+            self.assertNotIn('A', b.ledger.dismissed)
+            self.assertEqual({}, b.recalculation.assignments)
 
-    def test_deleted_snapshot_between_get_and_put_and_temporary_missing_are_distinct(self):
+    def test_context_removed_after_saved_assignment_reports_truthful_422(self):
         b = self.regular_backend(1)
-        b.analytics('month', '2026-10')
-        payment = stable_id('payment', 'A')
+        self.put(b, 'A', defer_calculation=True)
         b.delete_upload('regular')
         with self.assertRaises(ApiError) as caught:
             self.put(b, 'A')
         self.assertEqual((422, 'ANALYTICS_CONTEXT_UNAVAILABLE', False),
                          (caught.exception.status, caught.exception.code, caught.exception.retryable))
-        self.assertIn('A', b.ledger.dismissed)  # Error does not roll back the source assignment.
+        self.assertIsNone(caught.exception.details)
+        self.assertIn('A', b.ledger.dismissed)
         b.recalculation.run_pending()
         self.assertFalse(b.analytics()['has_data'])
-        b = self.regular_backend(1)
-        b.analytics('month', '2026-10')
-        b._regular_snapshots.pop(('2026-10', 'with'))  # Valid context, metric delivery is pending.
-        target = b.recalculation.assign(payment, True)['calc_version']
-        with self.assertRaises(ApiError) as caught:
-            b.apply_regular_dismissal(payment, target, '2026-10', 'with')
-        self.assertEqual((500, 'INTERNAL_ERROR', True),
-                         (caught.exception.status, caught.exception.code, caught.exception.retryable))
+
+    def test_missing_analytics_snapshot_does_not_block_supplied_fresh_metric(self):
+        b = self.regular_backend(2)
+        self.assertEqual({}, b._regular_snapshots)
+        update = self.put(b, 'A', defer_calculation=True)
+        self.assertEqual(['B'], [r['title'] for r in update['blocks'][0]['data']['items']])
+        self.assertEqual({}, b._regular_snapshots)
 
     def test_existing_covered_month_preserves_lock_and_response_context(self):
         b = self.regular_backend(1)
@@ -299,6 +312,25 @@ class RecalculationContract(unittest.TestCase):
         self.assertEqual(before, update['blocks'][0])
         self.assertEqual({'period': 'month', 'date': '2026-08', 'transfer_mode': 'without'}, update['params'])
         self.assertEqual('Europe/Moscow', update['time_zone'])
+
+    def test_source_window_uses_disjoint_full_months_in_both_modes_and_own_zone(self):
+        for mode in ('with', 'without'):
+            for zone, offset in [('Europe/Moscow', '[+3:MSK]'), ('Asia/Vladivostok', '[+10:VLAT]')]:
+                with self.subTest(mode=mode, zone=zone):
+                    b = self.backend('2027-01-01T12:00:00+03:00')
+                    b.zone = b.ledger.zone = ZoneInfo(zone)
+                    for month in ('08', '10', '12'):
+                        rows = [(name + month, f'2026{month}15120000', -amount, name, 'Продукты')
+                                for name, amount in [('A', 10), ('B', 20)]]
+                        raw = spec.stmt('2026' + month + '01', '2026' + month + '31', rows).replace('[+3:MSK]', offset)
+                        b.upload(month, raw)
+                    update = b.dismiss(stable_id('payment', 'A'), date='2026-12', mode=mode, defer_calculation=True)
+                    self.assertEqual(zone, update['time_zone'])
+                    self.assertEqual(mode, update['params']['transfer_mode'])
+                    self.assertEqual('ready', update['blocks'][0]['status'])
+                    self.assertEqual(2000, update['blocks'][0]['data']['value'])
+                    self.assertEqual(['B'], [r['title'] for r in update['blocks'][0]['data']['items']])
+                    self.assertEqual([], self.schema.errors('dismiss_regular_payment', update))
 
     def test_update_schema_bounds_duplicates_and_required_empty_metadata(self):
         b = self.regular_backend(1)

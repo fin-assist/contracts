@@ -3,6 +3,7 @@ syntax = "proto3";
 package finassist.statementdata.v1;
 
 import "buf/validate/validate.proto";
+import "finassist/analytics/v1/analytics.proto";
 import "finassist/common/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -283,12 +284,17 @@ message ListCategoriesResponse {
 message DismissRegularPaymentRequest {
   // ID платежа (RegularPayment.id), стабилен между пересчётами.
   string regular_payment_id = 1;
+  // Обязателен в FIN-420: MONTH, точный YYYY-MM и заданный режим; проверяется до изменения.
+  finassist.common.v1.AnalyticsParams params = 2;
 }
 
-// Отметка сохранена; BFF затем получает полное обновление из собственной проекции analytics.
+// Отметка и задания сохранены; свежая regular-метрика посчитана в той же локальной транзакции BSD.
 message DismissRegularPaymentResponse {
   // Сохранённый target > 0 из последовательности BSD; повтор assignment возвращает тот же target.
   int32 calc_version = 1;
+  // Обязательный свежий результат, включая при идемпотентном повторе с прежним target.
+  // BFF без подмены передаёт его в analytics.ApplyRegularPaymentDismissal.projection.
+  finassist.analytics.v1.MetricProjection projection = 2;
 }
 
 // Вернуть платёж в регулярные.

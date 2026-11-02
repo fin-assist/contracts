@@ -1,5 +1,4 @@
 """Observable FIN-418 marker/assignment model; no database or network simulation."""
-from copy import deepcopy
 
 MAX_VERSION = 2_147_483_647
 
@@ -14,7 +13,6 @@ class Recalculation:
         self.deleted = False
         self.assignments = {}
         self.ready_version = 0
-        self.overlays = {}
         self.jobs = set()
         self.calculation_pending = False
 
@@ -63,22 +61,19 @@ class Recalculation:
         self.state_version, self.stored_flag = version, recalculating
         if not recalculating:
             self.ready_version = max(self.ready_version, version)
-            self.overlays = {p: v for p, v in self.overlays.items() if v > self.ready_version}
 
-    def apply_dismissal(self, payment, target, compose):
-        """One local projection transaction. compose reads only the stored full metric."""
+    def compose_dismissal(self, target, compose):
+        """One local marker+composition transaction; no financial overlay or source reads."""
         if self.deleted:
             raise LookupError('deleted user')
         if type(target) is not int or not 1 <= target <= MAX_VERSION:
             raise ValueError('invalid target')
-        before = self.marker, deepcopy(self.overlays)
+        before = self.marker
         try:
-            if target > self.ready_version:
-                self.overlays[payment] = max(target, self.overlays.get(payment, 0))
             self.mark(target)
-            return compose(set(self.overlays))
+            return compose()
         except Exception:
-            self.marker, self.overlays = before
+            self.marker = before
             raise
 
     def start(self, user_action=True):
@@ -117,7 +112,6 @@ class Recalculation:
         self.current = self.state_version = self.marker = 0
         self.stored_flag = False
         self.ready_version = 0
-        self.overlays.clear()
         self.assignments.clear()
         self.jobs.clear()
         self.calculation_pending = False

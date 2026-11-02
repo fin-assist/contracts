@@ -12,6 +12,7 @@ import json
 from dataclasses import asdict
 import uuid
 from copy import deepcopy
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from .analytics import Analytics, Ctx, SINGLETONS, parse_supports, period_bounds
 from .ledger import Ledger, stable_id
@@ -393,6 +394,10 @@ class Backend:
         ctx = Ctx(source, 'month', start, end, period_key, mode, scope, visible,
                   scope.in_days(visible, start, end), {'coverage': source.coverage_of('month', start, end)})
         block = ctx.regular_payments()
+        if block['status'] in ('ready', 'tentative'):
+            count = len(block['data']['items'])
+            noun = 'списаний' if 11 <= count % 100 <= 14 else ('списание' if count % 10 == 1 else 'списания' if count % 10 in (2, 3, 4) else 'списаний')
+            block['data']['description'] = f'в месяц · {count} {noun} каждый месяц'
         for row in block['data'].get('items', []):
             self._regular_references[row['button']['payment_id']] = row['title']
         return block
@@ -419,21 +424,41 @@ class Backend:
         for date, mode in set(self._regular_snapshots) | self._regular_absent:
             self._store_regular_snapshot(date, mode, version)
 
-    def apply_regular_dismissal(self, payment_id, target, date, mode, fail_compose=False):
-        """Own saved metric only. Failure rolls back analytics, never the source assignment."""
-        def compose(excluded):
-            saved = self._regular_snapshots.get((date, mode))
-            if saved is None and (date, mode) in self._regular_absent:
-                raise ApiError(422, 'ANALYTICS_CONTEXT_UNAVAILABLE', retryable=False)
-            if fail_compose or saved is None:
+    def _fresh_regular_projection(self, date, mode):
+        """Source-owned calculation. The block-shaped model is adapted only at the composition boundary."""
+        block = self._source_regular_block(date, mode)
+        if block is None:
+            return None
+        return {'params': {'period': 'month', 'date': date, 'transfer_mode': mode},
+                'currency': 'RUB', 'time_zone': str(self.zone), 'user_id': self._chart_owner,
+                'full_block': block}
+
+    def apply_regular_dismissal(self, target, projection, fail_compose=False, expected_params=None):
+        """Use only the supplied source payload. Failure never rolls back the BSD assignment."""
+        if (not isinstance(projection, dict) or projection.get('user_id') != self._chart_owner or
+                projection.get('currency') != 'RUB' or not projection.get('time_zone') or
+                projection.get('time_zone') == 'Local' or
+                projection.get('params', {}).get('period') != 'month' or
+                (expected_params is not None and projection.get('params') != expected_params) or
+                projection.get('full_block', {}).get('id') != 'regular_payments'):
+            raise ApiError(500, 'INTERNAL_ERROR', retryable=False)
+        try:
+            ZoneInfo(projection['time_zone'])
+        except (TypeError, ValueError, ZoneInfoNotFoundError):
+            raise ApiError(500, 'INTERNAL_ERROR', retryable=False)
+        params = projection['params']
+        if not re.fullmatch(r'[0-9]{4}-(0[1-9]|1[0-2])', params.get('date', '')) or params.get('transfer_mode') not in ('with', 'without'):
+            raise ApiError(500, 'INTERNAL_ERROR', retryable=False)
+        def compose():
+            if fail_compose:
                 raise ApiError(500, 'INTERNAL_ERROR', retryable=True)
-            return {**{k: deepcopy(saved[k]) for k in ('params', 'currency', 'time_zone')},
-                    'required_calc_version': target, 'blocks': [compose_regular(saved['block'], excluded)]}
-        return self.recalculation.apply_dismissal(payment_id, target, compose)
+            return {**{k: deepcopy(projection[k]) for k in ('params', 'currency', 'time_zone')},
+                    'required_calc_version': target, 'blocks': [compose_regular(projection['full_block'])]}
+        return self.recalculation.compose_dismissal(target, compose)
 
     def dismiss(self, payment_id: str, dismissed=True, marker_ack=True, defer_calculation=False,
-                date=None, mode=None, fail_compose=False):
-        """PUT returns the full projection; DELETE retains its bodyless asynchronous result."""
+                date=None, mode=None, fail_compose=False, fail_calculate=False, fail_payload=False):
+        """BSD's local transaction precedes marker delivery and BFF's synchronous composition call."""
         if dismissed:
             for field, valid in [('date', isinstance(date, str) and bool(re.fullmatch(r'[0-9]{4}-(0[1-9]|1[0-2])', date)) and date[:4] != '0000'),
                                  ('transfer_mode', mode in ('with', 'without'))]:
@@ -447,20 +472,42 @@ class Backend:
         if name is None:
             raise ApiError(404, "NOT_FOUND")
         if dismissed:
-            self._store_regular_snapshot(date, mode)
+            try:
+                period_bounds('month', dt.date.fromisoformat(date + '-01'))
+            except (ValueError, OverflowError):
+                raise ApiError(400, 'VALIDATION_ERROR', [{'field': 'date', 'code': 'OUT_OF_RANGE'}], retryable=False)
         changed = (name in self.ledger.dismissed) != dismissed
-        try:
-            if dismissed:
-                target = self.recalculation.assign(payment_id, True, marker_ack)['calc_version']
-            elif changed:
+        if not dismissed:
+            if changed:
                 self.recalculation.restore(payment_id)
-        except OverflowError:
-            raise ApiError(500, "INTERNAL_ERROR")
-        if dismissed:
-            self.ledger.dismissed.add(name)
-        else:
             self.ledger.dismissed.discard(name)
-        result = self.apply_regular_dismissal(payment_id, target, date, mode, fail_compose) if dismissed else None
+            if not defer_calculation:
+                self.recalculation.run_pending()
+            return None
+        before = set(self.ledger.dismissed), dict(self._regular_references)
+        try:
+            self.ledger.dismissed.add(name)
+            self._regular_references[payment_id] = name
+            if fail_calculate:
+                raise ApiError(500, 'INTERNAL_ERROR', retryable=True)
+            projection = self._fresh_regular_projection(date, mode)
+            if projection is None:
+                if not changed:
+                    raise ApiError(422, 'ANALYTICS_CONTEXT_UNAVAILABLE', retryable=False)
+                raise ApiError(400, 'VALIDATION_ERROR', [{'field': 'date', 'code': 'OUT_OF_RANGE'}], retryable=False)
+            if fail_payload:
+                raise ApiError(500, 'INTERNAL_ERROR', retryable=False)
+            target = self.recalculation.assign(payment_id, True, False)['calc_version']
+        except Exception as exc:
+            self.ledger.dismissed, self._regular_references = before
+            if isinstance(exc, OverflowError):
+                raise ApiError(500, 'INTERNAL_ERROR', retryable=False) from exc
+            raise
+        # The source transaction is committed. Everything below may fail independently.
+        if marker_ack:
+            self.recalculation.ack_marker(target)
+        result = self.apply_regular_dismissal(target, projection, fail_compose,
+                                             {'period': 'month', 'date': date, 'transfer_mode': mode})
         if not defer_calculation:
             self.recalculation.run_pending()
         return result
@@ -491,10 +538,10 @@ class Backend:
             selected = out['params']['date']
             self._store_regular_snapshot(selected, mode)
             saved = self._regular_snapshots.get((selected, mode))
-            if saved and self.recalculation.overlays:
+            if saved:
                 for i, block in enumerate(out['blocks']):
                     if block.get('id') == 'regular_payments':
-                        out['blocks'][i] = compose_regular(saved['block'], set(self.recalculation.overlays))
+                        out['blocks'][i] = compose_regular(saved['block'])
         out['calculation'] = self.recalculation.state()
         if 'state' in out:
             out['state']['recalculating'] = out['calculation']['recalculating']
