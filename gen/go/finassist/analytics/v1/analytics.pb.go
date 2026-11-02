@@ -339,8 +339,9 @@ type MetricProjection struct {
 	TimeZone string `protobuf:"bytes,3,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
 	// Границы полного календарного месяца в time_zone: from включается, to не включается.
 	Range *v1.TimeRange `protobuf:"bytes,4,opt,name=range,proto3" json:"range,omitempty"`
-	// Какая часть выбранного месяца покрыта загруженными данными.
-	// data_to — последняя существующая секунда последнего покрытого дня.
+	// Какая часть выбранного месяца покрыта данными: общее правило DataBounds из common.proto.
+	// data_to — время последней операции в месяце, если она в последний покрытый день;
+	// иначе — последняя существующая секунда этого дня. Расчёт тот же, что для PeriodSnapshot.
 	Bounds *v1.DataBounds `protobuf:"bytes,5,opt,name=bounds,proto3" json:"bounds,omitempty"`
 	// Границы данных источника для пояснений о недоступности метрики: from включается, to не включается.
 	// Не описывают состояние или готовность остальных метрик экрана.
