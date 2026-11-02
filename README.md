@@ -216,3 +216,8 @@ MetricProjection.metrics — набор с уникальными id, сейча
 Analytics только компонует payload и принимает marker; не обновляет финансовые snapshots. REST/cache/true-job
 остаются FIN-418. После merge новый тег владельца и согласованная выкатка BSD/analytics/BFF до открытия PUT;
 старый overlay режим не поддерживается. Потребитель Android/mock — FIN-416, Temporal отдельно FIN-419.
+
+## Профильное ревью (FIN-421)
+
+Перед ревью применяются [профильные навыки](docs/review-skills/README.md) из проверяемой ревизии.
+Обязательные требования, выбор и ограничения — в `AGENTS.md`, раздел `Code Review Rules`.
